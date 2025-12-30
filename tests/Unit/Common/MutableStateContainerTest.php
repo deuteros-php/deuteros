@@ -5,17 +5,12 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\MutableStateContainer;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \Deuteros\Common\MutableStateContainer
- */
+#[CoversClass(MutableStateContainer::class)]
 class MutableStateContainerTest extends TestCase
 {
-    /**
-     * @covers ::hasFieldValue
-     * @covers ::setFieldValue
-     */
     public function testSetAndCheckFieldValue(): void
     {
         $container = new MutableStateContainer();
@@ -27,10 +22,6 @@ class MutableStateContainerTest extends TestCase
         $this->assertTrue($container->hasFieldValue('field_test'));
     }
 
-    /**
-     * @covers ::getFieldValue
-     * @covers ::setFieldValue
-     */
     public function testGetFieldValue(): void
     {
         $container = new MutableStateContainer();
@@ -39,9 +30,6 @@ class MutableStateContainerTest extends TestCase
         $this->assertSame('new value', $container->getFieldValue('field_test'));
     }
 
-    /**
-     * @covers ::getFieldValue
-     */
     public function testGetFieldValueThrowsForUnsetField(): void
     {
         $container = new MutableStateContainer();
@@ -52,9 +40,6 @@ class MutableStateContainerTest extends TestCase
         $container->getFieldValue('nonexistent');
     }
 
-    /**
-     * @covers ::setFieldValue
-     */
     public function testOverwriteFieldValue(): void
     {
         $container = new MutableStateContainer();
@@ -64,9 +49,6 @@ class MutableStateContainerTest extends TestCase
         $this->assertSame('second', $container->getFieldValue('field_test'));
     }
 
-    /**
-     * @covers ::reset
-     */
     public function testReset(): void
     {
         $container = new MutableStateContainer();
@@ -79,9 +61,6 @@ class MutableStateContainerTest extends TestCase
         $this->assertFalse($container->hasFieldValue('field_b'));
     }
 
-    /**
-     * @covers ::getAll
-     */
     public function testGetAll(): void
     {
         $container = new MutableStateContainer();
@@ -94,18 +73,12 @@ class MutableStateContainerTest extends TestCase
         ], $container->getAll());
     }
 
-    /**
-     * @covers ::getAll
-     */
     public function testGetAllEmpty(): void
     {
         $container = new MutableStateContainer();
         $this->assertSame([], $container->getAll());
     }
 
-    /**
-     * @covers ::setFieldValue
-     */
     public function testNullValueIsStoredCorrectly(): void
     {
         $container = new MutableStateContainer();

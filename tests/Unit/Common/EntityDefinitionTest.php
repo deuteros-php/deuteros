@@ -7,16 +7,12 @@ namespace Deuteros\Tests\Unit\Common;
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\FieldDefinition;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \Deuteros\Common\EntityDefinition
- */
+#[CoversClass(EntityDefinition::class)]
 class EntityDefinitionTest extends TestCase
 {
-    /**
-     * @covers ::__construct
-     */
     public function testMinimalConstruction(): void
     {
         $definition = new EntityDefinition(entityType: 'node');
@@ -33,9 +29,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertFalse($definition->mutable);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testFullConstruction(): void
     {
         $fields = ['field_test' => new FieldDefinition('value')];
@@ -68,18 +61,12 @@ class EntityDefinitionTest extends TestCase
         $this->assertTrue($definition->mutable);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testBundleDefaultsToEntityType(): void
     {
         $definition = new EntityDefinition(entityType: 'user');
         $this->assertSame('user', $definition->bundle);
     }
 
-    /**
-     * @covers ::__construct
-     */
     public function testFieldsRequireFieldableEntityInterface(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -91,9 +78,6 @@ class EntityDefinitionTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::fromArray
-     */
     public function testFromArrayMinimal(): void
     {
         $definition = EntityDefinition::fromArray(['entity_type' => 'node']);
@@ -102,9 +86,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertSame('node', $definition->bundle);
     }
 
-    /**
-     * @covers ::fromArray
-     */
     public function testFromArrayFull(): void
     {
         $definition = EntityDefinition::fromArray([
@@ -131,9 +112,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertSame('raw value', $definition->fields['field_test']->getValue());
     }
 
-    /**
-     * @covers ::fromArray
-     */
     public function testFromArrayConvertsRawFieldsToDefinitions(): void
     {
         $definition = EntityDefinition::fromArray([
@@ -145,9 +123,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertInstanceOf(FieldDefinition::class, $definition->fields['field_test']);
     }
 
-    /**
-     * @covers ::fromArray
-     */
     public function testFromArrayRequiresEntityType(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -156,9 +131,6 @@ class EntityDefinitionTest extends TestCase
         EntityDefinition::fromArray([]);
     }
 
-    /**
-     * @covers ::fromArray
-     */
     public function testFromArrayRejectsEmptyEntityType(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -166,9 +138,6 @@ class EntityDefinitionTest extends TestCase
         EntityDefinition::fromArray(['entity_type' => '']);
     }
 
-    /**
-     * @covers ::hasInterface
-     */
     public function testHasInterface(): void
     {
         $definition = new EntityDefinition(
@@ -180,10 +149,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertFalse($definition->hasInterface('NonExistent'));
     }
 
-    /**
-     * @covers ::hasMethodOverride
-     * @covers ::getMethodOverride
-     */
     public function testMethodOverrides(): void
     {
         $callable = fn() => 1;
@@ -198,10 +163,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertNull($definition->getMethodOverride('nonexistent'));
     }
 
-    /**
-     * @covers ::hasField
-     * @covers ::getField
-     */
     public function testFieldAccess(): void
     {
         $fieldDef = new FieldDefinition('value');
@@ -217,9 +178,6 @@ class EntityDefinitionTest extends TestCase
         $this->assertNull($definition->getField('nonexistent'));
     }
 
-    /**
-     * @covers ::withContext
-     */
     public function testWithContext(): void
     {
         $original = new EntityDefinition(

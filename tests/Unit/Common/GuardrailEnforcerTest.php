@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\GuardrailEnforcer;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \Deuteros\Common\GuardrailEnforcer
- */
+#[CoversClass(GuardrailEnforcer::class)]
 class GuardrailEnforcerTest extends TestCase
 {
-    /**
-     * @covers ::getUnsupportedMethods
-     */
     public function testGetUnsupportedMethods(): void
     {
         $methods = GuardrailEnforcer::getUnsupportedMethods();
@@ -27,9 +23,6 @@ class GuardrailEnforcerTest extends TestCase
         $this->assertArrayHasKey('toUrl', $methods);
     }
 
-    /**
-     * @covers ::isUnsupportedMethod
-     */
     public function testIsUnsupportedMethod(): void
     {
         $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('save'));
@@ -41,9 +34,6 @@ class GuardrailEnforcerTest extends TestCase
         $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('nonexistent'));
     }
 
-    /**
-     * @covers ::createUnsupportedMethodException
-     */
     public function testCreateUnsupportedMethodException(): void
     {
         $exception = GuardrailEnforcer::createUnsupportedMethodException('save');
@@ -54,9 +44,6 @@ class GuardrailEnforcerTest extends TestCase
         $this->assertStringContainsString('Kernel test', $exception->getMessage());
     }
 
-    /**
-     * @covers ::createMissingResolverException
-     */
     public function testCreateMissingResolverException(): void
     {
         $exception = GuardrailEnforcer::createMissingResolverException(
@@ -70,9 +57,6 @@ class GuardrailEnforcerTest extends TestCase
         $this->assertStringContainsString('methodOverrides', $exception->getMessage());
     }
 
-    /**
-     * @covers ::createMissingResolverExceptionGeneric
-     */
     public function testCreateMissingResolverExceptionGeneric(): void
     {
         $exception = GuardrailEnforcer::createMissingResolverExceptionGeneric('customMethod');

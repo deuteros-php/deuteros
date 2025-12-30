@@ -8,22 +8,19 @@ use Deuteros\Prophecy\EntityDoubleTrait;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Integration tests for the Prophecy EntityDoubleTrait.
  *
  * These tests mirror the PHPUnit tests to demonstrate behavioral parity.
- *
- * @coversDefaultClass \Deuteros\Prophecy\EntityDoubleTrait
  */
+#[CoversClass(EntityDoubleTrait::class)]
 class EntityDoubleTraitTest extends TestCase
 {
     use EntityDoubleTrait;
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testMinimalEntityDouble(): void
     {
         $entity = $this->createEntityDouble([
@@ -35,9 +32,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('node', $entity->bundle());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testEntityWithMetadata(): void
     {
         $entity = $this->createEntityDouble([
@@ -55,9 +49,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('Test Article', $entity->label());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testScalarFieldAccess(): void
     {
         $entity = $this->createEntityDouble([
@@ -75,9 +66,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(42, $entity->get('field_count')->value);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testCallbackFieldResolution(): void
     {
         $entity = $this->createEntityDouble([
@@ -92,9 +80,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('Resolved from context', $entity->get('field_dynamic')->value);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testContextPropagation(): void
     {
         $entity = $this->createEntityDouble([
@@ -116,9 +101,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('Dynamic Field', $entity->get('field_computed')->value);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testMultiValueFieldAccess(): void
     {
         $entity = $this->createEntityDouble([
@@ -146,9 +128,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(1, $entity->get('field_tags')->target_id);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testNestedFieldAccess(): void
     {
         $entity = $this->createEntityDouble([
@@ -165,9 +144,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('Plain text value', $entity->get('field_text')->first()->value);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testHasField(): void
     {
         $entity = $this->createEntityDouble([
@@ -183,9 +159,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertFalse($entity->hasField('field_nonexistent'));
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testFieldIsEmpty(): void
     {
         $entity = $this->createEntityDouble([
@@ -202,9 +175,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertTrue($entity->get('field_null')->isEmpty());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testInterfaceComposition(): void
     {
         $entity = $this->createEntityDouble([
@@ -226,9 +196,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(1704067200, $entity->getChangedTime());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testMethodOverridesPrecedence(): void
     {
         $entity = $this->createEntityDouble([
@@ -245,9 +212,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(999, $entity->id());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testMethodOverridesReceiveContext(): void
     {
         $entity = $this->createEntityDouble([
@@ -263,9 +227,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(1704153600, $entity->getChangedTime());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testUndefinedFieldThrows(): void
     {
         $entity = $this->createEntityDouble([
@@ -283,9 +244,6 @@ class EntityDoubleTraitTest extends TestCase
         $entity->get('field_undefined');
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testUnsupportedMethodThrows(): void
     {
         $entity = $this->createEntityDouble([
@@ -300,9 +258,6 @@ class EntityDoubleTraitTest extends TestCase
         $entity->save();
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testFieldListCaching(): void
     {
         $entity = $this->createEntityDouble([
@@ -321,9 +276,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame($firstAccess, $secondAccess);
     }
 
-    /**
-     * @covers ::createMutableEntityDouble
-     */
     public function testMutableEntityFieldSet(): void
     {
         $entity = $this->createMutableEntityDouble([
@@ -345,9 +297,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame('published', $entity->get('field_status')->value);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testImmutableEntityRejectsSet(): void
     {
         $entity = $this->createEntityDouble([
@@ -366,9 +315,6 @@ class EntityDoubleTraitTest extends TestCase
         $entity->set('field_status', 'published');
     }
 
-    /**
-     * @covers ::createMutableEntityDouble
-     */
     public function testMutableEntitySetReturnsEntity(): void
     {
         $entity = $this->createMutableEntityDouble([
@@ -386,9 +332,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame($entity, $result);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testEntityReferenceFieldWithTargetId(): void
     {
         $entity = $this->createEntityDouble([
@@ -404,9 +347,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(42, $entity->get('field_author')->first()->target_id);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testFieldGetValue(): void
     {
         $entity = $this->createEntityDouble([
@@ -427,9 +367,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertSame(['target_id' => 2], $values[1]);
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testNullFieldItem(): void
     {
         $entity = $this->createEntityDouble([
@@ -446,9 +383,6 @@ class EntityDoubleTraitTest extends TestCase
         $this->assertTrue($entity->get('field_empty')->isEmpty());
     }
 
-    /**
-     * @covers ::createEntityDouble
-     */
     public function testOutOfRangeDeltaReturnsNull(): void
     {
         $entity = $this->createEntityDouble([

@@ -65,7 +65,7 @@ final readonly class EntityDefinition {
     public bool $mutable = FALSE,
   ) {
     // Validate that fields are only used with FieldableEntityInterface.
-    if (!empty($fields) && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
+    if ($fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
       throw new \InvalidArgumentException(
         "Fields can only be defined when FieldableEntityInterface is listed in interfaces. "
         . "Add FieldableEntityInterface::class to the 'interfaces' array."

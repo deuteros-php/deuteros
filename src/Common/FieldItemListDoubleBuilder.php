@@ -115,7 +115,7 @@ final class FieldItemListDoubleBuilder {
     return function (array $context): ?object {
       $values = $this->resolveValues($context);
 
-      if (empty($values)) {
+      if ($values === []) {
         return NULL;
       }
 
@@ -132,7 +132,7 @@ final class FieldItemListDoubleBuilder {
   private function buildIsEmptyResolver(): callable {
     return function (array $context): bool {
       $values = $this->resolveValues($context);
-      return empty($values);
+      return $values === [];
     };
   }
 
@@ -300,7 +300,7 @@ final class FieldItemListDoubleBuilder {
    *   TRUE if indexed, FALSE if associative.
    */
   private function isIndexedArray(array $array): bool {
-    if (empty($array)) {
+    if ($array === []) {
       return TRUE;
     }
 

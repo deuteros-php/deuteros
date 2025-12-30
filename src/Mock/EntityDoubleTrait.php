@@ -196,7 +196,7 @@ trait EntityDoubleTrait {
     $interfaces = $definition->interfaces;
 
     // If no interfaces declared, just use EntityInterface.
-    if (empty($interfaces)) {
+    if ($interfaces === []) {
       return [EntityInterface::class];
     }
 

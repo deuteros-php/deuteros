@@ -1,0 +1,191 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Deuteros\Common;
+
+/**
+ * Builds callable resolvers for field item double methods.
+ *
+ * Produces framework-agnostic callable resolvers for FieldItemInterface
+ * methods. These resolvers are then wired to PHPUnit mocks or Prophecy
+ * doubles by the adapter traits.
+ */
+final class FieldItemDoubleBuilder
+{
+    /**
+     * The item value.
+     */
+    private mixed $value;
+
+    /**
+     * The delta of this item.
+     */
+    private int $delta;
+
+    /**
+     * The field name.
+     */
+    private string $fieldName;
+
+    /**
+     * Whether the parent entity is mutable.
+     */
+    private bool $mutable;
+
+    /**
+     * Constructs a FieldItemDoubleBuilder.
+     *
+     * @param mixed $value
+     *   The item value.
+     * @param int $delta
+     *   The delta of this item.
+     * @param string $fieldName
+     *   The field name.
+     * @param bool $mutable
+     *   Whether the parent entity is mutable.
+     */
+    public function __construct(
+        mixed $value,
+        int $delta,
+        string $fieldName,
+        bool $mutable = false,
+    ) {
+        $this->value = $value;
+        $this->delta = $delta;
+        $this->fieldName = $fieldName;
+        $this->mutable = $mutable;
+    }
+
+    /**
+     * Gets all field item method resolvers.
+     *
+     * @return array<string, callable>
+     *   Resolvers keyed by method name.
+     */
+    public function getResolvers(): array
+    {
+        return [
+            '__get' => $this->buildMagicGetResolver(),
+            'getValue' => $this->buildGetValueResolver(),
+            'setValue' => $this->buildSetValueResolver(),
+            '__set' => $this->buildMagicSetResolver(),
+            'isEmpty' => $this->buildIsEmptyResolver(),
+        ];
+    }
+
+    /**
+     * Builds the __get() resolver.
+     *
+     * Provides access to common field properties: value, target_id, etc.
+     *
+     * @return callable
+     */
+    private function buildMagicGetResolver(): callable
+    {
+        return function (array $context, string $property): mixed {
+            // If the value is an array (e.g., ['target_id' => 1]), look up the property.
+            if (is_array($this->value)) {
+                return $this->value[$property] ?? null;
+            }
+
+            // For scalar values, 'value' returns the scalar.
+            if ($property === 'value') {
+                return $this->value;
+            }
+
+            return null;
+        };
+    }
+
+    /**
+     * Builds the getValue() resolver.
+     *
+     * @return callable
+     */
+    private function buildGetValueResolver(): callable
+    {
+        return fn(array $context): mixed => $this->value;
+    }
+
+    /**
+     * Builds the setValue() resolver.
+     *
+     * @return callable
+     */
+    private function buildSetValueResolver(): callable
+    {
+        return function (array $context, mixed $value, bool $notify = true): object {
+            if (!$this->mutable) {
+                throw new \LogicException(
+                    "Cannot modify field item at delta {$this->delta} on immutable entity double. "
+                    . "Use createMutableEntityDouble() if you need to test mutations."
+                );
+            }
+
+            $this->value = $value;
+
+            // Return $this equivalent.
+            return new class {};
+        };
+    }
+
+    /**
+     * Builds the __set() resolver.
+     *
+     * Proxies property set to setValue() for 'value' property.
+     *
+     * @return callable
+     */
+    private function buildMagicSetResolver(): callable
+    {
+        return function (array $context, string $property, mixed $value): void {
+            if (!$this->mutable) {
+                throw new \LogicException(
+                    "Cannot modify property '$property' on immutable entity double. "
+                    . "Use createMutableEntityDouble() if you need to test mutations."
+                );
+            }
+
+            if ($property === 'value') {
+                $this->value = $value;
+            } elseif (is_array($this->value)) {
+                $this->value[$property] = $value;
+            } else {
+                throw new \LogicException(
+                    "Cannot set property '$property' on scalar field item."
+                );
+            }
+        };
+    }
+
+    /**
+     * Builds the isEmpty() resolver.
+     *
+     * @return callable
+     */
+    private function buildIsEmptyResolver(): callable
+    {
+        return fn(array $context): bool => $this->value === null || $this->value === '';
+    }
+
+    /**
+     * Gets the item value.
+     *
+     * @return mixed
+     */
+    public function getValue(): mixed
+    {
+        return $this->value;
+    }
+
+    /**
+     * Gets the delta.
+     *
+     * @return int
+     */
+    public function getDelta(): int
+    {
+        return $this->delta;
+    }
+}

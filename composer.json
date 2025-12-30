@@ -1,0 +1,35 @@
+{
+  "name": "plach79/deuteros",
+  "description": "Drupal Entity Unit Test Extensible Replacement Object Scaffolding - Value-object entity doubles for unit testing",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "drupal/core": "^10.0 || ^11.0",
+    "phpunit/phpunit": "^9.0 || ^10.0 || ^11.0",
+    "phpspec/prophecy": "^1.15",
+    "phpspec/prophecy-phpunit": "^2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Deuteros\\": "src/Deuteros/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Deuteros\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "drupal/core-composer-scaffold": true
+    }
+  }
+}

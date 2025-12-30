@@ -18,65 +18,12 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *
  * @see \Deuteros\Common\EntityDoubleBuilder
  */
-final class EntityDefinition
+final readonly class EntityDefinition
 {
     /**
-     * The entity type ID.
+     * The bundle (defaults to entityType if not provided).
      */
-    public readonly string $entityType;
-
-    /**
-     * The bundle.
-     */
-    public readonly string $bundle;
-
-    /**
-     * The entity ID.
-     */
-    public readonly mixed $id;
-
-    /**
-     * The entity UUID.
-     */
-    public readonly mixed $uuid;
-
-    /**
-     * The entity label.
-     */
-    public readonly mixed $label;
-
-    /**
-     * Field definitions keyed by field name.
-     *
-     * @var array<string, FieldDefinition>
-     */
-    public readonly array $fields;
-
-    /**
-     * List of interfaces the entity double should implement.
-     *
-     * @var string[]
-     */
-    public readonly array $interfaces;
-
-    /**
-     * Method overrides keyed by method name.
-     *
-     * @var array<string, callable|mixed>
-     */
-    public readonly array $methodOverrides;
-
-    /**
-     * Context data for callback resolution.
-     *
-     * @var array<string, mixed>
-     */
-    public readonly array $context;
-
-    /**
-     * Whether the entity double should be mutable.
-     */
-    public readonly bool $mutable;
+    public string $bundle;
 
     /**
      * Constructs an EntityDefinition.
@@ -106,16 +53,20 @@ final class EntityDefinition
      *   If fields are defined but FieldableEntityInterface is not in interfaces.
      */
     public function __construct(
-        string $entityType,
+        public string $entityType,
         string $bundle = '',
-        mixed $id = null,
-        mixed $uuid = null,
-        mixed $label = null,
-        array $fields = [],
-        array $interfaces = [],
-        array $methodOverrides = [],
-        array $context = [],
-        bool $mutable = false,
+        public mixed $id = null,
+        public mixed $uuid = null,
+        public mixed $label = null,
+        /** @var array<string, FieldDefinition> */
+        public array $fields = [],
+        /** @var string[] */
+        public array $interfaces = [],
+        /** @var array<string, callable|mixed> */
+        public array $methodOverrides = [],
+        /** @var array<string, mixed> */
+        public array $context = [],
+        public bool $mutable = false,
     ) {
         // Validate that fields are only used with FieldableEntityInterface.
         if (!empty($fields) && !in_array(FieldableEntityInterface::class, $interfaces, true)) {
@@ -125,16 +76,7 @@ final class EntityDefinition
             );
         }
 
-        $this->entityType = $entityType;
         $this->bundle = $bundle !== '' ? $bundle : $entityType;
-        $this->id = $id;
-        $this->uuid = $uuid;
-        $this->label = $label;
-        $this->fields = $fields;
-        $this->interfaces = $interfaces;
-        $this->methodOverrides = $methodOverrides;
-        $this->context = $context;
-        $this->mutable = $mutable;
     }
 
     /**

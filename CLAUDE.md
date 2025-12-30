@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Composer package:** `plach79/deuteros`
 - **Root namespace:** `\Deuteros`
-- **PHP version:** 8.0+
+- **PHP version:** 8.3+
 - **Drupal compatibility:** 10.x, 11.x
 - **Test frameworks:** PHPUnit 9.0+/10.0+/11.0+, Prophecy 1.15+
 
@@ -64,6 +64,16 @@ fn(array $context, ...$args): mixed
 - Immutable doubles (default): Throw on field mutation
 - Mutable doubles: Track changes in `MutableStateContainer` for assertions
 - Metadata (id, uuid, entityType, bundle) always immutable
+
+## PHP 8.3 Features Used
+
+The codebase leverages modern PHP features:
+
+- **Readonly classes** (PHP 8.2): `EntityDefinition`, `FieldDefinition` are `final readonly class`
+- **Constructor property promotion**: Used throughout for cleaner constructors
+- **Typed class constants** (PHP 8.3): `GuardrailEnforcer::UNSUPPORTED_METHODS` uses `const array`
+- **Match expressions**: Used in `resolveValue()` and `normalizeToArray()` methods
+- **Readonly properties**: Builder classes use `private readonly` for immutable dependencies
 
 ## Non-Negotiable Constraints
 

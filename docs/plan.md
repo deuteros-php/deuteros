@@ -79,7 +79,7 @@ well as custom methods from custom interfaces without DEUTEROS knowing what
 they mean.
 
 **Constructor pattern**
-* Use PHP 8.0+ named parameters for type safety
+* Use PHP 8.3+ named parameters for type safety
 * Provide static `fromArray()` factory method for trait usage
 
 ```php

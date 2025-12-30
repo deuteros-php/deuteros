@@ -26,21 +26,11 @@ final class EntityDoubleBuilder
     private array $fieldListCache = [];
 
     /**
-     * The entity definition.
-     */
-    private EntityDefinition $definition;
-
-    /**
-     * The mutable state container (null for immutable doubles).
-     */
-    private ?MutableStateContainer $mutableState;
-
-    /**
      * Factory for creating field item list doubles.
      *
      * @var callable|null
      */
-    private $fieldListFactory;
+    private mixed $fieldListFactory = null;
 
     /**
      * Constructs an EntityDoubleBuilder.
@@ -51,12 +41,9 @@ final class EntityDoubleBuilder
      *   The mutable state container, or NULL for immutable doubles.
      */
     public function __construct(
-        EntityDefinition $definition,
-        ?MutableStateContainer $mutableState = null,
-    ) {
-        $this->definition = $definition;
-        $this->mutableState = $mutableState;
-    }
+        private readonly EntityDefinition $definition,
+        private readonly ?MutableStateContainer $mutableState = null,
+    ) {}
 
     /**
      * Sets the factory for creating field item list doubles.
@@ -284,10 +271,10 @@ final class EntityDoubleBuilder
      */
     private function resolveValue(mixed $value, array $context, mixed ...$args): mixed
     {
-        if (is_callable($value)) {
-            return $value($context, ...$args);
-        }
-        return $value;
+        return match (true) {
+            is_callable($value) => $value($context, ...$args),
+            default => $value,
+        };
     }
 
     /**

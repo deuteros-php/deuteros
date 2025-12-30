@@ -14,19 +14,9 @@ namespace Deuteros\Common;
 final class FieldItemListDoubleBuilder
 {
     /**
-     * The field definition.
+     * The field definition (mutable for mutable doubles).
      */
     private FieldDefinition $fieldDefinition;
-
-    /**
-     * The field name.
-     */
-    private string $fieldName;
-
-    /**
-     * Whether the parent entity is mutable.
-     */
-    private bool $mutable;
 
     /**
      * Cached resolved value (for callable fields).
@@ -50,14 +40,14 @@ final class FieldItemListDoubleBuilder
      *
      * @var callable|null
      */
-    private $fieldItemFactory;
+    private mixed $fieldItemFactory = null;
 
     /**
      * Callback to update the mutable state.
      *
      * @var callable|null
      */
-    private $mutableStateUpdater;
+    private mixed $mutableStateUpdater = null;
 
     /**
      * Constructs a FieldItemListDoubleBuilder.
@@ -71,12 +61,10 @@ final class FieldItemListDoubleBuilder
      */
     public function __construct(
         FieldDefinition $fieldDefinition,
-        string $fieldName,
-        bool $mutable = false,
+        private readonly string $fieldName,
+        private readonly bool $mutable = false,
     ) {
         $this->fieldDefinition = $fieldDefinition;
-        $this->fieldName = $fieldName;
-        $this->mutable = $mutable;
     }
 
     /**
@@ -300,17 +288,11 @@ final class FieldItemListDoubleBuilder
      */
     private function normalizeToArray(mixed $value): array
     {
-        if ($value === null) {
-            return [];
-        }
-
-        // Check if it's already an indexed array of items.
-        if (is_array($value) && $this->isIndexedArray($value)) {
-            return array_values($value);
-        }
-
-        // Scalar or associative array -> single item.
-        return [$value];
+        return match (true) {
+            $value === null => [],
+            is_array($value) && $this->isIndexedArray($value) => array_values($value),
+            default => [$value],
+        };
     }
 
     /**

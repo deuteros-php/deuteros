@@ -10,25 +10,17 @@ namespace Deuteros\Common;
  * Stores field value which can be a scalar, array, or callable.
  * No behavior beyond holding the value.
  */
-final class FieldDefinition
+final readonly class FieldDefinition
 {
-    /**
-     * The field value.
-     *
-     * @var mixed
-     */
-    private mixed $value;
-
     /**
      * Constructs a FieldDefinition.
      *
      * @param mixed $value
      *   The field value (scalar, array, or callable).
      */
-    public function __construct(mixed $value)
-    {
-        $this->value = $value;
-    }
+    public function __construct(
+        private mixed $value,
+    ) {}
 
     /**
      * Gets the field value.

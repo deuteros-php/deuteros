@@ -4,7 +4,7 @@
   "type": "library",
   "license": "GPL-2.0-or-later",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.3"
   },
   "require-dev": {
     "drupal/core": "^10.0 || ^11.0",

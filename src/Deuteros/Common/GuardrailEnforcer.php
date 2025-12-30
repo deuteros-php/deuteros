@@ -18,7 +18,7 @@ final class GuardrailEnforcer
      *
      * @var array<string, string>
      */
-    private const UNSUPPORTED_METHODS = [
+    private const array UNSUPPORTED_METHODS = [
         'save' => 'Saving entities',
         'delete' => 'Deleting entities',
         'access' => 'Access checking',

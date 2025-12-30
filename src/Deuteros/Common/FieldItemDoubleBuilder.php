@@ -14,24 +14,9 @@ namespace Deuteros\Common;
 final class FieldItemDoubleBuilder
 {
     /**
-     * The item value.
+     * The item value (mutable for mutable doubles).
      */
     private mixed $value;
-
-    /**
-     * The delta of this item.
-     */
-    private int $delta;
-
-    /**
-     * The field name.
-     */
-    private string $fieldName;
-
-    /**
-     * Whether the parent entity is mutable.
-     */
-    private bool $mutable;
 
     /**
      * Constructs a FieldItemDoubleBuilder.
@@ -47,14 +32,11 @@ final class FieldItemDoubleBuilder
      */
     public function __construct(
         mixed $value,
-        int $delta,
-        string $fieldName,
-        bool $mutable = false,
+        private readonly int $delta,
+        private readonly string $fieldName,
+        private readonly bool $mutable = false,
     ) {
         $this->value = $value;
-        $this->delta = $delta;
-        $this->fieldName = $fieldName;
-        $this->mutable = $mutable;
     }
 
     /**

@@ -44,7 +44,7 @@ Any deviation invalidates the implementation.
 
 **File**
 ```
-src/Deuteros/Common/EntityDefinition.php
+src/Common/EntityDefinition.php
 ```
 
 **Namespace**
@@ -126,7 +126,7 @@ EntityDefinition::fromArray([
 
 **File**
 ```
-src/Deuteros/Common/FieldDefinition.php
+src/Common/FieldDefinition.php
 ```
 
 **Namespace**
@@ -147,7 +147,7 @@ namespace Deuteros\Common;
 
 **File**
 ```
-src/Deuteros/Common/EntityDoubleBuilder.php
+src/Common/EntityDoubleBuilder.php
 ```
 
 **Namespace**
@@ -180,7 +180,7 @@ namespace Deuteros\Common;
 
 **File**
 ```
-src/Deuteros/Common/FieldItemListDoubleBuilder.php
+src/Common/FieldItemListDoubleBuilder.php
 ```
 
 **Namespace**
@@ -262,7 +262,7 @@ For `FieldItemInterface`:
 
 **File**
 ```
-src/Deuteros/Common/EntityDefinitionNormalizer.php
+src/Common/EntityDefinitionNormalizer.php
 ```
 
 **Namespace**
@@ -288,7 +288,7 @@ namespace Deuteros\Common;
 
 **File**
 ```
-src/Deuteros/Mock/EntityDoubleTrait.php
+src/Mock/EntityDoubleTrait.php
 ```
 
 **Namespace**
@@ -332,7 +332,7 @@ protected function createMutableEntityDouble(
 
 **File**
 ```
-src/Deuteros/Prophecy/EntityDoubleTrait.php
+src/Prophecy/EntityDoubleTrait.php
 ```
 
 **Namespace**

@@ -15,7 +15,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Deuteros\\": "src/Deuteros/"
+      "Deuteros\\": "src/"
     }
   },
   "autoload-dev": {

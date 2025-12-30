@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Integration;
 
 use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\EntityDefinitionNormalizerTrait;
 use Deuteros\Common\EntityDoubleBuilder;
 use Deuteros\Common\FieldDefinition;
 use Deuteros\Common\FieldItemDoubleBuilder;
 use Deuteros\Common\FieldItemListDoubleBuilder;
-use Deuteros\Common\MutableStateContainer;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;

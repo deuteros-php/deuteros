@@ -6,48 +6,66 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\FieldDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests the FieldDefinition value object.
+ */
 #[CoversClass(FieldDefinition::class)]
-class FieldDefinitionTest extends TestCase
-{
-    public function testScalarValue(): void
-    {
-        $definition = new FieldDefinition('test value');
-        $this->assertSame('test value', $definition->getValue());
-    }
+#[Group('deuteros')]
+class FieldDefinitionTest extends TestCase {
 
-    public function testNullValue(): void
-    {
-        $definition = new FieldDefinition(null);
-        $this->assertNull($definition->getValue());
-    }
+  /**
+   * Tests storing and retrieving a scalar string value.
+   */
+  public function testScalarValue(): void {
+    $definition = new FieldDefinition('test value');
+    $this->assertSame('test value', $definition->getValue());
+  }
 
-    public function testArrayValue(): void
-    {
-        $value = [['target_id' => 1], ['target_id' => 2]];
-        $definition = new FieldDefinition($value);
-        $this->assertSame($value, $definition->getValue());
-        $this->assertTrue($definition->isMultiValue());
-    }
+  /**
+   * Tests that NULL values are stored correctly.
+   */
+  public function testNullValue(): void {
+    $definition = new FieldDefinition(NULL);
+    $this->assertNull($definition->getValue());
+  }
 
-    public function testIsCallable(): void
-    {
-        $callable = fn() => 'dynamic';
-        $definition = new FieldDefinition($callable);
-        $this->assertTrue($definition->isCallable());
-        $this->assertFalse($definition->isMultiValue());
-    }
+  /**
+   * Tests multi-value field detection with array of items.
+   */
+  public function testArrayValue(): void {
+    $value = [['target_id' => 1], ['target_id' => 2]];
+    $definition = new FieldDefinition($value);
+    $this->assertSame($value, $definition->getValue());
+    $this->assertTrue($definition->isMultiValue());
+  }
 
-    public function testNonCallableIsNotCallable(): void
-    {
-        $definition = new FieldDefinition('static');
-        $this->assertFalse($definition->isCallable());
-    }
+  /**
+   * Tests that callable values are correctly identified.
+   */
+  public function testIsCallable(): void {
+    $callable = fn() => 'dynamic';
+    $definition = new FieldDefinition($callable);
+    $this->assertTrue($definition->isCallable());
+    $this->assertFalse($definition->isMultiValue());
+  }
 
-    public function testScalarIsNotMultiValue(): void
-    {
-        $definition = new FieldDefinition('scalar');
-        $this->assertFalse($definition->isMultiValue());
-    }
+  /**
+   * Tests that non-callable values return false from isCallable().
+   */
+  public function testNonCallableIsNotCallable(): void {
+    $definition = new FieldDefinition('static');
+    $this->assertFalse($definition->isCallable());
+  }
+
+  /**
+   * Tests that scalar values are not detected as multi-value.
+   */
+  public function testScalarIsNotMultiValue(): void {
+    $definition = new FieldDefinition('scalar');
+    $this->assertFalse($definition->isMultiValue());
+  }
+
 }

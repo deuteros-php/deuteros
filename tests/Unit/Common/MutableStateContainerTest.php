@@ -6,85 +6,107 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\MutableStateContainer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests the MutableStateContainer class.
+ */
 #[CoversClass(MutableStateContainer::class)]
-class MutableStateContainerTest extends TestCase
-{
-    public function testSetAndCheckFieldValue(): void
-    {
-        $container = new MutableStateContainer();
+#[Group('deuteros')]
+class MutableStateContainerTest extends TestCase {
 
-        $this->assertFalse($container->hasFieldValue('field_test'));
+  /**
+   * Tests setFieldValue() and hasFieldValue() work correctly.
+   */
+  public function testSetAndCheckFieldValue(): void {
+    $container = new MutableStateContainer();
 
-        $container->setFieldValue('field_test', 'new value');
+    $this->assertFalse($container->hasFieldValue('field_test'));
 
-        $this->assertTrue($container->hasFieldValue('field_test'));
-    }
+    $container->setFieldValue('field_test', 'new value');
 
-    public function testGetFieldValue(): void
-    {
-        $container = new MutableStateContainer();
-        $container->setFieldValue('field_test', 'new value');
+    $this->assertTrue($container->hasFieldValue('field_test'));
+  }
 
-        $this->assertSame('new value', $container->getFieldValue('field_test'));
-    }
+  /**
+   * Tests getFieldValue() returns the stored value.
+   */
+  public function testGetFieldValue(): void {
+    $container = new MutableStateContainer();
+    $container->setFieldValue('field_test', 'new value');
 
-    public function testGetFieldValueThrowsForUnsetField(): void
-    {
-        $container = new MutableStateContainer();
+    $this->assertSame('new value', $container->getFieldValue('field_test'));
+  }
 
-        $this->expectException(\OutOfBoundsException::class);
-        $this->expectExceptionMessage("Field 'nonexistent' has not been mutated");
+  /**
+   * Tests getFieldValue() throws for fields that were never set.
+   */
+  public function testGetFieldValueThrowsForUnsetField(): void {
+    $container = new MutableStateContainer();
 
-        $container->getFieldValue('nonexistent');
-    }
+    $this->expectException(\OutOfBoundsException::class);
+    $this->expectExceptionMessage("Field 'nonexistent' has not been mutated");
 
-    public function testOverwriteFieldValue(): void
-    {
-        $container = new MutableStateContainer();
-        $container->setFieldValue('field_test', 'first');
-        $container->setFieldValue('field_test', 'second');
+    $container->getFieldValue('nonexistent');
+  }
 
-        $this->assertSame('second', $container->getFieldValue('field_test'));
-    }
+  /**
+   * Tests that setFieldValue() overwrites previous values.
+   */
+  public function testOverwriteFieldValue(): void {
+    $container = new MutableStateContainer();
+    $container->setFieldValue('field_test', 'first');
+    $container->setFieldValue('field_test', 'second');
 
-    public function testReset(): void
-    {
-        $container = new MutableStateContainer();
-        $container->setFieldValue('field_a', 'a');
-        $container->setFieldValue('field_b', 'b');
+    $this->assertSame('second', $container->getFieldValue('field_test'));
+  }
 
-        $container->reset();
+  /**
+   * Tests reset() clears all stored values.
+   */
+  public function testReset(): void {
+    $container = new MutableStateContainer();
+    $container->setFieldValue('field_a', 'a');
+    $container->setFieldValue('field_b', 'b');
 
-        $this->assertFalse($container->hasFieldValue('field_a'));
-        $this->assertFalse($container->hasFieldValue('field_b'));
-    }
+    $container->reset();
 
-    public function testGetAll(): void
-    {
-        $container = new MutableStateContainer();
-        $container->setFieldValue('field_a', 'a');
-        $container->setFieldValue('field_b', 'b');
+    $this->assertFalse($container->hasFieldValue('field_a'));
+    $this->assertFalse($container->hasFieldValue('field_b'));
+  }
 
-        $this->assertSame([
-            'field_a' => 'a',
-            'field_b' => 'b',
-        ], $container->getAll());
-    }
+  /**
+   * Tests getAll() returns all stored field values.
+   */
+  public function testGetAll(): void {
+    $container = new MutableStateContainer();
+    $container->setFieldValue('field_a', 'a');
+    $container->setFieldValue('field_b', 'b');
 
-    public function testGetAllEmpty(): void
-    {
-        $container = new MutableStateContainer();
-        $this->assertSame([], $container->getAll());
-    }
+    $this->assertSame([
+      'field_a' => 'a',
+      'field_b' => 'b',
+    ], $container->getAll());
+  }
 
-    public function testNullValueIsStoredCorrectly(): void
-    {
-        $container = new MutableStateContainer();
-        $container->setFieldValue('field_test', null);
+  /**
+   * Tests getAll() returns empty array when no values stored.
+   */
+  public function testGetAllEmpty(): void {
+    $container = new MutableStateContainer();
+    $this->assertSame([], $container->getAll());
+  }
 
-        $this->assertTrue($container->hasFieldValue('field_test'));
-        $this->assertNull($container->getFieldValue('field_test'));
-    }
+  /**
+   * Tests that NULL values are stored and distinguished from unset fields.
+   */
+  public function testNullValueIsStoredCorrectly(): void {
+    $container = new MutableStateContainer();
+    $container->setFieldValue('field_test', NULL);
+
+    $this->assertTrue($container->hasFieldValue('field_test'));
+    $this->assertNull($container->getFieldValue('field_test'));
+  }
+
 }

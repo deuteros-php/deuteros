@@ -14,217 +14,208 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  * - Field definitions
  * - Interfaces to implement
  * - Method overrides for custom behavior
- * - Context for callback resolution
+ * - Context for callback resolution.
  *
  * @see \Deuteros\Common\EntityDoubleBuilder
  */
-final readonly class EntityDefinition
-{
-    /**
-     * The bundle (defaults to entityType if not provided).
-     */
-    public string $bundle;
+final readonly class EntityDefinition {
 
-    /**
-     * Constructs an EntityDefinition.
-     *
-     * @param string $entityType
-     *   The entity type ID.
-     * @param string $bundle
-     *   The bundle.
-     * @param mixed $id
-     *   The entity ID.
-     * @param mixed $uuid
-     *   The entity UUID.
-     * @param mixed $label
-     *   The entity label.
-     * @param array<string, FieldDefinition> $fields
-     *   Field definitions keyed by field name.
-     * @param string[] $interfaces
-     *   List of interfaces to implement.
-     * @param array<string, callable|mixed> $methodOverrides
-     *   Method overrides keyed by method name.
-     * @param array<string, mixed> $context
-     *   Context data for callback resolution.
-     * @param bool $mutable
-     *   Whether the entity double should be mutable.
-     *
-     * @throws \InvalidArgumentException
-     *   If fields are defined but FieldableEntityInterface is not in interfaces.
-     */
-    public function __construct(
-        public string $entityType,
-        string $bundle = '',
-        public mixed $id = null,
-        public mixed $uuid = null,
-        public mixed $label = null,
-        /** @var array<string, FieldDefinition> */
-        public array $fields = [],
-        /** @var string[] */
-        public array $interfaces = [],
-        /** @var array<string, callable|mixed> */
-        public array $methodOverrides = [],
-        /** @var array<string, mixed> */
-        public array $context = [],
-        public bool $mutable = false,
-    ) {
-        // Validate that fields are only used with FieldableEntityInterface.
-        if (!empty($fields) && !in_array(FieldableEntityInterface::class, $interfaces, true)) {
-            throw new \InvalidArgumentException(
-                "Fields can only be defined when FieldableEntityInterface is listed in interfaces. "
-                . "Add FieldableEntityInterface::class to the 'interfaces' array."
-            );
-        }
+  /**
+   * The bundle (defaults to entityType if not provided).
+   */
+  public string $bundle;
 
-        $this->bundle = $bundle !== '' ? $bundle : $entityType;
+  /**
+   * Constructs an EntityDefinition.
+   *
+   * @param string $entityType
+   *   The entity type ID.
+   * @param string $bundle
+   *   The bundle.
+   * @param mixed $id
+   *   The entity ID.
+   * @param mixed $uuid
+   *   The entity UUID.
+   * @param mixed $label
+   *   The entity label.
+   * @param array<string, \Deuteros\Common\FieldDefinition> $fields
+   *   Field definitions keyed by field name.
+   * @param list<class-string> $interfaces
+   *   List of interfaces to implement.
+   * @param array<string, callable|mixed> $methodOverrides
+   *   Method overrides keyed by method name.
+   * @param array<string, mixed> $context
+   *   Context data for callback resolution.
+   * @param bool $mutable
+   *   Whether the entity double should be mutable.
+   *
+   * @throws \InvalidArgumentException
+   *   If fields are defined but FieldableEntityInterface is not in interfaces.
+   */
+  public function __construct(
+    public string $entityType,
+    string $bundle = '',
+    public mixed $id = NULL,
+    public mixed $uuid = NULL,
+    public mixed $label = NULL,
+    public array $fields = [],
+    public array $interfaces = [],
+    public array $methodOverrides = [],
+    public array $context = [],
+    public bool $mutable = FALSE,
+  ) {
+    // Validate that fields are only used with FieldableEntityInterface.
+    if (!empty($fields) && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
+      throw new \InvalidArgumentException(
+        "Fields can only be defined when FieldableEntityInterface is listed in interfaces. "
+        . "Add FieldableEntityInterface::class to the 'interfaces' array."
+      );
     }
 
-    /**
-     * Creates an EntityDefinition from an array.
-     *
-     * Used by traits for convenient definition syntax.
-     *
-     * @param array<string, mixed> $data
-     *   The definition data with snake_case keys:
-     *   - entity_type: (required) The entity type ID.
-     *   - bundle: The bundle (defaults to entity_type).
-     *   - id: The entity ID.
-     *   - uuid: The entity UUID.
-     *   - label: The entity label.
-     *   - fields: Field definitions (raw values, will be converted to FieldDefinition).
-     *   - interfaces: List of interfaces to implement.
-     *   - method_overrides: Method overrides keyed by method name.
-     *   - context: Context data for callback resolution.
-     *   - mutable: Whether the entity double should be mutable.
-     *
-     * @return self
-     *   A new EntityDefinition instance.
-     *
-     * @throws \InvalidArgumentException
-     *   If entity_type is missing.
-     */
-    public static function fromArray(array $data): self
-    {
-        if (!isset($data['entity_type']) || !is_string($data['entity_type']) || $data['entity_type'] === '') {
-            throw new \InvalidArgumentException("'entity_type' is required and must be a non-empty string.");
-        }
+    $this->bundle = $bundle !== '' ? $bundle : $entityType;
+  }
 
-        // Convert raw field values to FieldDefinition objects.
-        $fields = [];
-        if (isset($data['fields']) && is_array($data['fields'])) {
-            foreach ($data['fields'] as $fieldName => $value) {
-                $fields[$fieldName] = $value instanceof FieldDefinition
-                    ? $value
-                    : new FieldDefinition($value);
-            }
-        }
-
-        return new self(
-            entityType: $data['entity_type'],
-            bundle: $data['bundle'] ?? '',
-            id: $data['id'] ?? null,
-            uuid: $data['uuid'] ?? null,
-            label: $data['label'] ?? null,
-            fields: $fields,
-            interfaces: $data['interfaces'] ?? [],
-            methodOverrides: $data['method_overrides'] ?? [],
-            context: $data['context'] ?? [],
-            mutable: $data['mutable'] ?? false,
-        );
+  /**
+   * Creates an EntityDefinition from an array.
+   *
+   * Used by traits for convenient definition syntax.
+   *
+   * @param array<string, mixed> $data
+   *   The definition data with snake_case keys:
+   *   - entity_type: (required) The entity type ID.
+   *   - bundle: The bundle (defaults to entity_type).
+   *   - id: The entity ID.
+   *   - uuid: The entity UUID.
+   *   - label: The entity label.
+   *   - fields: Field definitions (raw values, converted to FieldDefinition).
+   *   - interfaces: List of interfaces to implement.
+   *   - method_overrides: Method overrides keyed by method name.
+   *   - context: Context data for callback resolution.
+   *   - mutable: Whether the entity double should be mutable.
+   *
+   * @return self
+   *   A new EntityDefinition instance.
+   *
+   * @throws \InvalidArgumentException
+   *   If entity_type is missing.
+   */
+  public static function fromArray(array $data): self {
+    $entityType = $data['entity_type'] ?? NULL;
+    if (!is_string($entityType) || $entityType === '') {
+      throw new \InvalidArgumentException(
+        "'entity_type' is required and must be a non-empty string."
+      );
     }
 
-    /**
-     * Checks if a specific interface is implemented.
-     *
-     * @param string $interface
-     *   The fully qualified interface name.
-     *
-     * @return bool
-     *   TRUE if the interface is listed, FALSE otherwise.
-     */
-    public function hasInterface(string $interface): bool
-    {
-        return in_array($interface, $this->interfaces, true);
+    // Convert raw field values to FieldDefinition objects.
+    $fields = [];
+    if (isset($data['fields']) && is_array($data['fields'])) {
+      foreach ($data['fields'] as $fieldName => $value) {
+        $fields[$fieldName] = $value instanceof FieldDefinition ? $value : new FieldDefinition($value);
+      }
     }
 
-    /**
-     * Checks if a method override exists.
-     *
-     * @param string $method
-     *   The method name.
-     *
-     * @return bool
-     *   TRUE if an override exists, FALSE otherwise.
-     */
-    public function hasMethodOverride(string $method): bool
-    {
-        return array_key_exists($method, $this->methodOverrides);
-    }
+    return new self(
+      entityType: $data['entity_type'],
+      bundle: $data['bundle'] ?? '',
+      id: $data['id'] ?? NULL,
+      uuid: $data['uuid'] ?? NULL,
+      label: $data['label'] ?? NULL,
+      fields: $fields,
+      interfaces: $data['interfaces'] ?? [],
+      methodOverrides: $data['method_overrides'] ?? [],
+      context: $data['context'] ?? [],
+      mutable: $data['mutable'] ?? FALSE,
+    );
+  }
 
-    /**
-     * Gets a method override.
-     *
-     * @param string $method
-     *   The method name.
-     *
-     * @return callable|mixed|null
-     *   The override value, or NULL if not defined.
-     */
-    public function getMethodOverride(string $method): mixed
-    {
-        return $this->methodOverrides[$method] ?? null;
-    }
+  /**
+   * Checks if a specific interface is implemented.
+   *
+   * @param class-string $interface
+   *   The fully qualified interface name.
+   *
+   * @return bool
+   *   TRUE if the interface is listed, FALSE otherwise.
+   */
+  public function hasInterface(string $interface): bool {
+    return in_array($interface, $this->interfaces, TRUE);
+  }
 
-    /**
-     * Checks if a field is defined.
-     *
-     * @param string $fieldName
-     *   The field name.
-     *
-     * @return bool
-     *   TRUE if the field is defined, FALSE otherwise.
-     */
-    public function hasField(string $fieldName): bool
-    {
-        return isset($this->fields[$fieldName]);
-    }
+  /**
+   * Checks if a method override exists.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return bool
+   *   TRUE if an override exists, FALSE otherwise.
+   */
+  public function hasMethodOverride(string $method): bool {
+    return array_key_exists($method, $this->methodOverrides);
+  }
 
-    /**
-     * Gets a field definition.
-     *
-     * @param string $fieldName
-     *   The field name.
-     *
-     * @return FieldDefinition|null
-     *   The field definition, or NULL if not defined.
-     */
-    public function getField(string $fieldName): ?FieldDefinition
-    {
-        return $this->fields[$fieldName] ?? null;
-    }
+  /**
+   * Gets a method override.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return callable|mixed|null
+   *   The override value, or NULL if not defined.
+   */
+  public function getMethodOverride(string $method): mixed {
+    return $this->methodOverrides[$method] ?? NULL;
+  }
 
-    /**
-     * Creates a new definition with additional context.
-     *
-     * @param array<string, mixed> $additionalContext
-     *   Additional context to merge.
-     *
-     * @return self
-     *   A new EntityDefinition with merged context.
-     */
-    public function withContext(array $additionalContext): self
-    {
-        return new self(
-            entityType: $this->entityType,
-            bundle: $this->bundle,
-            id: $this->id,
-            uuid: $this->uuid,
-            label: $this->label,
-            fields: $this->fields,
-            interfaces: $this->interfaces,
-            methodOverrides: $this->methodOverrides,
-            context: array_merge($this->context, $additionalContext),
-            mutable: $this->mutable,
-        );
-    }
+  /**
+   * Checks if a field is defined.
+   *
+   * @param string $fieldName
+   *   The field name.
+   *
+   * @return bool
+   *   TRUE if the field is defined, FALSE otherwise.
+   */
+  public function hasField(string $fieldName): bool {
+    return isset($this->fields[$fieldName]);
+  }
+
+  /**
+   * Gets a field definition.
+   *
+   * @param string $fieldName
+   *   The field name.
+   *
+   * @return \Deuteros\Common\FieldDefinition|null
+   *   The field definition, or NULL if not defined.
+   */
+  public function getField(string $fieldName): ?FieldDefinition {
+    return $this->fields[$fieldName] ?? NULL;
+  }
+
+  /**
+   * Creates a new definition with additional context.
+   *
+   * @param array<string, mixed> $additionalContext
+   *   Additional context to merge.
+   *
+   * @return self
+   *   A new EntityDefinition with merged context.
+   */
+  public function withContext(array $additionalContext): self {
+    return new self(
+      entityType: $this->entityType,
+      bundle: $this->bundle,
+      id: $this->id,
+      uuid: $this->uuid,
+      label: $this->label,
+      fields: $this->fields,
+      interfaces: $this->interfaces,
+      methodOverrides: $this->methodOverrides,
+      context: array_merge($this->context, $additionalContext),
+      mutable: $this->mutable,
+    );
+  }
+
 }

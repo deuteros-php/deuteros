@@ -6,63 +6,79 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\GuardrailEnforcer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests the GuardrailEnforcer class.
+ */
 #[CoversClass(GuardrailEnforcer::class)]
-class GuardrailEnforcerTest extends TestCase
-{
-    public function testGetUnsupportedMethods(): void
-    {
-        $methods = GuardrailEnforcer::getUnsupportedMethods();
+#[Group('deuteros')]
+class GuardrailEnforcerTest extends TestCase {
 
-        $this->assertIsArray($methods);
-        $this->assertArrayHasKey('save', $methods);
-        $this->assertArrayHasKey('delete', $methods);
-        $this->assertArrayHasKey('access', $methods);
-        $this->assertArrayHasKey('getTranslation', $methods);
-        $this->assertArrayHasKey('toUrl', $methods);
-    }
+  /**
+   * Tests that getUnsupportedMethods() returns expected blocked methods.
+   */
+  public function testGetUnsupportedMethods(): void {
+    $methods = GuardrailEnforcer::getUnsupportedMethods();
 
-    public function testIsUnsupportedMethod(): void
-    {
-        $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('save'));
-        $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('delete'));
-        $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('access'));
+    $this->assertIsArray($methods);
+    $this->assertArrayHasKey('save', $methods);
+    $this->assertArrayHasKey('delete', $methods);
+    $this->assertArrayHasKey('access', $methods);
+    $this->assertArrayHasKey('getTranslation', $methods);
+    $this->assertArrayHasKey('toUrl', $methods);
+  }
 
-        $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('id'));
-        $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('bundle'));
-        $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('nonexistent'));
-    }
+  /**
+   * Tests isUnsupportedMethod() identifies blocked vs allowed methods.
+   */
+  public function testIsUnsupportedMethod(): void {
+    $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('save'));
+    $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('delete'));
+    $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('access'));
 
-    public function testCreateUnsupportedMethodException(): void
-    {
-        $exception = GuardrailEnforcer::createUnsupportedMethodException('save');
+    $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('id'));
+    $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('bundle'));
+    $this->assertFalse(GuardrailEnforcer::isUnsupportedMethod('nonexistent'));
+  }
 
-        $this->assertInstanceOf(\LogicException::class, $exception);
-        $this->assertStringContainsString("Method 'save' is not supported", $exception->getMessage());
-        $this->assertStringContainsString('unit-test value object', $exception->getMessage());
-        $this->assertStringContainsString('Kernel test', $exception->getMessage());
-    }
+  /**
+   * Tests exception message format for unsupported methods.
+   */
+  public function testCreateUnsupportedMethodException(): void {
+    $exception = GuardrailEnforcer::createUnsupportedMethodException('save');
 
-    public function testCreateMissingResolverException(): void
-    {
-        $exception = GuardrailEnforcer::createMissingResolverException(
-            'getOwnerId',
-            'EntityOwnerInterface'
-        );
+    $this->assertInstanceOf(\LogicException::class, $exception);
+    $this->assertStringContainsString("Method 'save' is not supported", $exception->getMessage());
+    $this->assertStringContainsString('unit-test value object', $exception->getMessage());
+    $this->assertStringContainsString('Kernel test', $exception->getMessage());
+  }
 
-        $this->assertInstanceOf(\LogicException::class, $exception);
-        $this->assertStringContainsString("Method 'getOwnerId'", $exception->getMessage());
-        $this->assertStringContainsString("interface 'EntityOwnerInterface'", $exception->getMessage());
-        $this->assertStringContainsString('methodOverrides', $exception->getMessage());
-    }
+  /**
+   * Tests exception message for interface methods without resolver.
+   */
+  public function testCreateMissingResolverException(): void {
+    $exception = GuardrailEnforcer::createMissingResolverException(
+          'getOwnerId',
+          'EntityOwnerInterface'
+      );
 
-    public function testCreateMissingResolverExceptionGeneric(): void
-    {
-        $exception = GuardrailEnforcer::createMissingResolverExceptionGeneric('customMethod');
+    $this->assertInstanceOf(\LogicException::class, $exception);
+    $this->assertStringContainsString("Method 'getOwnerId'", $exception->getMessage());
+    $this->assertStringContainsString("interface 'EntityOwnerInterface'", $exception->getMessage());
+    $this->assertStringContainsString('methodOverrides', $exception->getMessage());
+  }
 
-        $this->assertInstanceOf(\LogicException::class, $exception);
-        $this->assertStringContainsString("Method 'customMethod'", $exception->getMessage());
-        $this->assertStringContainsString('methodOverrides', $exception->getMessage());
-    }
+  /**
+   * Tests generic exception message for methods without resolver.
+   */
+  public function testCreateMissingResolverExceptionGeneric(): void {
+    $exception = GuardrailEnforcer::createMissingResolverExceptionGeneric('customMethod');
+
+    $this->assertInstanceOf(\LogicException::class, $exception);
+    $this->assertStringContainsString("Method 'customMethod'", $exception->getMessage());
+    $this->assertStringContainsString('methodOverrides', $exception->getMessage());
+  }
+
 }

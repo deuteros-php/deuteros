@@ -11,137 +11,133 @@ namespace Deuteros\Common;
  * - Missing resolver (method from declared interface, no override provided)
  * - Explicitly unsupported (write operations, entity storage, services)
  */
-final class GuardrailEnforcer
-{
-    /**
-     * Methods that are explicitly unsupported (storage/service operations).
-     *
-     * @var array<string, string>
-     */
-    private const array UNSUPPORTED_METHODS = [
-        'save' => 'Saving entities',
-        'delete' => 'Deleting entities',
-        'access' => 'Access checking',
-        'getTranslation' => 'Translation handling',
-        'getTranslations' => 'Translation handling',
-        'hasTranslation' => 'Translation handling',
-        'addTranslation' => 'Translation handling',
-        'removeTranslation' => 'Translation handling',
-        'toUrl' => 'URL generation',
-        'toLink' => 'Link generation',
-        'referencedEntities' => 'Entity reference traversal',
-        'getTypedData' => 'Typed data access',
-        'getFieldDefinition' => 'Field definition access',
-        'getFieldDefinitions' => 'Field definition access',
-        'isNewRevision' => 'Revision handling',
-        'setNewRevision' => 'Revision handling',
-        'isDefaultRevision' => 'Revision handling',
-        'wasDefaultRevision' => 'Revision handling',
-        'isLatestRevision' => 'Revision handling',
-        'isLatestTranslationAffectedRevision' => 'Revision handling',
-        'preSave' => 'Entity lifecycle hooks',
-        'postSave' => 'Entity lifecycle hooks',
-        'preCreate' => 'Entity lifecycle hooks',
-        'postCreate' => 'Entity lifecycle hooks',
-        'preDelete' => 'Entity lifecycle hooks',
-        'postDelete' => 'Entity lifecycle hooks',
-        'postLoad' => 'Entity lifecycle hooks',
-        'createDuplicate' => 'Entity duplication',
-        'enforceIsNew' => 'Entity state enforcement',
-        'getOriginalId' => 'Original entity tracking',
-        'setOriginalId' => 'Original entity tracking',
-        'getCacheContexts' => 'Cache metadata',
-        'getCacheTags' => 'Cache metadata',
-        'getCacheMaxAge' => 'Cache metadata',
-    ];
+final class GuardrailEnforcer {
+  /**
+   * Methods that are explicitly unsupported (storage/service operations).
+   *
+   * @var array<string, string>
+   */
+  private const array UNSUPPORTED_METHODS = [
+    'save' => 'Saving entities',
+    'delete' => 'Deleting entities',
+    'access' => 'Access checking',
+    'getTranslation' => 'Translation handling',
+    'getTranslations' => 'Translation handling',
+    'hasTranslation' => 'Translation handling',
+    'addTranslation' => 'Translation handling',
+    'removeTranslation' => 'Translation handling',
+    'toUrl' => 'URL generation',
+    'toLink' => 'Link generation',
+    'referencedEntities' => 'Entity reference traversal',
+    'getTypedData' => 'Typed data access',
+    'getFieldDefinition' => 'Field definition access',
+    'getFieldDefinitions' => 'Field definition access',
+    'isNewRevision' => 'Revision handling',
+    'setNewRevision' => 'Revision handling',
+    'isDefaultRevision' => 'Revision handling',
+    'wasDefaultRevision' => 'Revision handling',
+    'isLatestRevision' => 'Revision handling',
+    'isLatestTranslationAffectedRevision' => 'Revision handling',
+    'preSave' => 'Entity lifecycle hooks',
+    'postSave' => 'Entity lifecycle hooks',
+    'preCreate' => 'Entity lifecycle hooks',
+    'postCreate' => 'Entity lifecycle hooks',
+    'preDelete' => 'Entity lifecycle hooks',
+    'postDelete' => 'Entity lifecycle hooks',
+    'postLoad' => 'Entity lifecycle hooks',
+    'createDuplicate' => 'Entity duplication',
+    'enforceIsNew' => 'Entity state enforcement',
+    'getOriginalId' => 'Original entity tracking',
+    'setOriginalId' => 'Original entity tracking',
+    'getCacheContexts' => 'Cache metadata',
+    'getCacheTags' => 'Cache metadata',
+    'getCacheMaxAge' => 'Cache metadata',
+  ];
 
-    /**
-     * Gets the unsupported methods map.
-     *
-     * @return array<string, string>
-     *   Methods keyed by name with description of why they're unsupported.
-     */
-    public static function getUnsupportedMethods(): array
-    {
-        return self::UNSUPPORTED_METHODS;
-    }
+  /**
+   * Gets the unsupported methods map.
+   *
+   * @return array<string, string>
+   *   Methods keyed by name with description of why they're unsupported.
+   */
+  public static function getUnsupportedMethods(): array {
+    return self::UNSUPPORTED_METHODS;
+  }
 
-    /**
-     * Checks if a method is explicitly unsupported.
-     *
-     * @param string $method
-     *   The method name.
-     *
-     * @return bool
-     *   TRUE if explicitly unsupported, FALSE otherwise.
-     */
-    public static function isUnsupportedMethod(string $method): bool
-    {
-        return isset(self::UNSUPPORTED_METHODS[$method]);
-    }
+  /**
+   * Checks if a method is explicitly unsupported.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return bool
+   *   TRUE if explicitly unsupported, FALSE otherwise.
+   */
+  public static function isUnsupportedMethod(string $method): bool {
+    return isset(self::UNSUPPORTED_METHODS[$method]);
+  }
 
-    /**
-     * Creates an exception for an explicitly unsupported method.
-     *
-     * @param string $method
-     *   The method name.
-     *
-     * @return \LogicException
-     *   The exception to throw.
-     */
-    public static function createUnsupportedMethodException(string $method): \LogicException
-    {
-        $reason = self::UNSUPPORTED_METHODS[$method] ?? 'This operation';
+  /**
+   * Creates an exception for an explicitly unsupported method.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return \LogicException
+   *   The exception to throw.
+   */
+  public static function createUnsupportedMethodException(string $method): \LogicException {
+    $reason = self::UNSUPPORTED_METHODS[$method] ?? 'This operation';
 
-        return new \LogicException(sprintf(
-            "Method '%s' is not supported. %s requires runtime services. "
-            . "This entity double is a unit-test value object. "
-            . "Use a Kernel test for this behavior.",
-            $method,
-            $reason
-        ));
-    }
+    return new \LogicException(sprintf(
+          "Method '%s' is not supported. %s requires runtime services. "
+          . "This entity double is a unit-test value object. "
+          . "Use a Kernel test for this behavior.",
+          $method,
+          $reason
+      ));
+  }
 
-    /**
-     * Creates an exception for a missing resolver.
-     *
-     * @param string $method
-     *   The method name.
-     * @param string $interface
-     *   The interface declaring the method.
-     *
-     * @return \LogicException
-     *   The exception to throw.
-     */
-    public static function createMissingResolverException(
-        string $method,
-        string $interface,
-    ): \LogicException {
-        return new \LogicException(sprintf(
-            "Method '%s' on interface '%s' requires a resolver in methodOverrides. "
-            . "Add '%s' => callable to your entity double definition.",
-            $method,
-            $interface,
-            $method
-        ));
-    }
+  /**
+   * Creates an exception for a missing resolver.
+   *
+   * @param string $method
+   *   The method name.
+   * @param string $interface
+   *   The interface declaring the method.
+   *
+   * @return \LogicException
+   *   The exception to throw.
+   */
+  public static function createMissingResolverException(
+    string $method,
+    string $interface,
+  ): \LogicException {
+    return new \LogicException(sprintf(
+          "Method '%s' on interface '%s' requires a resolver in methodOverrides. "
+          . "Add '%s' => callable to your entity double definition.",
+          $method,
+          $interface,
+          $method
+      ));
+  }
 
-    /**
-     * Creates an exception for a missing resolver without known interface.
-     *
-     * @param string $method
-     *   The method name.
-     *
-     * @return \LogicException
-     *   The exception to throw.
-     */
-    public static function createMissingResolverExceptionGeneric(string $method): \LogicException
-    {
-        return new \LogicException(sprintf(
-            "Method '%s' requires a resolver in methodOverrides. "
-            . "Add '%s' => callable to your entity double definition.",
-            $method,
-            $method
-        ));
-    }
+  /**
+   * Creates an exception for a missing resolver without known interface.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return \LogicException
+   *   The exception to throw.
+   */
+  public static function createMissingResolverExceptionGeneric(string $method): \LogicException {
+    return new \LogicException(sprintf(
+          "Method '%s' requires a resolver in methodOverrides. "
+          . "Add '%s' => callable to your entity double definition.",
+          $method,
+          $method
+      ));
+  }
+
 }

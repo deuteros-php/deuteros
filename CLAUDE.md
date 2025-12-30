@@ -23,6 +23,23 @@ composer test                 # Run all tests (alias for phpunit)
 ./vendor/bin/phpunit --filter TestName # Run specific test by name
 ```
 
+## Coding Standards
+
+The codebase follows Drupal coding standards (Drupal + DrupalPractice sniffs).
+
+```bash
+composer phpcs                # Check coding standards
+composer phpcbf               # Auto-fix coding standard violations
+```
+
+Key requirements enforced by phpcs:
+- 2-space indentation
+- Opening braces on same line as class/function declarations
+- Line length max 80 characters
+- `@return` descriptions required in docblocks
+- Parentheses required for anonymous class constructors (`new class ()`)
+- No empty doc comments
+
 ## Architecture
 
 ### Layer Structure

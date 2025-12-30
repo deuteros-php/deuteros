@@ -32,12 +32,10 @@ trait EntityDefinitionNormalizerTrait {
     array $context = [],
     bool $mutable = FALSE,
   ): EntityDefinition {
+
     // Merge context into definition.
     if ($context !== []) {
-      $definition['context'] = array_merge(
-            $definition['context'] ?? [],
-            $context
-        );
+      $definition['context'] = array_merge($definition['context'] ?? [], $context);
     }
 
     // Set mutability.

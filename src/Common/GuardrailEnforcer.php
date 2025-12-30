@@ -12,6 +12,7 @@ namespace Deuteros\Common;
  * - Explicitly unsupported (write operations, entity storage, services)
  */
 final class GuardrailEnforcer {
+
   /**
    * Methods that are explicitly unsupported (storage/service operations).
    *
@@ -90,12 +91,12 @@ final class GuardrailEnforcer {
     $reason = self::UNSUPPORTED_METHODS[$method] ?? 'This operation';
 
     return new \LogicException(sprintf(
-          "Method '%s' is not supported. %s requires runtime services. "
-          . "This entity double is a unit-test value object. "
-          . "Use a Kernel test for this behavior.",
-          $method,
-          $reason
-      ));
+     "Method '%s' is not supported. %s requires runtime services. "
+      . "This entity double is a unit-test value object. "
+      . "Use a Kernel test for this behavior.",
+      $method,
+      $reason
+    ));
   }
 
   /**
@@ -109,17 +110,14 @@ final class GuardrailEnforcer {
    * @return \LogicException
    *   The exception to throw.
    */
-  public static function createMissingResolverException(
-    string $method,
-    string $interface,
-  ): \LogicException {
+  public static function createMissingResolverException(string $method, string $interface): \LogicException {
     return new \LogicException(sprintf(
-          "Method '%s' on interface '%s' requires a resolver in methodOverrides. "
-          . "Add '%s' => callable to your entity double definition.",
-          $method,
-          $interface,
-          $method
-      ));
+      "Method '%s' on interface '%s' requires a resolver in methodOverrides. "
+      . "Add '%s' => callable to your entity double definition.",
+      $method,
+      $interface,
+      $method
+    ));
   }
 
   /**
@@ -133,11 +131,11 @@ final class GuardrailEnforcer {
    */
   public static function createMissingResolverExceptionGeneric(string $method): \LogicException {
     return new \LogicException(sprintf(
-          "Method '%s' requires a resolver in methodOverrides. "
-          . "Add '%s' => callable to your entity double definition.",
-          $method,
-          $method
-      ));
+      "Method '%s' requires a resolver in methodOverrides. "
+      . "Add '%s' => callable to your entity double definition.",
+      $method,
+      $method
+    ));
   }
 
 }

@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 class MutableStateContainerTest extends TestCase {
 
   /**
-   * Tests setFieldValue() and hasFieldValue() work correctly.
+   * Tests ::setFieldValue() and ::hasFieldValue() work correctly.
    */
   public function testSetAndCheckFieldValue(): void {
     $container = new MutableStateContainer();
@@ -30,7 +30,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests getFieldValue() returns the stored value.
+   * Tests ::getFieldValue() returns the stored value.
    */
   public function testGetFieldValue(): void {
     $container = new MutableStateContainer();
@@ -40,7 +40,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests getFieldValue() throws for fields that were never set.
+   * Tests ::getFieldValue() throws for fields that were never set.
    */
   public function testGetFieldValueThrowsForUnsetField(): void {
     $container = new MutableStateContainer();
@@ -52,7 +52,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests that setFieldValue() overwrites previous values.
+   * Tests that ::setFieldValue() overwrites previous values.
    */
   public function testOverwriteFieldValue(): void {
     $container = new MutableStateContainer();
@@ -63,7 +63,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests reset() clears all stored values.
+   * Tests reset::() clears all stored values.
    */
   public function testReset(): void {
     $container = new MutableStateContainer();
@@ -77,7 +77,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests getAll() returns all stored field values.
+   * Tests ::getAll() returns all stored field values.
    */
   public function testGetAll(): void {
     $container = new MutableStateContainer();
@@ -91,7 +91,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests getAll() returns empty array when no values stored.
+   * Tests ::getAll() returns empty array when no values stored.
    */
   public function testGetAllEmpty(): void {
     $container = new MutableStateContainer();

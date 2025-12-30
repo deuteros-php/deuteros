@@ -7,9 +7,9 @@ namespace Deuteros\Common;
 /**
  * Builds callable resolvers for entity double methods.
  *
- * Produces framework-agnostic callable resolvers for core entity methods.
- * These resolvers are then wired to PHPUnit mocks or Prophecy doubles
- * by the adapter traits.
+ * Produces framework-agnostic callable resolvers for core entity methods. These
+ * resolvers are then wired to PHPUnit mocks or Prophecy doubles by the adapter
+ * traits.
  *
  * Method resolution order:
  * 1. methodOverrides from EntityDefinition.
@@ -48,8 +48,9 @@ final class EntityDoubleBuilder {
    * Sets the factory for creating field item list doubles.
    *
    * @param callable $factory
-   *   A callable that accepts (string $fieldName, FieldDefinition $fieldDef)
-   *   and returns a field item list double.
+   *   A callable that accepts
+   *   (string $fieldName, FieldDefinition $fieldDefinition) and returns a field
+   *   item list double.
    */
   public function setFieldListFactory(callable $factory): void {
     $this->fieldListFactory = $factory;
@@ -83,9 +84,9 @@ final class EntityDoubleBuilder {
    */
   private function buildIdResolver(): callable {
     return fn(array $context): mixed => $this->resolveValue(
-            $this->definition->id,
-            $context
-        );
+      $this->definition->id,
+      $context
+    );
   }
 
   /**
@@ -96,9 +97,9 @@ final class EntityDoubleBuilder {
    */
   private function buildUuidResolver(): callable {
     return fn(array $context): mixed => $this->resolveValue(
-            $this->definition->uuid,
-            $context
-        );
+      $this->definition->uuid,
+      $context
+    );
   }
 
   /**
@@ -109,9 +110,9 @@ final class EntityDoubleBuilder {
    */
   private function buildLabelResolver(): callable {
     return fn(array $context): mixed => $this->resolveValue(
-            $this->definition->label,
-            $context
-        );
+      $this->definition->label,
+      $context
+    );
   }
 
   /**
@@ -141,8 +142,7 @@ final class EntityDoubleBuilder {
    *   The resolver callable.
    */
   private function buildHasFieldResolver(): callable {
-    return fn(array $context, string $fieldName): bool =>
-            $this->definition->hasField($fieldName);
+    return fn(array $context, string $fieldName): bool => $this->definition->hasField($fieldName);
   }
 
   /**
@@ -163,9 +163,7 @@ final class EntityDoubleBuilder {
       $fieldDefinition = $this->getFieldDefinitionForAccess($fieldName);
 
       if ($this->fieldListFactory === NULL) {
-        throw new \LogicException(
-              "Field list factory not set. Cannot create field list double for '$fieldName'."
-          );
+        throw new \LogicException("Field list factory not set. Cannot create field list double for '$fieldName'.");
       }
 
       // Create and cache the field list double.
@@ -186,8 +184,7 @@ final class EntityDoubleBuilder {
    */
   private function buildMagicGetResolver(): callable {
     $getResolver = $this->buildGetResolver();
-    return fn(array $context, string $fieldName): object =>
-            $getResolver($context, $fieldName);
+    return fn(array $context, string $fieldName): object => $getResolver($context, $fieldName);
   }
 
   /**
@@ -206,9 +203,7 @@ final class EntityDoubleBuilder {
       }
 
       if (!$this->definition->hasField($fieldName)) {
-        throw new \InvalidArgumentException(
-              "Field '$fieldName' is not defined on this entity double."
-          );
+        throw new \InvalidArgumentException("Field '$fieldName' is not defined on this entity double.");
       }
 
       // Store the new value in mutable state.
@@ -244,9 +239,7 @@ final class EntityDoubleBuilder {
 
     $fieldDefinition = $this->definition->getField($fieldName);
     if ($fieldDefinition === NULL) {
-      throw new \InvalidArgumentException(
-            "Field '$fieldName' is not defined on this entity double."
-        );
+      throw new \InvalidArgumentException("Field '$fieldName' is not defined on this entity double.");
     }
 
     return $fieldDefinition;
@@ -268,7 +261,7 @@ final class EntityDoubleBuilder {
   private function resolveValue(mixed $value, array $context, mixed ...$args): mixed {
     return match (TRUE) {
       is_callable($value) => $value($context, ...$args),
-            default => $value,
+      default => $value,
     };
   }
 

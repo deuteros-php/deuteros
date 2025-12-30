@@ -198,9 +198,9 @@ final class FieldItemListDoubleBuilder {
     return function (array $context, mixed $values, bool $notify = TRUE): object {
       if (!$this->mutable) {
         throw new \LogicException(
-              "Cannot modify field '{$this->fieldName}' on immutable entity double. "
-              . "Use createMutableEntityDouble() if you need to test mutations."
-          );
+          "Cannot modify field '{$this->fieldName}' on immutable entity double. "
+          . "Use createMutableEntityDouble() if you need to test mutations."
+        );
       }
 
       // Update the mutable state.
@@ -237,9 +237,7 @@ final class FieldItemListDoubleBuilder {
         $setValueResolver($context, $value, TRUE);
       }
       else {
-        throw new \LogicException(
-              "Setting property '$property' on field item list is not supported."
-                );
+        throw new \LogicException("Setting property '$property' on field item list is not supported.");
       }
     };
   }
@@ -285,8 +283,8 @@ final class FieldItemListDoubleBuilder {
   private function normalizeToArray(mixed $value): array {
     return match (TRUE) {
       $value === NULL => [],
-            is_array($value) && $this->isIndexedArray($value) => array_values($value),
-            default => [$value],
+      is_array($value) && $this->isIndexedArray($value) => array_values($value),
+      default => [$value],
     };
   }
 
@@ -334,9 +332,7 @@ final class FieldItemListDoubleBuilder {
     }
 
     if ($this->fieldItemFactory === NULL) {
-      throw new \LogicException(
-            "Field item factory not set. Cannot create field item double."
-        );
+      throw new \LogicException("Field item factory not set. Cannot create field item double.");
     }
 
     $fieldItem = ($this->fieldItemFactory)($delta, $value, $context);

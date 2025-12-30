@@ -28,6 +28,7 @@ use Prophecy\Prophecy\MethodProphecy;
  */
 #[Group('deuteros')]
 class BehavioralParityTest extends TestCase {
+
   use ProphecyTrait;
 
   /**
@@ -72,21 +73,21 @@ class BehavioralParityTest extends TestCase {
 
     // Scalar field.
     $this->assertSame(
-          $mock->get('field_text')->value,
-          $prophecy->get('field_text')->value
-      );
+      $mock->get('field_text')->value,
+      $prophecy->get('field_text')->value
+    );
 
     // Number field.
     $this->assertSame(
-          $mock->get('field_number')->value,
-          $prophecy->get('field_number')->value
-      );
+      $mock->get('field_number')->value,
+      $prophecy->get('field_number')->value
+    );
 
     // Reference field.
     $this->assertSame(
-          $mock->get('field_ref')->target_id,
-          $prophecy->get('field_ref')->target_id
-      );
+      $mock->get('field_ref')->target_id,
+      $prophecy->get('field_ref')->target_id
+    );
   }
 
   /**
@@ -109,9 +110,9 @@ class BehavioralParityTest extends TestCase {
     $this->assertSame(42, $mock->get('field_dynamic')->value);
     $this->assertSame(42, $prophecy->get('field_dynamic')->value);
     $this->assertSame(
-          $mock->get('field_dynamic')->value,
-          $prophecy->get('field_dynamic')->value
-      );
+      $mock->get('field_dynamic')->value,
+      $prophecy->get('field_dynamic')->value
+    );
   }
 
   /**
@@ -123,9 +124,9 @@ class BehavioralParityTest extends TestCase {
       'bundle' => 'article',
       'fields' => [
         'field_tags' => [
-                  ['target_id' => 1],
-                  ['target_id' => 2],
-                  ['target_id' => 3],
+          ['target_id' => 1],
+          ['target_id' => 2],
+          ['target_id' => 3],
         ],
       ],
       'interfaces' => [FieldableEntityInterface::class],
@@ -136,16 +137,16 @@ class BehavioralParityTest extends TestCase {
 
     // First item.
     $this->assertSame(
-          $mock->get('field_tags')->first()->target_id,
-          $prophecy->get('field_tags')->first()->target_id
-      );
+      $mock->get('field_tags')->first()->target_id,
+      $prophecy->get('field_tags')->first()->target_id
+    );
 
     // Delta access.
     for ($i = 0; $i < 3; $i++) {
       $this->assertSame(
-            $mock->get('field_tags')->get($i)->target_id,
-            $prophecy->get('field_tags')->get($i)->target_id
-        );
+        $mock->get('field_tags')->get($i)->target_id,
+        $prophecy->get('field_tags')->get($i)->target_id
+      );
     }
 
     // Out of range.
@@ -175,9 +176,9 @@ class BehavioralParityTest extends TestCase {
     $this->assertSame($timestamp, $mock->getChangedTime());
     $this->assertSame($timestamp, $prophecy->getChangedTime());
     $this->assertSame(
-          $mock->getChangedTime(),
-          $prophecy->getChangedTime()
-      );
+      $mock->getChangedTime(),
+      $prophecy->getChangedTime()
+    );
   }
 
   /**
@@ -186,49 +187,50 @@ class BehavioralParityTest extends TestCase {
    * This is a simplified version of the trait method for testing purposes.
    */
   private function createMockDouble(array $definition, array $context = []): EntityInterface {
-    $entityDef = EntityDefinition::fromArray(array_merge(
-          $definition,
-          ['context' => array_merge($definition['context'] ?? [], $context)]
-      ));
+    $entityDefinition = EntityDefinition::fromArray(array_merge(
+      $definition,
+      ['context' => array_merge($definition['context'] ?? [], $context)]
+    ));
 
-    $builder = new EntityDoubleBuilder($entityDef, NULL);
+    $builder = new EntityDoubleBuilder($entityDefinition, NULL);
     $builder->setFieldListFactory(
-          fn(string $fieldName, FieldDefinition $fieldDef, array $ctx) =>
-                $this->createMockFieldItemList($fieldName, $fieldDef, $entityDef, $ctx)
-      );
+      fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
+        $this->createMockFieldItemList($fieldName, $fieldDefinition, $context)
+    );
 
-    $interfaces = $this->resolveInterfacesForMock($entityDef);
+    $interfaces = $this->resolveInterfacesForMock($entityDefinition);
 
     $mock = count($interfaces) === 1
-            ? $this->createMock($interfaces[0])
-            : $this->createMockForIntersectionOfInterfaces($interfaces);
+      ? $this->createMock($interfaces[0])
+      : $this->createMockForIntersectionOfInterfaces($interfaces);
     $resolvers = $builder->getResolvers();
 
-    $mock->method('id')->willReturnCallback(fn() => $resolvers['id']($entityDef->context));
-    $mock->method('uuid')->willReturnCallback(fn() => $resolvers['uuid']($entityDef->context));
-    $mock->method('label')->willReturnCallback(fn() => $resolvers['label']($entityDef->context));
-    $mock->method('bundle')->willReturnCallback(fn() => $resolvers['bundle']($entityDef->context));
-    $mock->method('getEntityTypeId')->willReturnCallback(fn() => $resolvers['getEntityTypeId']($entityDef->context));
+    $mock->method('id')->willReturnCallback(fn() => $resolvers['id']($entityDefinition->context));
+    $mock->method('uuid')->willReturnCallback(fn() => $resolvers['uuid']($entityDefinition->context));
+    $mock->method('label')->willReturnCallback(fn() => $resolvers['label']($entityDefinition->context));
+    $mock->method('bundle')->willReturnCallback(fn() => $resolvers['bundle']($entityDefinition->context));
+    $mock->method('getEntityTypeId')->willReturnCallback(fn() => $resolvers['getEntityTypeId']($entityDefinition->context));
 
-    if ($entityDef->hasInterface(FieldableEntityInterface::class)) {
+    if ($entityDefinition->hasInterface(FieldableEntityInterface::class)) {
       $mock->method('hasField')->willReturnCallback(
-            fn(string $fieldName) => $resolvers['hasField']($entityDef->context, $fieldName)
-        );
+        fn(string $fieldName) => $resolvers['hasField']($entityDefinition->context, $fieldName)
+      );
       $mock->method('get')->willReturnCallback(
-            fn(string $fieldName) => $resolvers['get']($entityDef->context, $fieldName)
-        );
+        fn(string $fieldName) => $resolvers['get']($entityDefinition->context, $fieldName)
+      );
       // Note: __get is not declared in FieldableEntityInterface, so magic
       // property access ($entity->field_name) is not supported on interface
       // mocks.
     }
 
-    foreach ($entityDef->methodOverrides as $method => $override) {
+    foreach ($entityDefinition->methodOverrides as $method => $override) {
       $resolver = $builder->getMethodOverrideResolver($method);
       $mock->method($method)->willReturnCallback(
-            fn(mixed ...$args) => $resolver($entityDef->context, ...$args)
-        );
+        fn(mixed ...$args) => $resolver($entityDefinition->context, ...$args)
+      );
     }
 
+    assert($mock instanceof EntityInterface);
     return $mock;
   }
 
@@ -238,19 +240,19 @@ class BehavioralParityTest extends TestCase {
    * This is a simplified version of the trait method for testing purposes.
    */
   private function createProphecyDouble(array $definition, array $context = []): EntityInterface {
-    $entityDef = EntityDefinition::fromArray(array_merge(
-          $definition,
-          ['context' => array_merge($definition['context'] ?? [], $context)]
-      ));
+    $entityDefinition = EntityDefinition::fromArray(array_merge(
+      $definition,
+      ['context' => array_merge($definition['context'] ?? [], $context)]
+    ));
 
-    $builder = new EntityDoubleBuilder($entityDef, NULL);
+    $builder = new EntityDoubleBuilder($entityDefinition, NULL);
     $builder->setFieldListFactory(
-          fn(string $fieldName, FieldDefinition $fieldDef, array $ctx) =>
-                $this->createProphecyFieldItemList($fieldName, $fieldDef, $entityDef, $ctx)
-      );
+      fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
+        $this->createProphecyFieldItemList($fieldName, $fieldDefinition, $context)
+    );
 
     $interfaces = [EntityInterface::class];
-    foreach ($entityDef->interfaces as $interface) {
+    foreach ($entityDefinition->interfaces as $interface) {
       if (!in_array($interface, $interfaces, TRUE)) {
         $interfaces[] = $interface;
       }
@@ -264,48 +266,45 @@ class BehavioralParityTest extends TestCase {
 
     $resolvers = $builder->getResolvers();
 
-    $prophecy->id()->will(fn() => $resolvers['id']($entityDef->context));
-    $prophecy->uuid()->will(fn() => $resolvers['uuid']($entityDef->context));
-    $prophecy->label()->will(fn() => $resolvers['label']($entityDef->context));
-    $prophecy->bundle()->will(fn() => $resolvers['bundle']($entityDef->context));
-    $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($entityDef->context));
+    $prophecy->id()->will(fn() => $resolvers['id']($entityDefinition->context));
+    $prophecy->uuid()->will(fn() => $resolvers['uuid']($entityDefinition->context));
+    $prophecy->label()->will(fn() => $resolvers['label']($entityDefinition->context));
+    $prophecy->bundle()->will(fn() => $resolvers['bundle']($entityDefinition->context));
+    $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($entityDefinition->context));
 
-    if ($entityDef->hasInterface(FieldableEntityInterface::class)) {
+    if ($entityDefinition->hasInterface(FieldableEntityInterface::class)) {
       $prophecy->hasField(Argument::type('string'))->will(
-            fn(array $args) => $resolvers['hasField']($entityDef->context, $args[0])
-        );
+        fn(array $args) => $resolvers['hasField']($entityDefinition->context, $args[0])
+      );
       $prophecy->get(Argument::type('string'))->will(
-            fn(array $args) => $resolvers['get']($entityDef->context, $args[0])
-        );
+        fn(array $args) => $resolvers['get']($entityDefinition->context, $args[0])
+      );
       // Note: __get is not declared in FieldableEntityInterface, so magic
       // property access ($entity->field_name) is not supported on interface
       // prophecies.
     }
 
-    foreach ($entityDef->methodOverrides as $method => $override) {
+    foreach ($entityDefinition->methodOverrides as $method => $override) {
       $resolver = $builder->getMethodOverrideResolver($method);
       $prophecy->$method(Argument::cetera())->will(
-            fn(array $args) => $resolver($entityDef->context, ...$args)
-        );
+        fn(array $args) => $resolver($entityDefinition->context, ...$args)
+      );
     }
 
-    return $prophecy->reveal();
+    $entity = $prophecy->reveal();
+    assert($entity instanceof EntityInterface);
+    return $entity;
   }
 
   /**
    * Creates a mock field item list.
    */
-  private function createMockFieldItemList(
-    string $fieldName,
-    FieldDefinition $fieldDef,
-    EntityDefinition $entityDef,
-    array $context,
-  ): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDef, $fieldName, FALSE);
+  private function createMockFieldItemList(string $fieldName, FieldDefinition $fieldDefinition, array $context): FieldItemListInterface {
+    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, FALSE);
     $builder->setFieldItemFactory(
-          fn(int $delta, mixed $value, array $ctx) =>
-                $this->createMockFieldItem($delta, $value, $fieldName, $ctx)
-      );
+      fn(int $delta, mixed $value, array $context) =>
+        $this->createMockFieldItem($delta, $value, $fieldName, $context)
+    );
 
     $mock = $this->createMock(FieldItemListInterface::class);
     $resolvers = $builder->getResolvers();
@@ -322,17 +321,12 @@ class BehavioralParityTest extends TestCase {
   /**
    * Creates a prophecy field item list.
    */
-  private function createProphecyFieldItemList(
-    string $fieldName,
-    FieldDefinition $fieldDef,
-    EntityDefinition $entityDef,
-    array $context,
-  ): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDef, $fieldName, FALSE);
+  private function createProphecyFieldItemList(string $fieldName, FieldDefinition $fieldDefinition, array $context): FieldItemListInterface {
+    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, FALSE);
     $builder->setFieldItemFactory(
-          fn(int $delta, mixed $value, array $ctx) =>
-                $this->createProphecyFieldItem($delta, $value, $fieldName, $ctx)
-      );
+      fn(int $delta, mixed $value, array $context) =>
+        $this->createProphecyFieldItem($delta, $value, $fieldName, $context)
+    );
 
     $prophecy = $this->prophesize(FieldItemListInterface::class);
     $resolvers = $builder->getResolvers();
@@ -354,12 +348,7 @@ class BehavioralParityTest extends TestCase {
   /**
    * Creates a mock field item.
    */
-  private function createMockFieldItem(
-    int $delta,
-    mixed $value,
-    string $fieldName,
-    array $context,
-  ): FieldItemInterface {
+  private function createMockFieldItem(int $delta, mixed $value, string $fieldName, array $context): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, FALSE);
     $mock = $this->createMock(FieldItemInterface::class);
     $resolvers = $builder->getResolvers();
@@ -374,12 +363,7 @@ class BehavioralParityTest extends TestCase {
   /**
    * Creates a prophecy field item.
    */
-  private function createProphecyFieldItem(
-    int $delta,
-    mixed $value,
-    string $fieldName,
-    array $context,
-  ): FieldItemInterface {
+  private function createProphecyFieldItem(int $delta, mixed $value, string $fieldName, array $context): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, FALSE);
     $prophecy = $this->prophesize(FieldItemInterface::class);
     $resolvers = $builder->getResolvers();
@@ -400,8 +384,8 @@ class BehavioralParityTest extends TestCase {
    * Resolves interfaces for mocking, handling deduplication.
    *
    * PHPUnit cannot mock intersection of interfaces that share a common parent
-   * (e.g., FieldableEntityInterface and EntityChangedInterface both extend
-   * EntityInterface). This method detects and resolves such conflicts.
+   * (e.g., "FieldableEntityInterface" and "EntityChangedInterface" both extend
+   * "EntityInterface"). This method detects and resolves such conflicts.
    *
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
@@ -444,10 +428,10 @@ class BehavioralParityTest extends TestCase {
       if (count($entityChildren) > 1) {
         // Prefer FieldableEntityInterface if present.
         $preferred = in_array(FieldableEntityInterface::class, $entityChildren, TRUE)
-                    ? FieldableEntityInterface::class
-                    : $entityChildren[0];
+          ? FieldableEntityInterface::class
+          : $entityChildren[0];
         $filtered = array_filter($filtered, function ($interface) use ($entityChildren, $preferred) {
-            return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
+          return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
         });
         $filtered = array_values($filtered);
       }

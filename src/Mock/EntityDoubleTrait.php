@@ -42,8 +42,8 @@ use PHPUnit\Framework\MockObject\MockObject;
  * - toUrl() - requires routing services
  * - Entity reference traversal
  *
- * This is a unit-test value object only. Use Kernel tests for behaviors
- * that require runtime services.
+ * This is a unit-test value object only. Use Kernel tests for behaviors that
+ * require runtime services.
  *
  * @example Static values
  * ```php
@@ -71,10 +71,9 @@ use PHPUnit\Framework\MockObject\MockObject;
  * ], ['date' => '2024-01-01']);
  * $this->assertSame('2024-01-01', $entity->field_date->value);
  * ```
- *
- * @mixin TestCase
  */
 trait EntityDoubleTrait {
+
   use EntityDefinitionNormalizerTrait;
 
   /**
@@ -90,13 +89,8 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The entity double.
    */
-  protected function createEntityDouble(
-    array $definition,
-    array $context = [],
-  ): EntityInterface {
-    return $this->buildEntityDouble(
-          $this->normalizeDefinition($definition, $context, FALSE)
-      );
+  protected function createEntityDouble(array $definition, array $context = []): EntityInterface {
+    return $this->buildEntityDouble($this->normalizeDefinition($definition, $context));
   }
 
   /**
@@ -112,13 +106,8 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The mutable entity double.
    */
-  protected function createMutableEntityDouble(
-    array $definition,
-    array $context = [],
-  ): EntityInterface {
-    return $this->buildEntityDouble(
-          $this->normalizeDefinition($definition, $context, TRUE)
-      );
+  protected function createMutableEntityDouble(array $definition, array $context = []): EntityInterface {
+    return $this->buildEntityDouble($this->normalizeDefinition($definition, $context, TRUE));
   }
 
   /**
@@ -142,9 +131,9 @@ trait EntityDoubleTrait {
 
     // Set up field list factory.
     $builder->setFieldListFactory(
-          fn(string $fieldName, FieldDefinition $fieldDef, array $context) =>
-                $this->createFieldItemListDouble($fieldName, $fieldDef, $definition, $mutableState, $context)
-      );
+      fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
+        $this->createFieldItemListDouble($fieldName, $fieldDefinition, $definition, $mutableState, $context)
+    );
 
     // Create the mock using mock builder for multiple interfaces.
     /** @var \Drupal\Core\Entity\EntityInterface&MockObject $mock */
@@ -171,7 +160,6 @@ trait EntityDoubleTrait {
     }
 
     // PHPUnit 10.1+ supports createMockForIntersectionOfInterfaces.
-    // @phpstan-ignore-next-line
     return $this->createMockForIntersectionOfInterfaces($interfaces);
   }
 
@@ -179,11 +167,13 @@ trait EntityDoubleTrait {
    * Resolves the interfaces to mock.
    *
    * Deduplicates interfaces to avoid PHPUnit errors when interfaces
-   * extend each other (e.g., FieldableEntityInterface extends EntityInterface).
+   * extend each other (e.g., "FieldableEntityInterface" extending
+   * "EntityInterface").
    *
-   * When multiple interfaces share a common parent (like EntityInterface),
-   * PHPUnit's createMockForIntersectionOfInterfaces fails. In such cases,
-   * we prioritize FieldableEntityInterface over other EntityInterface children.
+   * When multiple interfaces share a common parent (like "EntityInterface"),
+   * PHPUnit's createMockForIntersectionOfInterfaces fails. In such cases, we
+   * prioritize "FieldableEntityInterface" over other "EntityInterface"
+   * children.
    *
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
@@ -217,10 +207,10 @@ trait EntityDoubleTrait {
       }
     }
 
-    // PHPUnit can't mock intersection of interfaces that share a common
-    // parent interface (they'd have duplicate method signatures).
-    // If we have multiple EntityInterface children, keep only
-    // FieldableEntityInterface if present, as it's the most feature-rich.
+    // PHPUnit can't mock intersection of interfaces that share a common parent
+    // interface (they'd have duplicate method signatures).
+    // If we have multiple "EntityInterface" children, keep only
+    // "FieldableEntityInterface" if present, as it's the most feature-rich.
     if (count($filtered) > 1) {
       $entityChildren = [];
       foreach ($filtered as $interface) {
@@ -229,22 +219,22 @@ trait EntityDoubleTrait {
         }
       }
 
-      // If multiple interfaces extend EntityInterface, we can only mock one.
+      // If multiple interfaces extend "EntityInterface", we can only mock one.
       if (count($entityChildren) > 1) {
-        // Prefer FieldableEntityInterface as it's the most comprehensive.
+        // Prefer "FieldableEntityInterface" as it's the most comprehensive.
         $preferred = in_array(FieldableEntityInterface::class, $entityChildren, TRUE)
-                    ? FieldableEntityInterface::class
-                    : $entityChildren[0];
+          ? FieldableEntityInterface::class
+          : $entityChildren[0];
 
         // Keep only the preferred interface from EntityInterface children.
         $filtered = array_filter($filtered, function ($interface) use ($entityChildren, $preferred) {
-            return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
+          return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
         });
         $filtered = array_values($filtered);
       }
     }
 
-    // If EntityInterface is not covered by any declared interface, add it.
+    // If "EntityInterface" is not covered by any declared interface, add it.
     $coversEntity = FALSE;
     foreach ($filtered as $interface) {
       if (is_a($interface, EntityInterface::class, TRUE)) {
@@ -269,11 +259,7 @@ trait EntityDoubleTrait {
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
    */
-  private function wireEntityResolvers(
-    MockObject $mock,
-    EntityDoubleBuilder $builder,
-    EntityDefinition $definition,
-  ): void {
+  private function wireEntityResolvers(MockObject $mock, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
     $resolvers = $builder->getResolvers();
     $context = $definition->context;
 
@@ -281,9 +267,7 @@ trait EntityDoubleTrait {
     $wireMethod = function (string $method, callable $defaultResolver) use ($mock, $builder, $definition, $context) {
       if ($definition->hasMethodOverride($method)) {
         $resolver = $builder->getMethodOverrideResolver($method);
-        $mock->method($method)->willReturnCallback(
-              fn(mixed ...$args) => $resolver($context, ...$args)
-          );
+        $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
       }
       else {
         $mock->method($method)->willReturnCallback($defaultResolver);
@@ -301,35 +285,34 @@ trait EntityDoubleTrait {
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
       $wireMethod('hasField', fn(string $fieldName) => $resolvers['hasField']($context, $fieldName));
       $wireMethod('get', fn(string $fieldName) => $resolvers['get']($context, $fieldName));
-      // Note: __get is not declared in FieldableEntityInterface, so we can't
+
+      // Note: __get is not declared in FieldableEntityInterface, so we cannot
       // mock it on interface mocks. Use get() method instead.
       // For property access syntax ($entity->field_name), use Prophecy adapter.
       if (!$definition->hasMethodOverride('set')) {
         if ($definition->mutable) {
           $self = $mock;
           $mock->method('set')->willReturnCallback(
-                function (string $fieldName, mixed $value, bool $notify = TRUE) use ($resolvers, $context, $self) {
-                    $resolvers['set']($context, $fieldName, $value, $notify);
-                    return $self;
-                }
-            );
+            function (string $fieldName, mixed $value, bool $notify = TRUE) use ($resolvers, $context, $self) {
+              $resolvers['set']($context, $fieldName, $value, $notify);
+              return $self;
+            }
+          );
         }
         else {
           $mock->method('set')->willReturnCallback(
-                  function (string $fieldName) {
-                      throw new \LogicException(
-                          "Cannot modify field '$fieldName' on immutable entity double. "
-                          . "Use createMutableEntityDouble() if you need to test mutations."
-                      );
-                  }
-                      );
+            function (string $fieldName) {
+              throw new \LogicException(
+                "Cannot modify field '$fieldName' on immutable entity double. "
+                 . "Use createMutableEntityDouble() if you need to test mutations."
+              );
+            }
+          );
         }
       }
       else {
         $resolver = $builder->getMethodOverrideResolver('set');
-        $mock->method('set')->willReturnCallback(
-                fn(mixed ...$args) => $resolver($context, ...$args)
-                  );
+        $mock->method('set')->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
       }
     }
 
@@ -341,9 +324,7 @@ trait EntityDoubleTrait {
         continue;
       }
       $resolver = $builder->getMethodOverrideResolver($method);
-      $mock->method($method)->willReturnCallback(
-            fn(mixed ...$args) => $resolver($context, ...$args)
-        );
+      $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
     }
 
     // Wire guardrails for unsupported methods.
@@ -378,8 +359,8 @@ trait EntityDoubleTrait {
 
       if ($methodExists) {
         $mock->method($method)->willReturnCallback(
-              fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
-          );
+          fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
+        );
       }
     }
   }
@@ -389,9 +370,9 @@ trait EntityDoubleTrait {
    *
    * @param string $fieldName
    *   The field name.
-   * @param \Deuteros\Common\FieldDefinition $fieldDef
+   * @param \Deuteros\Common\FieldDefinition $fieldDefinition
    *   The field definition.
-   * @param \Deuteros\Common\EntityDefinition $entityDef
+   * @param \Deuteros\Common\EntityDefinition $entityDefinition
    *   The entity definition.
    * @param \Deuteros\Common\MutableStateContainer|null $mutableState
    *   The mutable state container.
@@ -401,26 +382,20 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Field\FieldItemListInterface
    *   The field item list double.
    */
-  private function createFieldItemListDouble(
-    string $fieldName,
-    FieldDefinition $fieldDef,
-    EntityDefinition $entityDef,
-    ?MutableStateContainer $mutableState,
-    array $context,
-  ): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDef, $fieldName, $entityDef->mutable);
+  private function createFieldItemListDouble(string $fieldName, FieldDefinition $fieldDefinition, EntityDefinition $entityDefinition, ?MutableStateContainer $mutableState, array $context): FieldItemListInterface {
+    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, $entityDefinition->mutable);
 
     // Set up field item factory.
     $builder->setFieldItemFactory(
-          fn(int $delta, mixed $value, array $ctx) =>
-                $this->createFieldItemDouble($delta, $value, $fieldName, $entityDef->mutable, $ctx)
-      );
+      fn(int $delta, mixed $value, array $context) =>
+        $this->createFieldItemDouble($delta, $value, $fieldName, $entityDefinition->mutable, $context)
+    );
 
     // Set up mutable state updater if applicable.
     if ($mutableState !== NULL) {
       $builder->setMutableStateUpdater(
-            fn(string $name, mixed $value) => $mutableState->setFieldValue($name, $value)
-        );
+        fn(string $name, mixed $value) => $mutableState->setFieldValue($name, $value)
+      );
     }
 
     /** @var \Drupal\Core\Field\FieldItemListInterface&MockObject $mock */
@@ -434,35 +409,35 @@ trait EntityDoubleTrait {
     $mock->method('get')->willReturnCallback(fn(int $delta) => $resolvers['get']($context, $delta));
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
 
-    if ($entityDef->mutable) {
+    if ($entityDefinition->mutable) {
       $self = $mock;
       $mock->method('setValue')->willReturnCallback(
-            function (mixed $values, bool $notify = TRUE) use ($resolvers, $context, $self) {
-                $resolvers['setValue']($context, $values, $notify);
-                return $self;
-            }
-        );
+        function (mixed $values, bool $notify = TRUE) use ($resolvers, $context, $self) {
+          $resolvers['setValue']($context, $values, $notify);
+          return $self;
+        }
+      );
       $mock->method('__set')->willReturnCallback(
-            fn(string $property, mixed $value) => $resolvers['__set']($context, $property, $value)
-        );
+        fn(string $property, mixed $value) => $resolvers['__set']($context, $property, $value)
+      );
     }
     else {
       $mock->method('setValue')->willReturnCallback(
-            function () use ($fieldName) {
-                throw new \LogicException(
-                    "Cannot modify field '$fieldName' on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function () use ($fieldName) {
+          throw new \LogicException(
+            "Cannot modify field '$fieldName' on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
       $mock->method('__set')->willReturnCallback(
-            function (string $property) use ($fieldName) {
-                throw new \LogicException(
-                    "Cannot modify field '$fieldName' on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function (string $property) use ($fieldName) {
+          throw new \LogicException(
+            "Cannot modify field '$fieldName' on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
     }
 
     return $mock;
@@ -485,13 +460,7 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  private function createFieldItemDouble(
-    int $delta,
-    mixed $value,
-    string $fieldName,
-    bool $mutable,
-    array $context,
-  ): FieldItemInterface {
+  private function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable);
 
     /** @var \Drupal\Core\Field\FieldItemInterface&MockObject $mock */
@@ -506,32 +475,32 @@ trait EntityDoubleTrait {
     if ($mutable) {
       $self = $mock;
       $mock->method('setValue')->willReturnCallback(
-            function (mixed $val, bool $notify = TRUE) use ($resolvers, $context, $self) {
-                $resolvers['setValue']($context, $val, $notify);
-                return $self;
-            }
-        );
+        function (mixed $val, bool $notify = TRUE) use ($resolvers, $context, $self) {
+          $resolvers['setValue']($context, $val, $notify);
+          return $self;
+        }
+      );
       $mock->method('__set')->willReturnCallback(
-            fn(string $property, mixed $val) => $resolvers['__set']($context, $property, $val)
-        );
+        fn(string $property, mixed $val) => $resolvers['__set']($context, $property, $val)
+      );
     }
     else {
       $mock->method('setValue')->willReturnCallback(
-            function () use ($delta) {
-                throw new \LogicException(
-                    "Cannot modify field item at delta $delta on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function () use ($delta) {
+          throw new \LogicException(
+            "Cannot modify field item at delta $delta on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
       $mock->method('__set')->willReturnCallback(
-            function (string $property) {
-                throw new \LogicException(
-                    "Cannot modify property '$property' on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function (string $property) {
+          throw new \LogicException(
+            "Cannot modify property '$property' on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
     }
 
     return $mock;

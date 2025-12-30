@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(EntityDoubleTrait::class)]
 #[Group('deuteros')]
 class EntityDoubleTraitTest extends TestCase {
+
   use EntityDoubleTrait;
 
   /**

@@ -53,7 +53,7 @@ class FieldDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that non-callable values return false from isCallable().
+   * Tests that non-callable values return false from ::isCallable().
    */
   public function testNonCallableIsNotCallable(): void {
     $definition = new FieldDefinition('static');

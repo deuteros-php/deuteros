@@ -30,9 +30,6 @@ use Prophecy\Prophecy\ObjectProphecy;
  * It allows testing code that depends on entity and field interfaces without
  * requiring Kernel tests, module enablement, storage, or services.
  *
- * Behavioral parity with PHPUnit adapter is mandatory - both traits produce
- * identical results for the same inputs.
- *
  * Supported behaviors:
  * - Scalar and callback-based field values
  * - Multi-value field access via get(int $delta)
@@ -48,8 +45,8 @@ use Prophecy\Prophecy\ObjectProphecy;
  * - toUrl() - requires routing services
  * - Entity reference traversal
  *
- * This is a unit-test value object only. Use Kernel tests for behaviors
- * that require runtime services.
+ * This is a unit-test value object only. Use Kernel tests for behaviors that
+ * require runtime services.
  *
  * @example Static values
  * ```php
@@ -79,6 +76,7 @@ use Prophecy\Prophecy\ObjectProphecy;
  * ```
  */
 trait EntityDoubleTrait {
+
   use EntityDefinitionNormalizerTrait;
   use ProphecyTrait;
 
@@ -95,13 +93,8 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The entity double.
    */
-  protected function createEntityDouble(
-    array $definition,
-    array $context = [],
-  ): EntityInterface {
-    return $this->buildEntityDouble(
-          $this->normalizeDefinition($definition, $context, FALSE)
-      );
+  protected function createEntityDouble(array $definition, array $context = []): EntityInterface {
+    return $this->buildEntityDouble($this->normalizeDefinition($definition, $context));
   }
 
   /**
@@ -117,13 +110,10 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The mutable entity double.
    */
-  protected function createMutableEntityDouble(
-    array $definition,
-    array $context = [],
-  ): EntityInterface {
+  protected function createMutableEntityDouble(array $definition, array $context = []): EntityInterface {
     return $this->buildEntityDouble(
-          $this->normalizeDefinition($definition, $context, TRUE)
-      );
+      $this->normalizeDefinition($definition, $context, TRUE)
+    );
   }
 
   /**
@@ -147,8 +137,8 @@ trait EntityDoubleTrait {
 
     // Set up field list factory.
     $builder->setFieldListFactory(
-          fn(string $fieldName, FieldDefinition $fieldDef, array $context) =>
-                $this->createFieldItemListDouble($fieldName, $fieldDef, $definition, $mutableState, $context)
+          fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
+                $this->createFieldItemListDouble($fieldName, $fieldDefinition, $definition, $mutableState, $context)
       );
 
     // Create the prophecy with all interfaces.
@@ -215,11 +205,7 @@ trait EntityDoubleTrait {
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
    */
-  private function wireEntityResolvers(
-    ObjectProphecy $prophecy,
-    EntityDoubleBuilder $builder,
-    EntityDefinition $definition,
-  ): void {
+  private function wireEntityResolvers(ObjectProphecy $prophecy, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
     $resolvers = $builder->getResolvers();
     $context = $definition->context;
 
@@ -233,44 +219,43 @@ trait EntityDoubleTrait {
     // Wire fieldable entity methods if applicable.
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
       $prophecy->hasField(Argument::type('string'))->will(
-            fn(array $args) => $resolvers['hasField']($context, $args[0])
-        );
+        fn(array $args) => $resolvers['hasField']($context, $args[0])
+      );
       $prophecy->get(Argument::type('string'))->will(
-            fn(array $args) => $resolvers['get']($context, $args[0])
-        );
-      // Note: __get is not declared in FieldableEntityInterface, so magic
+        fn(array $args) => $resolvers['get']($context, $args[0])
+      );
+
+      // Note: ::__get is not declared in "FieldableEntityInterface", so magic
       // property access ($entity->field_name) is not supported on interface
-      // prophecies. Use get() method instead: $entity->get('field_name').
+      // prophecies. Use ::get() method instead: $entity->get('field_name').
       if ($definition->mutable) {
         $revealed = NULL;
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
           function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
-              $resolvers['set']($context, $args[0], $args[1], $args[2] ?? TRUE);
+            $resolvers['set']($context, $args[0], $args[1], $args[2] ?? TRUE);
             if ($revealed === NULL) {
-                        $revealed = $prophecy->reveal();
+              $revealed = $prophecy->reveal();
             }
-              return $revealed;
+            return $revealed;
           }
-          );
+        );
       }
       else {
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
           function (array $args) {
-              throw new \LogicException(
-                  "Cannot modify field '{$args[0]}' on immutable entity double. "
-                  . "Use createMutableEntityDouble() if you need to test mutations."
-              );
-          }
+            throw new \LogicException(
+              "Cannot modify field '{$args[0]}' on immutable entity double. "
+              . "Use createMutableEntityDouble() if you need to test mutations."
             );
+          }
+        );
       }
     }
 
     // Wire method overrides.
     foreach ($definition->methodOverrides as $method => $override) {
       $resolver = $builder->getMethodOverrideResolver($method);
-      $prophecy->$method(Argument::cetera())->will(
-            fn(array $args) => $resolver($context, ...$args)
-        );
+      $prophecy->$method(Argument::cetera())->will(fn(array $args) => $resolver($context, ...$args));
     }
 
     // Wire guardrails for unsupported methods.
@@ -305,8 +290,8 @@ trait EntityDoubleTrait {
 
       if ($methodExists) {
         $prophecy->$method(Argument::cetera())->will(
-              fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
-          );
+          fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
+        );
       }
     }
   }
@@ -316,9 +301,9 @@ trait EntityDoubleTrait {
    *
    * @param string $fieldName
    *   The field name.
-   * @param \Deuteros\Common\FieldDefinition $fieldDef
+   * @param \Deuteros\Common\FieldDefinition $fieldDefinition
    *   The field definition.
-   * @param \Deuteros\Common\EntityDefinition $entityDef
+   * @param \Deuteros\Common\EntityDefinition $entityDefinition
    *   The entity definition.
    * @param \Deuteros\Common\MutableStateContainer|null $mutableState
    *   The mutable state container.
@@ -328,26 +313,20 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Field\FieldItemListInterface
    *   The field item list double.
    */
-  private function createFieldItemListDouble(
-    string $fieldName,
-    FieldDefinition $fieldDef,
-    EntityDefinition $entityDef,
-    ?MutableStateContainer $mutableState,
-    array $context,
-  ): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDef, $fieldName, $entityDef->mutable);
+  private function createFieldItemListDouble(string $fieldName, FieldDefinition $fieldDefinition, EntityDefinition $entityDefinition, ?MutableStateContainer $mutableState, array $context): FieldItemListInterface {
+    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, $entityDefinition->mutable);
 
     // Set up field item factory.
     $builder->setFieldItemFactory(
-          fn(int $delta, mixed $value, array $ctx) =>
-                $this->createFieldItemDouble($delta, $value, $fieldName, $entityDef->mutable, $ctx)
-      );
+      fn(int $delta, mixed $value, array $context) =>
+        $this->createFieldItemDouble($delta, $value, $fieldName, $entityDefinition->mutable, $context)
+    );
 
     // Set up mutable state updater if applicable.
     if ($mutableState !== NULL) {
       $builder->setMutableStateUpdater(
-            fn(string $name, mixed $value) => $mutableState->setFieldValue($name, $value)
-        );
+        fn(string $name, mixed $value) => $mutableState->setFieldValue($name, $value)
+      );
     }
 
     $prophecy = $this->prophesize(FieldItemListInterface::class);
@@ -359,46 +338,46 @@ trait EntityDoubleTrait {
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
     $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, $args[0]));
 
-    // Manually add MethodProphecy for __get since Prophecy's ObjectProphecy
-    // intercepts __get calls instead of treating them as method stubs.
+    // Manually add MethodProphecy for ::__get since Prophecy's "ObjectProphecy"
+    // intercepts ::__get calls instead of treating them as method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
-    if ($entityDef->mutable) {
+    if ($entityDefinition->mutable) {
       $revealed = NULL;
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-            function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
-                $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
-              if ($revealed === NULL) {
-                    $revealed = $prophecy->reveal();
-              }
-                return $revealed;
-            }
-        );
+        function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
+          $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
+          if ($revealed === NULL) {
+            $revealed = $prophecy->reveal();
+          }
+          return $revealed;
+        }
+      );
 
-      // Manually add MethodProphecy for __set.
+      // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-            function () use ($fieldName) {
-                throw new \LogicException(
-                    "Cannot modify field '$fieldName' on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function () use ($fieldName) {
+          throw new \LogicException(
+            "Cannot modify field '$fieldName' on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
 
-      // Manually add MethodProphecy for __set.
+      // Manually add MethodProphecy for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(function () use ($fieldName) {
-          throw new \LogicException(
+        throw new \LogicException(
           "Cannot modify field '$fieldName' on immutable entity double. "
           . "Use createMutableEntityDouble() if you need to test mutations."
-          );
+        );
       });
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
@@ -423,21 +402,16 @@ trait EntityDoubleTrait {
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  private function createFieldItemDouble(
-    int $delta,
-    mixed $value,
-    string $fieldName,
-    bool $mutable,
-    array $context,
-  ): FieldItemInterface {
+  private function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable);
 
     $prophecy = $this->prophesize(FieldItemInterface::class);
 
     $resolvers = $builder->getResolvers();
 
-    // Manually add MethodProphecy for __get since Prophecy's ObjectProphecy
-    // intercepts __get calls instead of treating them as method stubs.
+    // Manually add "MethodProphecy" for ::__get since Prophecy's
+    // "ObjectProphecy" intercepts ::__get calls instead of treating them as
+    // method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
@@ -448,37 +422,37 @@ trait EntityDoubleTrait {
     if ($mutable) {
       $revealed = NULL;
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-            function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
-                $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
-              if ($revealed === NULL) {
-                    $revealed = $prophecy->reveal();
-              }
-                return $revealed;
-            }
-        );
+        function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
+          $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
+          if ($revealed === NULL) {
+            $revealed = $prophecy->reveal();
+          }
+          return $revealed;
+        }
+      );
 
-      // Manually add MethodProphecy for __set.
+      // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-            function () use ($delta) {
-                throw new \LogicException(
-                    "Cannot modify field item at delta $delta on immutable entity double. "
-                    . "Use createMutableEntityDouble() if you need to test mutations."
-                );
-            }
-            );
+        function () use ($delta) {
+          throw new \LogicException(
+            "Cannot modify field item at delta $delta on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
 
-      // Manually add MethodProphecy for __set.
+      // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(function (array $args) {
-          throw new \LogicException(
+        throw new \LogicException(
           "Cannot modify property '{$args[0]}' on immutable entity double. "
           . "Use createMutableEntityDouble() if you need to test mutations."
-          );
+        );
       });
       $prophecy->addMethodProphecy($setMethodProphecy);
     }

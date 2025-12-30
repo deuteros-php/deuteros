@@ -98,9 +98,9 @@ final class FieldItemDoubleBuilder {
     return function (array $context, mixed $value, bool $notify = TRUE): object {
       if (!$this->mutable) {
         throw new \LogicException(
-              "Cannot modify field item at delta {$this->delta} on immutable entity double. "
-              . "Use createMutableEntityDouble() if you need to test mutations."
-          );
+         "Cannot modify field item at delta {$this->delta} on immutable entity double. "
+          . "Use createMutableEntityDouble() if you need to test mutations."
+        );
       }
 
       $this->value = $value;
@@ -122,9 +122,9 @@ final class FieldItemDoubleBuilder {
     return function (array $context, string $property, mixed $value): void {
       if (!$this->mutable) {
         throw new \LogicException(
-              "Cannot modify property '$property' on immutable entity double. "
-              . "Use createMutableEntityDouble() if you need to test mutations."
-          );
+          "Cannot modify property '$property' on immutable entity double. "
+          . "Use createMutableEntityDouble() if you need to test mutations."
+        );
       }
 
       if ($property === 'value') {
@@ -134,9 +134,7 @@ final class FieldItemDoubleBuilder {
         $this->value[$property] = $value;
       }
       else {
-        throw new \LogicException(
-              "Cannot set property '$property' on scalar field item."
-                );
+        throw new \LogicException("Cannot set property '$property' on scalar field item.");
       }
     };
   }

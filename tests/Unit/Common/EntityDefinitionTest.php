@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 class EntityDefinitionTest extends TestCase {
 
   /**
-   * Tests construction with only required entity_type parameter.
+   * Tests construction with only required "entity_type" parameter.
    *
    * Verifies all optional parameters have sensible defaults.
    */
@@ -48,17 +48,17 @@ class EntityDefinitionTest extends TestCase {
     $context = ['key' => 'value'];
 
     $definition = new EntityDefinition(
-          entityType: 'node',
-          bundle: 'article',
-          id: 1,
-          uuid: 'test-uuid',
-          label: 'Test Node',
-          fields: $fields,
-          interfaces: $interfaces,
-          methodOverrides: $methodOverrides,
-          context: $context,
-          mutable: TRUE,
-      );
+      entityType: 'node',
+      bundle: 'article',
+      id: 1,
+      uuid: 'test-uuid',
+      label: 'Test Node',
+      fields: $fields,
+      interfaces: $interfaces,
+      methodOverrides: $methodOverrides,
+      context: $context,
+      mutable: TRUE,
+    );
 
     $this->assertSame('node', $definition->entityType);
     $this->assertSame('article', $definition->bundle);
@@ -73,7 +73,7 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that bundle defaults to entity_type when not specified.
+   * Tests that bundle defaults to "entity_type" when not specified.
    */
   public function testBundleDefaultsToEntityType(): void {
     $definition = new EntityDefinition(entityType: 'user');
@@ -81,20 +81,20 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that defining fields without FieldableEntityInterface throws.
+   * Tests that defining fields without "FieldableEntityInterface" throws.
    */
   public function testFieldsRequireFieldableEntityInterface(): void {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Fields can only be defined when FieldableEntityInterface is listed');
 
     new EntityDefinition(
-          entityType: 'node',
-          fields: ['field_test' => new FieldDefinition('value')],
-      );
+      entityType: 'node',
+      fields: ['field_test' => new FieldDefinition('value')],
+    );
   }
 
   /**
-   * Tests fromArray() with minimal configuration.
+   * Tests ::fromArray() with minimal configuration.
    */
   public function testFromArrayMinimal(): void {
     $definition = EntityDefinition::fromArray(['entity_type' => 'node']);
@@ -104,7 +104,7 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests fromArray() with full configuration.
+   * Tests ::fromArray() with full configuration.
    */
   public function testFromArrayFull(): void {
     $definition = EntityDefinition::fromArray([
@@ -132,7 +132,7 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that fromArray() converts raw field values to FieldDefinition.
+   * Tests that ::fromArray() converts raw field values to "FieldDefinition".
    */
   public function testFromArrayConvertsRawFieldsToDefinitions(): void {
     $definition = EntityDefinition::fromArray([
@@ -145,7 +145,7 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that fromArray() throws when entity_type is missing.
+   * Tests that ::fromArray() throws when "entity_type" is missing.
    */
   public function testFromArrayRequiresEntityType(): void {
     $this->expectException(\InvalidArgumentException::class);
@@ -155,7 +155,7 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests that fromArray() throws when entity_type is empty string.
+   * Tests that ::fromArray() throws when entity_type is empty string.
    */
   public function testFromArrayRejectsEmptyEntityType(): void {
     $this->expectException(\InvalidArgumentException::class);
@@ -164,13 +164,13 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests hasInterface() returns correct boolean for declared interfaces.
+   * Tests ::hasInterface() returns correct boolean for declared interfaces.
    */
   public function testHasInterface(): void {
     $definition = new EntityDefinition(
-          entityType: 'node',
-          interfaces: [FieldableEntityInterface::class],
-      );
+      entityType: 'node',
+      interfaces: [FieldableEntityInterface::class],
+    );
 
     $this->assertTrue($definition->hasInterface(FieldableEntityInterface::class));
     $this->assertFalse($definition->hasInterface('NonExistent'));
@@ -182,9 +182,9 @@ class EntityDefinitionTest extends TestCase {
   public function testMethodOverrides(): void {
     $callable = fn() => 1;
     $definition = new EntityDefinition(
-          entityType: 'node',
-          methodOverrides: ['getOwnerId' => $callable],
-      );
+      entityType: 'node',
+      methodOverrides: ['getOwnerId' => $callable],
+    );
 
     $this->assertTrue($definition->hasMethodOverride('getOwnerId'));
     $this->assertFalse($definition->hasMethodOverride('nonexistent'));
@@ -196,27 +196,27 @@ class EntityDefinitionTest extends TestCase {
    * Tests field definition detection and retrieval.
    */
   public function testFieldAccess(): void {
-    $fieldDef = new FieldDefinition('value');
+    $fieldDefinition = new FieldDefinition('value');
     $definition = new EntityDefinition(
-          entityType: 'node',
-          fields: ['field_test' => $fieldDef],
-          interfaces: [FieldableEntityInterface::class],
-      );
+      entityType: 'node',
+      fields: ['field_test' => $fieldDefinition],
+      interfaces: [FieldableEntityInterface::class],
+    );
 
     $this->assertTrue($definition->hasField('field_test'));
     $this->assertFalse($definition->hasField('nonexistent'));
-    $this->assertSame($fieldDef, $definition->getField('field_test'));
+    $this->assertSame($fieldDefinition, $definition->getField('field_test'));
     $this->assertNull($definition->getField('nonexistent'));
   }
 
   /**
-   * Tests withContext() creates a new instance with merged context.
+   * Tests ::withContext() creates a new instance with merged context.
    */
   public function testWithContext(): void {
     $original = new EntityDefinition(
-          entityType: 'node',
-          context: ['a' => 1],
-      );
+      entityType: 'node',
+      context: ['a' => 1],
+    );
 
     $new = $original->withContext(['b' => 2]);
 

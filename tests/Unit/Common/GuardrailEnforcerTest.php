@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 class GuardrailEnforcerTest extends TestCase {
 
   /**
-   * Tests that getUnsupportedMethods() returns expected blocked methods.
+   * Tests that ::getUnsupportedMethods() returns expected blocked methods.
    */
   public function testGetUnsupportedMethods(): void {
     $methods = GuardrailEnforcer::getUnsupportedMethods();
@@ -31,7 +31,7 @@ class GuardrailEnforcerTest extends TestCase {
   }
 
   /**
-   * Tests isUnsupportedMethod() identifies blocked vs allowed methods.
+   * Tests ::isUnsupportedMethod() identifies blocked vs allowed methods.
    */
   public function testIsUnsupportedMethod(): void {
     $this->assertTrue(GuardrailEnforcer::isUnsupportedMethod('save'));
@@ -60,9 +60,9 @@ class GuardrailEnforcerTest extends TestCase {
    */
   public function testCreateMissingResolverException(): void {
     $exception = GuardrailEnforcer::createMissingResolverException(
-          'getOwnerId',
-          'EntityOwnerInterface'
-      );
+      'getOwnerId',
+      'EntityOwnerInterface'
+    );
 
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'getOwnerId'", $exception->getMessage());

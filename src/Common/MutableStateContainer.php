@@ -8,10 +8,11 @@ namespace Deuteros\Common;
  * Container for mutable field state in entity doubles.
  *
  * Tracks field value changes separately from the immutable EntityDefinition.
- * Used only for mutable entity doubles where field values can be updated
- * for assertion purposes.
+ * Used only for mutable entity doubles where field values can be updated for
+ * assertion purposes.
  */
 final class MutableStateContainer {
+
   /**
    * Mutable field values keyed by field name.
    *
@@ -46,9 +47,7 @@ final class MutableStateContainer {
    */
   public function getFieldValue(string $fieldName): mixed {
     if (!$this->hasFieldValue($fieldName)) {
-      throw new \OutOfBoundsException(
-            "Field '$fieldName' has not been mutated."
-        );
+      throw new \OutOfBoundsException("Field '$fieldName' has not been mutated.");
     }
     return $this->fieldValues[$fieldName];
   }

@@ -73,11 +73,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireEntityResolvers(
-    object $double,
-    EntityDoubleBuilder $builder,
-    EntityDefinition $definition,
-  ): void {
+  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
@@ -136,11 +132,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireGuardrails(
-    object $double,
-    EntityDefinition $definition,
-    array $interfaces,
-  ): void {
+  protected function wireGuardrails(object $double, EntityDefinition $definition, array $interfaces): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $unsupportedMethods = GuardrailEnforcer::getUnsupportedMethods();
@@ -178,12 +170,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(
-    object $double,
-    FieldItemListDoubleBuilder $builder,
-    EntityDefinition $entityDefinition,
-    array $context,
-  ): void {
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDefinition $entityDefinition, array $context): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
@@ -251,14 +238,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldItemResolvers(
-    object $double,
-    FieldItemDoubleBuilder $builder,
-    bool $mutable,
-    int $delta,
-    string $fieldName,
-    array $context,
-  ): void {
+  protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();

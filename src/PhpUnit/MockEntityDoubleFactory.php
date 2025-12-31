@@ -118,10 +118,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * @param list<class-string> $interfaces
    *   The interfaces to extend.
    */
-  private function declareCombinedInterface(
-    string $interfaceName,
-    array $interfaces,
-  ): void {
+  private function declareCombinedInterface(string $interfaceName, array $interfaces): void {
     $parts = explode('\\', $interfaceName);
     $shortName = array_pop($parts);
     $namespace = implode('\\', $parts);
@@ -164,11 +161,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireEntityResolvers(
-    object $double,
-    EntityDoubleBuilder $builder,
-    EntityDefinition $definition,
-  ): void {
+  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();
@@ -242,11 +235,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireGuardrails(
-    object $double,
-    EntityDefinition $definition,
-    array $interfaces,
-  ): void {
+  protected function wireGuardrails(object $double, EntityDefinition $definition, array $interfaces): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $unsupportedMethods = GuardrailEnforcer::getUnsupportedMethods();
@@ -286,12 +275,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(
-    object $double,
-    FieldItemListDoubleBuilder $builder,
-    EntityDefinition $entityDefinition,
-    array $context,
-  ): void {
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDefinition $entityDefinition, array $context): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();
@@ -347,14 +331,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldItemResolvers(
-    object $double,
-    FieldItemDoubleBuilder $builder,
-    bool $mutable,
-    int $delta,
-    string $fieldName,
-    array $context,
-  ): void {
+  protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();

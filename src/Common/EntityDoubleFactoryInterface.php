@@ -27,10 +27,7 @@ interface EntityDoubleFactoryInterface {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The entity double.
    */
-  public function create(
-    EntityDefinition $definition,
-    array $context = [],
-  ): EntityInterface;
+  public function create(EntityDefinition $definition, array $context = []): EntityInterface;
 
   /**
    * Creates a mutable entity double.
@@ -45,9 +42,6 @@ interface EntityDoubleFactoryInterface {
    * @return \Drupal\Core\Entity\EntityInterface
    *   The mutable entity double.
    */
-  public function createMutable(
-    EntityDefinition $definition,
-    array $context = [],
-  ): EntityInterface;
+  public function createMutable(EntityDefinition $definition, array $context = []): EntityInterface;
 
 }

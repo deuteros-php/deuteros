@@ -40,6 +40,10 @@ Key requirements enforced by phpcs:
 - Parentheses required for anonymous class constructors (`new class ()`)
 - No empty doc comments
 
+Additional formatting rules:
+- Method/function signatures should be on a single line if ≤160 characters
+- Constructors are exempt (they use property promotion and can span multiple lines)
+
 ## Static Analysis
 
 PHPStan is configured at level 10 (max) with a baseline for existing issues.

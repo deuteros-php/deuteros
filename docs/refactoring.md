@@ -264,3 +264,34 @@ EntityDefinitionBuilder
 5. **Definition Reuse**: `from()` allows copying and modifying definitions
 6. **Clean Factory API**: Factory accepts typed `EntityDefinition` instead of
    untyped array
+
+## Task 5 - Unwrap Multi-Line Method Signatures
+
+**Status:** Complete
+
+### Overview
+
+Unwrapped all method/function signatures that fit within 160 characters to a
+single line for improved readability. Constructors are exempt as they use
+property promotion.
+
+### Changes
+
+**Modified:**
+- `CLAUDE.md` - Added formatting rule for 160-char signature limit
+- `src/Common/EntityDoubleFactoryInterface.php` - Unwrapped 2 signatures
+- `src/Common/EntityDoubleFactory.php` - Unwrapped 8 signatures
+- `src/PhpUnit/MockEntityDoubleFactory.php` - Unwrapped 5 signatures
+- `src/Prophecy/ProphecyEntityDoubleFactory.php` - Unwrapped 4 signatures
+
+### Rule
+
+Method and function signatures should be on a single line if they fit within
+160 characters. Constructors are exempt because they typically use property
+promotion and benefit from multi-line formatting for readability.
+
+### Benefits
+
+1. **Readability**: Signatures are easier to scan when on a single line
+2. **Consistency**: All non-constructor signatures follow the same pattern
+3. **Documented**: Rule added to CLAUDE.md for future contributions

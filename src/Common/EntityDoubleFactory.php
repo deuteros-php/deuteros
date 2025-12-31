@@ -89,10 +89,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * {@inheritdoc}
    */
-  public function create(
-    EntityDefinition $definition,
-    array $context = [],
-  ): EntityInterface {
+  public function create(EntityDefinition $definition, array $context = []): EntityInterface {
     $normalized = $definition
       ->withContext($context)
       ->withMutable(FALSE);
@@ -102,10 +99,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * {@inheritdoc}
    */
-  public function createMutable(
-    EntityDefinition $definition,
-    array $context = [],
-  ): EntityInterface {
+  public function createMutable(EntityDefinition $definition, array $context = []): EntityInterface {
     $normalized = $definition
       ->withContext($context)
       ->withMutable(TRUE);
@@ -228,13 +222,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @return \Drupal\Core\Field\FieldItemListInterface
    *   The field item list double.
    */
-  protected function createFieldItemListDouble(
-    string $fieldName,
-    FieldDefinition $fieldDefinition,
-    EntityDefinition $entityDefinition,
-    ?MutableStateContainer $mutableState,
-    array $context,
-  ): FieldItemListInterface {
+  protected function createFieldItemListDouble(string $fieldName, FieldDefinition $fieldDefinition, EntityDefinition $entityDefinition, ?MutableStateContainer $mutableState, array $context): FieldItemListInterface {
     $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, $entityDefinition->mutable);
 
     // Set up field item factory.
@@ -279,13 +267,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  protected function createFieldItemDouble(
-    int $delta,
-    mixed $value,
-    string $fieldName,
-    bool $mutable,
-    array $context,
-  ): FieldItemInterface {
+  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable);
 
     // Create the double.
@@ -318,11 +300,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
    */
-  abstract protected function wireEntityResolvers(
-    object $double,
-    EntityDoubleBuilder $builder,
-    EntityDefinition $definition,
-  ): void;
+  abstract protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDefinition $definition): void;
 
   /**
    * Wires guardrail exceptions to the double.
@@ -334,11 +312,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param list<class-string> $interfaces
    *   The interfaces being mocked.
    */
-  abstract protected function wireGuardrails(
-    object $double,
-    EntityDefinition $definition,
-    array $interfaces,
-  ): void;
+  abstract protected function wireGuardrails(object $double, EntityDefinition $definition, array $interfaces): void;
 
   /**
    * Creates a field item list double object.
@@ -360,12 +334,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param array<string, mixed> $context
    *   The context.
    */
-  abstract protected function wireFieldListResolvers(
-    object $double,
-    FieldItemListDoubleBuilder $builder,
-    EntityDefinition $entityDefinition,
-    array $context,
-  ): void;
+  abstract protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDefinition $entityDefinition, array $context): void;
 
   /**
    * Creates a field item double object.
@@ -391,14 +360,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param array<string, mixed> $context
    *   The context.
    */
-  abstract protected function wireFieldItemResolvers(
-    object $double,
-    FieldItemDoubleBuilder $builder,
-    bool $mutable,
-    int $delta,
-    string $fieldName,
-    array $context,
-  ): void;
+  abstract protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void;
 
   /**
    * Reveals the entity double (converts mock/prophecy to usable object).

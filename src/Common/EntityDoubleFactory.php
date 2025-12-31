@@ -68,7 +68,7 @@ use PHPUnit\Framework\TestCase;
  * $this->assertSame('2024-01-01', $entity->get('field_date')->value);
  * ```
  */
-abstract class EntityDoubleFactory {
+abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
   /**
    * Creates the appropriate factory based on the test case's available traits.
@@ -91,34 +91,14 @@ abstract class EntityDoubleFactory {
   }
 
   /**
-   * Creates an immutable entity double.
-   *
-   * Field values cannot be changed after creation.
-   *
-   * @param array<string, mixed> $definition
-   *   The entity definition array.
-   * @param array<string, mixed> $context
-   *   Context data for callback resolution.
-   *
-   * @return \Drupal\Core\Entity\EntityInterface
-   *   The entity double.
+   * {@inheritdoc}
    */
   public function create(array $definition, array $context = []): EntityInterface {
     return $this->buildEntityDouble($this->normalizeDefinition($definition, $context, FALSE));
   }
 
   /**
-   * Creates a mutable entity double.
-   *
-   * Field values can be updated via set() methods for assertion purposes.
-   *
-   * @param array<string, mixed> $definition
-   *   The entity definition array.
-   * @param array<string, mixed> $context
-   *   Context data for callback resolution.
-   *
-   * @return \Drupal\Core\Entity\EntityInterface
-   *   The mutable entity double.
+   * {@inheritdoc}
    */
   public function createMutable(array $definition, array $context = []): EntityInterface {
     return $this->buildEntityDouble($this->normalizeDefinition($definition, $context, TRUE));

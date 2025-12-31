@@ -116,3 +116,5 @@ These constraints must never be violated:
 
 - `docs/init.md` - Implementation requirements and constraints
 - `docs/plan.md` - Detailed implementation plan (single source of truth for scope/architecture)
+- `docs/refactoring.md` - Detailed implementation plan of changes performed
+  after the initial implementation (source of truth updates)

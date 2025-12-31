@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Deuteros\Tests\Integration\Mock;
+namespace Deuteros\Tests\Integration\PhpUnit;
 
-use Deuteros\Mock\EntityDoubleTrait;
+use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -13,19 +13,30 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Integration tests for the PHPUnit EntityDoubleTrait.
+ * Integration tests for the PHPUnit MockEntityDoubleFactory.
  */
-#[CoversClass(EntityDoubleTrait::class)]
+#[CoversClass(MockEntityDoubleFactory::class)]
 #[Group('deuteros')]
-class EntityDoubleTraitTest extends TestCase {
+class MockEntityDoubleFactoryTest extends TestCase {
 
-  use EntityDoubleTrait;
+  /**
+   * The factory under test.
+   */
+  private MockEntityDoubleFactory $factory;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->factory = new MockEntityDoubleFactory($this);
+  }
 
   /**
    * Tests creating an entity double with only "entity_type" specified.
    */
   public function testMinimalEntityDouble(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
     ]);
 
@@ -38,7 +49,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests entity metadata accessors (id, uuid, label, bundle).
    */
   public function testEntityWithMetadata(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'id' => 42,
@@ -57,7 +68,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests accessing scalar field values via get() method.
    */
   public function testScalarFieldAccess(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -76,7 +87,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that callback field values receive context and resolve correctly.
    */
   public function testCallbackFieldResolution(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -94,7 +105,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests context propagation to metadata and field callbacks.
    */
   public function testContextPropagation(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'id' => fn(array $context) => $context['computed_id'],
@@ -117,7 +128,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests accessing multi-value fields via ::first(), ::get($i), and shorthand.
    */
   public function testMultiValueFieldAccess(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -146,7 +157,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests chained field access: entity -> field list -> item -> property.
    */
   public function testNestedFieldAccess(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -164,7 +175,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests ::hasField() returns correct boolean for defined fields.
    */
   public function testHasField(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -181,7 +192,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests ::isEmpty() returns correct boolean based on field value.
    */
   public function testFieldIsEmpty(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -210,7 +221,7 @@ class EntityDoubleTraitTest extends TestCase {
     // For PHPUnit: use only "EntityChangedInterface" (which extends
     // "EntityInterface") and configure field-related methods via overrides
     // if needed.
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'interfaces' => [
@@ -231,7 +242,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that "method_overrides" take precedence over default resolvers.
    */
   public function testMethodOverridesPrecedence(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'id' => 1,
@@ -249,7 +260,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that method override callbacks receive context array.
    */
   public function testMethodOverridesReceiveContext(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'interfaces' => [EntityChangedInterface::class],
@@ -266,7 +277,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that accessing undefined fields throws "InvalidArgumentException".
    */
   public function testUndefinedFieldThrows(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -285,7 +296,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that guardrail methods like save() throw LogicException.
    */
   public function testUnsupportedMethodThrows(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
     ]);
@@ -301,7 +312,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that repeated get() calls return the same field list instance.
    */
   public function testFieldListCaching(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -321,7 +332,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that mutable entities allow field value updates via set().
    */
   public function testMutableEntityFieldSet(): void {
-    $entity = $this->createMutableEntityDouble([
+    $entity = $this->factory->createMutable([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -344,7 +355,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that immutable entities throw on ::set() attempts.
    */
   public function testImmutableEntityRejectsSet(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -364,7 +375,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that ::set() returns the entity for method chaining.
    */
   public function testMutableEntitySetReturnsEntity(): void {
-    $entity = $this->createMutableEntityDouble([
+    $entity = $this->factory->createMutable([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -383,7 +394,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests accessing entity reference field "target_id" property.
    */
   public function testEntityReferenceFieldWithTargetId(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -400,13 +411,13 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests ::getValue() returns array of all field item values.
    */
   public function testFieldGetValue(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
         'field_tags' => [
-                  ['target_id' => 1],
-                  ['target_id' => 2],
+          ['target_id' => 1],
+          ['target_id' => 2],
         ],
       ],
       'interfaces' => [FieldableEntityInterface::class],
@@ -422,7 +433,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that empty array fields return NULL from ::first() and ::get().
    */
   public function testNullFieldItem(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [
@@ -440,7 +451,7 @@ class EntityDoubleTraitTest extends TestCase {
    * Tests that ;;get() with out-of-range delta returns NULL.
    */
   public function testOutOfRangeDeltaReturnsNull(): void {
-    $entity = $this->createEntityDouble([
+    $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'fields' => [

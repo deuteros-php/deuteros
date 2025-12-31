@@ -55,13 +55,13 @@ Key requirements enforced by phpcs:
    - Framework-agnostic: no PHPUnit/Prophecy references
 
 3. **Shared Support**
-   - `EntityDefinitionNormalizerTrait` - Input normalization for adapter traits
    - `MutableStateContainer` - Stateful storage for mutable field values
    - `GuardrailEnforcer` - Centralized exception throwing for unsupported methods
 
-4. **Adapter Traits** (thin wrappers over core logic)
-   - `Deuteros\Mock\EntityDoubleTrait` - PHPUnit native mocks via `willReturnCallback()`
-   - `Deuteros\Prophecy\EntityDoubleTrait` - Prophecy via `prophesize()`, `will()`, `reveal()`
+4. **Factory Classes**
+   - `Deuteros\Common\EntityDoubleFactory` - Abstract base with `fromTest()` factory
+   - `Deuteros\PhpUnit\MockEntityDoubleFactory` - PHPUnit native mocks
+   - `Deuteros\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
 
 ### Key Patterns
 
@@ -103,12 +103,13 @@ These constraints must never be violated:
 - **Unsupported operations fail loudly** with differentiated error messages
 - **PHPUnit and Prophecy adapters must behave identically**
 - **Use term "Double"** everywhere except when referring to PHPUnit mock objects
+- **All code must pass `composer phpcs`** - Run before completing any code change
 
 ## Test Structure
 
 - `tests/Unit/Common/` - Unit tests for definition and support classes
-- `tests/Integration/Mock/` - PHPUnit adapter integration tests
-- `tests/Integration/Prophecy/` - Prophecy adapter integration tests
+- `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
+- `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/BehavioralParityTest.php` - Ensures both adapters produce identical behavior
 
 ## Documentation

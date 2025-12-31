@@ -173,3 +173,94 @@ Hash: First 12 chars of MD5 of sorted interface names
    `eval()` calls
 4. **Deterministic**: Same interface combination always produces the same
    generated interface name
+
+## Task 4 - Replace Array-Based API with EntityDefinitionBuilder
+
+**Status:** Complete
+
+### Overview
+
+Replaced the array-based entity double creation API with a fluent builder
+pattern, providing better IDE support, type safety, and discoverability.
+
+### Problem
+
+The array-based API required users to remember key names and had no IDE
+autocompletion:
+
+```php
+// Old API - error-prone, no IDE support
+$entity = $factory->create([
+  'entity_type' => 'node',
+  'bundle' => 'article',
+  'fields' => ['field_title' => 'Test'],
+  'interfaces' => [FieldableEntityInterface::class],
+]);
+```
+
+### Solution
+
+Fluent builder with auto-adding of `FieldableEntityInterface` when fields are
+defined:
+
+```php
+// New API - discoverable, type-safe, IDE-friendly
+$entity = $factory->create(
+  EntityDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_title', 'Test')  // Auto-adds FieldableEntityInterface
+);
+```
+
+### Changes
+
+**Created:**
+- `src/Common/EntityDefinitionBuilder.php` - Fluent builder class
+- `tests/Unit/Common/EntityDefinitionBuilderTest.php` - Builder unit tests
+
+**Modified:**
+- `src/Common/EntityDefinition.php`:
+  - Added `withMutable()` method
+  - Optimized `withContext()` to return same instance when empty
+  - Removed `fromArray()` static method
+- `src/Common/EntityDoubleFactoryInterface.php` - Changed to accept
+  `EntityDefinition` instead of array
+- `src/Common/EntityDoubleFactory.php`:
+  - Updated `create()` and `createMutable()` signatures
+  - Removed `normalizeDefinition()` method
+  - Updated docblock examples
+- `tests/Unit/Common/EntityDefinitionTest.php` - Removed `fromArray()` tests,
+  added `withMutable()` tests
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Converted to builder
+- `tests/Integration/BehavioralParityTest.php` - Converted to builder
+
+### API
+
+```php
+EntityDefinitionBuilder
+├── create(string $entityType): self       # Start new definition
+├── from(EntityDefinition $def): self      # Copy existing definition
+├── bundle(string): self
+├── id(mixed): self                        # Scalar or callable
+├── uuid(mixed): self
+├── label(mixed): self
+├── field(string, mixed): self             # Auto-adds FieldableEntityInterface
+├── fields(array): self                    # Bulk add
+├── interface(class-string): self          # Deduplicated
+├── interfaces(array): self                # Bulk add
+├── methodOverride(string, mixed): self
+├── methodOverrides(array): self           # Bulk add
+├── context(string, mixed): self           # Single key
+├── withContext(array): self               # Bulk add
+└── build(): EntityDefinition
+```
+
+### Benefits
+
+1. **IDE Support**: Full autocompletion for all builder methods
+2. **Type Safety**: Method signatures enforce correct types
+3. **Discoverability**: Users can explore API via method chaining
+4. **Auto-Interface**: `field()` automatically adds `FieldableEntityInterface`
+5. **Definition Reuse**: `from()` allows copying and modifying definitions
+6. **Clean Factory API**: Factory accepts typed `EntityDefinition` instead of
+   untyped array

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
+use Deuteros\Common\EntityDefinition;
+use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\EntityChangedInterface;
@@ -50,13 +52,12 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters return identical entity metadata.
    */
   public function testMetadataParity(): void {
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'id' => 42,
-      'uuid' => 'test-uuid',
-      'label' => 'Test Label',
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->id(42)
+      ->uuid('test-uuid')
+      ->label('Test Label')
+      ->build();
 
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
@@ -72,16 +73,12 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters return identical field values.
    */
   public function testFieldValueParity(): void {
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_text' => 'Test Value',
-        'field_number' => 123,
-        'field_ref' => ['target_id' => 42],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_text', 'Test Value')
+      ->field('field_number', 123)
+      ->field('field_ref', ['target_id' => 42])
+      ->build();
 
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
@@ -109,14 +106,10 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters resolve callbacks identically.
    */
   public function testCallbackResolutionParity(): void {
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_dynamic' => fn(array $context) => $context['value'] * 2,
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_dynamic', fn(array $context) => $context['value'] * 2)
+      ->build();
     $context = ['value' => 21];
 
     $mock = $this->createMockDouble($definition, $context);
@@ -134,18 +127,14 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters handle multi-value fields identically.
    */
   public function testMultiValueFieldParity(): void {
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_tags' => [
-          ['target_id' => 1],
-          ['target_id' => 2],
-          ['target_id' => 3],
-        ],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_tags', [
+        ['target_id' => 1],
+        ['target_id' => 2],
+        ['target_id' => 3],
+      ])
+      ->build();
 
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
@@ -174,15 +163,12 @@ class BehavioralParityTest extends TestCase {
    */
   public function testMethodOverrideParity(): void {
     $timestamp = 1704067200;
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'interfaces' => [EntityChangedInterface::class],
-      'method_overrides' => [
-        'getChangedTime' => fn(array $context) => $context['time'],
-        'setChangedTime' => fn() => NULL,
-      ],
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->interface(EntityChangedInterface::class)
+      ->methodOverride('getChangedTime', fn(array $context) => $context['time'])
+      ->methodOverride('setChangedTime', fn() => NULL)
+      ->build();
     $context = ['time' => $timestamp];
 
     $mock = $this->createMockDouble($definition, $context);
@@ -205,21 +191,13 @@ class BehavioralParityTest extends TestCase {
    */
   public function testMultiInterfaceParity(): void {
     $timestamp = 1704067200;
-    $definition = [
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_text' => 'Test Value',
-      ],
-      'interfaces' => [
-        FieldableEntityInterface::class,
-        EntityChangedInterface::class,
-      ],
-      'method_overrides' => [
-        'getChangedTime' => fn() => $timestamp,
-        'setChangedTime' => fn() => NULL,
-      ],
-    ];
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_text', 'Test Value')
+      ->interface(EntityChangedInterface::class)
+      ->methodOverride('getChangedTime', fn() => $timestamp)
+      ->methodOverride('setChangedTime', fn() => NULL)
+      ->build();
 
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
@@ -244,16 +222,38 @@ class BehavioralParityTest extends TestCase {
 
   /**
    * Creates a PHPUnit mock double.
+   *
+   * @param \Deuteros\Common\EntityDefinition $definition
+   *   The entity definition.
+   * @param array<string, mixed> $context
+   *   Optional context data.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The entity double.
    */
-  private function createMockDouble(array $definition, array $context = []): EntityInterface {
-    return $this->mockFactory->create($definition + ['context' => $context]);
+  private function createMockDouble(
+    EntityDefinition $definition,
+    array $context = [],
+  ): EntityInterface {
+    return $this->mockFactory->create($definition, $context);
   }
 
   /**
-   * Creates a PHPUnit mock double.
+   * Creates a Prophecy double.
+   *
+   * @param \Deuteros\Common\EntityDefinition $definition
+   *   The entity definition.
+   * @param array<string, mixed> $context
+   *   Optional context data.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The entity double.
    */
-  private function createProphecyDouble(array $definition, array $context = []): EntityInterface {
-    return $this->prophecyFactory->create($definition + ['context' => $context]);
+  private function createProphecyDouble(
+    EntityDefinition $definition,
+    array $context = [],
+  ): EntityInterface {
+    return $this->prophecyFactory->create($definition, $context);
   }
 
 }

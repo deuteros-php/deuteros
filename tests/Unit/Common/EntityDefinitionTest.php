@@ -94,76 +94,6 @@ class EntityDefinitionTest extends TestCase {
   }
 
   /**
-   * Tests ::fromArray() with minimal configuration.
-   */
-  public function testFromArrayMinimal(): void {
-    $definition = EntityDefinition::fromArray(['entity_type' => 'node']);
-
-    $this->assertSame('node', $definition->entityType);
-    $this->assertSame('node', $definition->bundle);
-  }
-
-  /**
-   * Tests ::fromArray() with full configuration.
-   */
-  public function testFromArrayFull(): void {
-    $definition = EntityDefinition::fromArray([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'id' => 1,
-      'uuid' => 'test-uuid',
-      'label' => 'Test Node',
-      'fields' => [
-        'field_test' => 'raw value',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-      'method_overrides' => [
-        'getOwnerId' => fn() => 1,
-      ],
-      'context' => ['key' => 'value'],
-      'mutable' => TRUE,
-    ]);
-
-    $this->assertSame('node', $definition->entityType);
-    $this->assertSame('article', $definition->bundle);
-    $this->assertSame(1, $definition->id);
-    $this->assertInstanceOf(FieldDefinition::class, $definition->fields['field_test']);
-    $this->assertSame('raw value', $definition->fields['field_test']->getValue());
-  }
-
-  /**
-   * Tests that ::fromArray() converts raw field values to "FieldDefinition".
-   */
-  public function testFromArrayConvertsRawFieldsToDefinitions(): void {
-    $definition = EntityDefinition::fromArray([
-      'entity_type' => 'node',
-      'fields' => ['field_test' => 'value'],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
-
-    $this->assertInstanceOf(FieldDefinition::class, $definition->fields['field_test']);
-  }
-
-  /**
-   * Tests that ::fromArray() throws when "entity_type" is missing.
-   */
-  public function testFromArrayRequiresEntityType(): void {
-    $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage("'entity_type' is required");
-
-    EntityDefinition::fromArray([]);
-  }
-
-  /**
-   * Tests that ::fromArray() throws when entity_type is empty string.
-   */
-  public function testFromArrayRejectsEmptyEntityType(): void {
-    $this->expectException(\InvalidArgumentException::class);
-
-    EntityDefinition::fromArray(['entity_type' => '']);
-  }
-
-  /**
    * Tests ::hasInterface() returns correct boolean for declared interfaces.
    */
   public function testHasInterface(): void {
@@ -223,6 +153,50 @@ class EntityDefinitionTest extends TestCase {
     $this->assertSame(['a' => 1], $original->context);
     $this->assertSame(['a' => 1, 'b' => 2], $new->context);
     $this->assertNotSame($original, $new);
+  }
+
+  /**
+   * Tests ::withContext() returns same instance when context is empty.
+   */
+  public function testWithContextReturnsSameInstanceWhenEmpty(): void {
+    $original = new EntityDefinition(
+      entityType: 'node',
+      context: ['a' => 1],
+    );
+
+    $new = $original->withContext([]);
+
+    $this->assertSame($original, $new);
+  }
+
+  /**
+   * Tests ::withMutable() creates a new instance with different mutability.
+   */
+  public function testWithMutable(): void {
+    $original = new EntityDefinition(
+      entityType: 'node',
+      mutable: FALSE,
+    );
+
+    $mutable = $original->withMutable(TRUE);
+
+    $this->assertFalse($original->mutable);
+    $this->assertTrue($mutable->mutable);
+    $this->assertNotSame($original, $mutable);
+  }
+
+  /**
+   * Tests ::withMutable() returns same instance when mutability unchanged.
+   */
+  public function testWithMutableReturnsSameInstanceWhenUnchanged(): void {
+    $original = new EntityDefinition(
+      entityType: 'node',
+      mutable: TRUE,
+    );
+
+    $new = $original->withMutable(TRUE);
+
+    $this->assertSame($original, $new);
   }
 
 }

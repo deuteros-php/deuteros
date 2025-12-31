@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
+use Deuteros\Common\EntityDefinition;
+use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,9 +43,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests creating an entity double with only "entity_type" specified.
    */
   public function testMinimalEntityDouble(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-    ]);
+    $entity = $this->factory->create(
+      new EntityDefinition('node')
+    );
 
     $this->assertInstanceOf(EntityInterface::class, $entity);
     $this->assertSame('node', $entity->getEntityTypeId());
@@ -55,13 +56,14 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests entity metadata accessors (id, uuid, label, bundle).
    */
   public function testEntityWithMetadata(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'id' => 42,
-      'uuid' => 'test-uuid-123',
-      'label' => 'Test Article',
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(42)
+        ->uuid('test-uuid-123')
+        ->label('Test Article')
+        ->build()
+    );
 
     $this->assertSame('node', $entity->getEntityTypeId());
     $this->assertSame('article', $entity->bundle());
@@ -74,15 +76,13 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests accessing scalar field values via get() method.
    */
   public function testScalarFieldAccess(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_title' => 'Test Title',
-        'field_count' => 42,
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->field('field_count', 42)
+        ->build()
+    );
 
     $this->assertSame('Test Title', $entity->get('field_title')->value);
     $this->assertSame(42, $entity->get('field_count')->value);
@@ -92,16 +92,13 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that callback field values receive context and resolve correctly.
    */
   public function testCallbackFieldResolution(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_dynamic' => fn(array $context) => $context['dynamic_value'],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ], [
-      'dynamic_value' => 'Resolved from context',
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_dynamic', fn(array $context) => $context['dynamic_value'])
+        ->build(),
+      ['dynamic_value' => 'Resolved from context'],
+    );
 
     $this->assertSame('Resolved from context', $entity->get('field_dynamic')->value);
   }
@@ -110,19 +107,18 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests context propagation to metadata and field callbacks.
    */
   public function testContextPropagation(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'id' => fn(array $context) => $context['computed_id'],
-      'label' => fn(array $context) => "Label: {$context['title']}",
-      'fields' => [
-        'field_computed' => fn(array $context) => $context['title'] . ' Field',
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(fn(array $context) => $context['computed_id'])
+        ->label(fn(array $context) => "Label: {$context['title']}")
+        ->field('field_computed', fn(array $context) => $context['title'] . ' Field')
+        ->build(),
+      [
+        'computed_id' => 100,
+        'title' => 'Dynamic',
       ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ], [
-      'computed_id' => 100,
-      'title' => 'Dynamic',
-    ]);
+    );
 
     $this->assertSame(100, $entity->id());
     $this->assertSame('Label: Dynamic', $entity->label());
@@ -133,18 +129,16 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests accessing multi-value fields via ::first(), ::get($i), and shorthand.
    */
   public function testMultiValueFieldAccess(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_tags' => [
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
           ['target_id' => 1],
           ['target_id' => 2],
           ['target_id' => 3],
-        ],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+        ])
+        ->build()
+    );
 
     // Access via first().
     $this->assertSame(1, $entity->get('field_tags')->first()->target_id);
@@ -162,14 +156,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests chained field access: entity -> field list -> item -> property.
    */
   public function testNestedFieldAccess(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_text' => 'Plain text value',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_text', 'Plain text value')
+        ->build()
+    );
 
     // Chain: entity -> field list -> first item -> value property.
     $this->assertSame('Plain text value', $entity->get('field_text')->value);
@@ -180,14 +172,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests ::hasField() returns correct boolean for defined fields.
    */
   public function testHasField(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_existing' => 'value',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_existing', 'value')
+        ->build()
+    );
 
     $this->assertTrue($entity->hasField('field_existing'));
     $this->assertFalse($entity->hasField('field_nonexistent'));
@@ -197,15 +187,13 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests ::isEmpty() returns correct boolean based on field value.
    */
   public function testFieldIsEmpty(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_with_value' => 'value',
-        'field_null' => NULL,
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_with_value', 'value')
+        ->field('field_null', NULL)
+        ->build()
+    );
 
     $this->assertFalse($entity->get('field_with_value')->isEmpty());
     $this->assertTrue($entity->get('field_null')->isEmpty());
@@ -215,15 +203,13 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that "method_overrides" take precedence over default resolvers.
    */
   public function testMethodOverridesPrecedence(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'id' => 1,
-      'method_overrides' => [
-        // Override the core id() resolver.
-        'id' => fn() => 999,
-      ],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(1)
+        ->methodOverride('id', fn() => 999)
+        ->build()
+    );
 
     // The override should take precedence.
     $this->assertSame(999, $entity->id());
@@ -237,13 +223,13 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * in PHPUnit vs Prophecy.
    */
   public function testMethodOverridesReceiveContext(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'method_overrides' => [
-        'id' => fn(array $context) => $context['computed_id'],
-      ],
-    ], ['computed_id' => 999]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->methodOverride('id', fn(array $context) => $context['computed_id'])
+        ->build(),
+      ['computed_id' => 999],
+    );
 
     $this->assertSame(999, $entity->id());
   }
@@ -252,14 +238,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that accessing undefined fields throws "InvalidArgumentException".
    */
   public function testUndefinedFieldThrows(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_defined' => 'value',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_defined', 'value')
+        ->build()
+    );
 
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("Field 'field_undefined' is not defined");
@@ -271,10 +255,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that guardrail methods like save() throw LogicException.
    */
   public function testUnsupportedMethodThrows(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-    ]);
+    $entity = $this->factory->create(
+      new EntityDefinition(entityType: 'node', bundle: 'article')
+    );
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage("Method 'save' is not supported");
@@ -287,14 +270,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that repeated get() calls return the same field list instance.
    */
   public function testFieldListCaching(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_test' => 'value',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_test', 'value')
+        ->build()
+    );
 
     $firstAccess = $entity->get('field_test');
     $secondAccess = $entity->get('field_test');
@@ -307,14 +288,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that mutable entities allow field value updates via set().
    */
   public function testMutableEntityFieldSet(): void {
-    $entity = $this->factory->createMutable([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_status' => 'draft',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->createMutable(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
 
     // Initial value.
     $this->assertSame('draft', $entity->get('field_status')->value);
@@ -330,14 +309,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that immutable entities throw on ::set() attempts.
    */
   public function testImmutableEntityRejectsSet(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_status' => 'draft',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage("Cannot modify field 'field_status' on immutable entity double");
@@ -350,14 +327,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that ::set() returns the entity for method chaining.
    */
   public function testMutableEntitySetReturnsEntity(): void {
-    $entity = $this->factory->createMutable([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_status' => 'draft',
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->createMutable(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
 
     $result = $entity->set('field_status', 'published');
 
@@ -369,14 +344,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests accessing entity reference field "target_id" property.
    */
   public function testEntityReferenceFieldWithTargetId(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_author' => ['target_id' => 42],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['target_id' => 42])
+        ->build()
+    );
 
     $this->assertSame(42, $entity->get('field_author')->target_id);
     $this->assertSame(42, $entity->get('field_author')->first()->target_id);
@@ -386,17 +359,15 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests ::getValue() returns array of all field item values.
    */
   public function testFieldGetValue(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_tags' => [
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
           ['target_id' => 1],
           ['target_id' => 2],
-        ],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+        ])
+        ->build()
+    );
 
     $values = $entity->get('field_tags')->getValue();
     $this->assertCount(2, $values);
@@ -408,14 +379,12 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that empty array fields return NULL from ::first() and ::get().
    */
   public function testNullFieldItem(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_empty' => [],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_empty', [])
+        ->build()
+    );
 
     $this->assertNull($entity->get('field_empty')->first());
     $this->assertNull($entity->get('field_empty')->get(0));
@@ -426,16 +395,14 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Tests that ;;get() with out-of-range delta returns NULL.
    */
   public function testOutOfRangeDeltaReturnsNull(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'fields' => [
-        'field_tags' => [
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
           ['target_id' => 1],
-        ],
-      ],
-      'interfaces' => [FieldableEntityInterface::class],
-    ]);
+        ])
+        ->build()
+    );
 
     $this->assertNull($entity->get('field_tags')->get(99));
   }

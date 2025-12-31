@@ -76,81 +76,6 @@ final readonly class EntityDefinition {
   }
 
   /**
-   * Creates an EntityDefinition from an array.
-   *
-   * Used by traits for convenient definition syntax.
-   *
-   * @param array<string, mixed> $data
-   *   The definition data with snake_case keys:
-   *   - entity_type: (required) The entity type ID.
-   *   - bundle: The bundle (defaults to entity_type).
-   *   - id: The entity ID.
-   *   - uuid: The entity UUID.
-   *   - label: The entity label.
-   *   - fields: Field definitions (raw values, converted to FieldDefinition).
-   *   - interfaces: List of interfaces to implement.
-   *   - method_overrides: Method overrides keyed by method name.
-   *   - context: Context data for callback resolution.
-   *   - mutable: Whether the entity double should be mutable.
-   *
-   * @return self
-   *   A new EntityDefinition instance.
-   *
-   * @throws \InvalidArgumentException
-   *   If entity_type is missing.
-   */
-  public static function fromArray(array $data): self {
-    $entityType = $data['entity_type'] ?? NULL;
-    if (!is_string($entityType) || $entityType === '') {
-      throw new \InvalidArgumentException(
-        "'entity_type' is required and must be a non-empty string."
-      );
-    }
-
-    // Convert raw field values to FieldDefinition objects.
-    /** @var array<string, FieldDefinition> $fields */
-    $fields = [];
-    if (isset($data['fields']) && is_array($data['fields'])) {
-      foreach ($data['fields'] as $fieldName => $value) {
-        assert(is_string($fieldName));
-        $fields[$fieldName] = $value instanceof FieldDefinition ? $value : new FieldDefinition($value);
-      }
-    }
-
-    // Extract and validate optional parameters.
-    $bundle = $data['bundle'] ?? '';
-    assert(is_string($bundle));
-
-    /** @var list<class-string> $interfaces */
-    $interfaces = $data['interfaces'] ?? [];
-    assert(is_array($interfaces));
-
-    /** @var array<string, mixed> $methodOverrides */
-    $methodOverrides = $data['method_overrides'] ?? [];
-    assert(is_array($methodOverrides));
-
-    /** @var array<string, mixed> $context */
-    $context = $data['context'] ?? [];
-    assert(is_array($context));
-
-    $mutable = $data['mutable'] ?? FALSE;
-    assert(is_bool($mutable));
-
-    return new self(
-      entityType: $entityType,
-      bundle: $bundle,
-      id: $data['id'] ?? NULL,
-      uuid: $data['uuid'] ?? NULL,
-      label: $data['label'] ?? NULL,
-      fields: $fields,
-      interfaces: $interfaces,
-      methodOverrides: $methodOverrides,
-      context: $context,
-      mutable: $mutable,
-    );
-  }
-
-  /**
    * Checks if a specific interface is implemented.
    *
    * @param class-string $interface
@@ -225,6 +150,9 @@ final readonly class EntityDefinition {
    *   A new EntityDefinition with merged context.
    */
   public function withContext(array $additionalContext): self {
+    if ($additionalContext === []) {
+      return $this;
+    }
     return new self(
       entityType: $this->entityType,
       bundle: $this->bundle,
@@ -236,6 +164,33 @@ final readonly class EntityDefinition {
       methodOverrides: $this->methodOverrides,
       context: array_merge($this->context, $additionalContext),
       mutable: $this->mutable,
+    );
+  }
+
+  /**
+   * Creates a new definition with the specified mutability.
+   *
+   * @param bool $mutable
+   *   Whether the entity double should be mutable.
+   *
+   * @return self
+   *   A new EntityDefinition with the specified mutability.
+   */
+  public function withMutable(bool $mutable): self {
+    if ($this->mutable === $mutable) {
+      return $this;
+    }
+    return new self(
+      entityType: $this->entityType,
+      bundle: $this->bundle,
+      id: $this->id,
+      uuid: $this->uuid,
+      label: $this->label,
+      fields: $this->fields,
+      interfaces: $this->interfaces,
+      methodOverrides: $this->methodOverrides,
+      context: $this->context,
+      mutable: $mutable,
     );
   }
 

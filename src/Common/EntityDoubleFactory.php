@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * Supported behaviors:
  * - Scalar and callback-based field values
  * - Multi-value field access via get(int $delta)
- * - Custom interfaces via the 'interfaces' array
+ * - Custom interfaces via the builder
  * - Method overrides for custom behavior
  * - Context propagation to callbacks
  * - Mutable doubles for testing entity modifications
@@ -41,29 +41,24 @@ use PHPUnit\Framework\TestCase;
  * @example Static values
  * ```php
  * $factory = EntityDoubleFactory::fromTest($this);
- * $entity = $factory->create([
- *     'entity_type' => 'node',
- *     'bundle' => 'article',
- *     'id' => 1,
- *     'fields' => [
- *         'field_title' => 'Test Article',
- *     ],
- *     'interfaces' => [FieldableEntityInterface::class],
- * ]);
+ * $entity = $factory->create(
+ *   EntityDefinitionBuilder::create('node')
+ *     ->bundle('article')
+ *     ->id(1)
+ *     ->field('field_title', 'Test Article')
+ * );
  * $this->assertSame('Test Article', $entity->get('field_title')->value);
  * ```
  *
  * @example Callback-based resolution
  * ```php
  * $factory = EntityDoubleFactory::fromTest($this);
- * $entity = $factory->create([
- *     'entity_type' => 'node',
- *     'bundle' => 'article',
- *     'fields' => [
- *         'field_date' => fn($context) => $context['date'],
- *     ],
- *     'interfaces' => [FieldableEntityInterface::class],
- * ], ['date' => '2024-01-01']);
+ * $entity = $factory->create(
+ *   EntityDefinitionBuilder::create('node')
+ *     ->bundle('article')
+ *     ->field('field_date', fn($context) => $context['date']),
+ *   ['date' => '2024-01-01'],
+ * );
  * $this->assertSame('2024-01-01', $entity->get('field_date')->value);
  * ```
  */
@@ -94,19 +89,31 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * {@inheritdoc}
    */
-  public function create(array $definition, array $context = []): EntityInterface {
-    return $this->buildEntityDouble($this->normalizeDefinition($definition, $context, FALSE));
+  public function create(
+    EntityDefinition $definition,
+    array $context = [],
+  ): EntityInterface {
+    $normalized = $definition
+      ->withContext($context)
+      ->withMutable(FALSE);
+    return $this->buildEntityDouble($normalized);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createMutable(array $definition, array $context = []): EntityInterface {
-    return $this->buildEntityDouble($this->normalizeDefinition($definition, $context, TRUE));
+  public function createMutable(
+    EntityDefinition $definition,
+    array $context = [],
+  ): EntityInterface {
+    $normalized = $definition
+      ->withContext($context)
+      ->withMutable(TRUE);
+    return $this->buildEntityDouble($normalized);
   }
 
   /**
-   * Builds an entity double from a normalized definition.
+   * Builds an entity double from a definition.
    *
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The normalized entity definition.
@@ -143,37 +150,6 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $this->wireGuardrails($double, $definition, $interfaces);
 
     return $this->instantiateDouble($double);
-  }
-
-  /**
-   * Normalizes a definition array into an EntityDefinition.
-   *
-   * @param array<string, mixed> $definition
-   *   The definition array with snake_case keys.
-   * @param array<string, mixed> $context
-   *   Additional context to merge.
-   * @param bool $mutable
-   *   Whether the entity double should be mutable.
-   *
-   * @return \Deuteros\Common\EntityDefinition
-   *   The normalized EntityDefinition.
-   */
-  protected function normalizeDefinition(
-    array $definition,
-    array $context = [],
-    bool $mutable = FALSE,
-  ): EntityDefinition {
-    // Merge context into definition.
-    if ($context !== []) {
-      /** @var array<string, mixed> $existingContext */
-      $existingContext = $definition['context'] ?? [];
-      $definition['context'] = array_merge($existingContext, $context);
-    }
-
-    // Set mutability.
-    $definition['mutable'] = $mutable;
-
-    return EntityDefinition::fromArray($definition);
   }
 
   /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration\Prophecy;
 
+use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Deuteros\Tests\Integration\EntityDoubleFactoryTestBase;
@@ -37,18 +38,15 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
    * willImplement().
    */
   public function testInterfaceComposition(): void {
-    $entity = $this->factory->create([
-      'entity_type' => 'node',
-      'bundle' => 'article',
-      'interfaces' => [
-        FieldableEntityInterface::class,
-        EntityChangedInterface::class,
-      ],
-      'method_overrides' => [
-        'getChangedTime' => fn() => 1704067200,
-        'setChangedTime' => fn() => throw new \LogicException('Read-only'),
-      ],
-    ]);
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(FieldableEntityInterface::class)
+        ->interface(EntityChangedInterface::class)
+        ->methodOverride('getChangedTime', fn() => 1704067200)
+        ->methodOverride('setChangedTime', fn() => throw new \LogicException('Read-only'))
+        ->build()
+    );
 
     $this->assertInstanceOf(EntityInterface::class, $entity);
     $this->assertInstanceOf(FieldableEntityInterface::class, $entity);

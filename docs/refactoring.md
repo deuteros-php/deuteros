@@ -414,3 +414,90 @@ in the hierarchy:
 3. **Minimal API Surface**: Single new method on existing builder
 4. **Forwards Compatible**: New Drupal interfaces automatically supported
 5. **Lenient Testing**: Exploratory testing without configuring every method
+
+## Task 7 - Break Core Circular Dependency
+
+**Status:** Complete
+
+### Overview
+
+Removed the hard dependency on `drupal/core` so that Drupal core itself can
+depend on this package without creating a circular dependency. Implemented via
+autoloaded interface stubs that define the required interfaces when Drupal core
+is not available.
+
+### Problem
+
+The original `composer.json` had `drupal/core` in `require-dev`. If Drupal core
+wanted to depend on Deuteros, this would create a circular dependency.
+
+### Solution
+
+1. **Interface Stubs**: Created `stubs/` directory with minimal interface
+   definitions that mirror Drupal's interface hierarchy
+2. **Conditional Loading**: Bootstrap file only loads stubs when the real
+   Drupal interfaces are not available
+3. **Dual Composer Configuration**:
+   - `composer.json` - Production (uses stubs, minimal dependencies)
+   - `composer.dev.json` - Development (includes drupal/core, phpcs, phpstan)
+
+### Changes
+
+**Created:**
+- `stubs/bootstrap.php` - Conditional loader for stub interfaces
+- `stubs/Drupal/Core/Entity/EntityInterface.php`
+- `stubs/Drupal/Core/Entity/FieldableEntityInterface.php`
+- `stubs/Drupal/Core/Entity/ContentEntityInterface.php`
+- `stubs/Drupal/Core/Entity/EntityChangedInterface.php`
+- `stubs/Drupal/Core/Entity/EntityPublishedInterface.php`
+- `stubs/Drupal/Core/Config/Entity/ConfigEntityInterface.php`
+- `stubs/Drupal/Core/Field/FieldItemInterface.php`
+- `stubs/Drupal/Core/Field/FieldItemListInterface.php`
+- `stubs/Drupal/node/NodeInterface.php`
+- `stubs/Drupal/user/EntityOwnerInterface.php`
+- `composer.dev.json` - Full development configuration
+
+**Modified:**
+- `composer.json` - Removed drupal/core, added stubs autoload
+- `CLAUDE.md` - Updated build commands for dual composer setup
+
+### Stub Interface Design
+
+Stubs include method signatures (not just empty interfaces) because PHPUnit
+and Prophecy require method definitions to create mocks. Each stub contains
+only the methods actually used by Deuteros:
+
+```php
+// stubs/Drupal/Core/Entity/EntityInterface.php
+interface EntityInterface {
+  public function uuid();
+  public function id();
+  public function getEntityTypeId();
+  public function bundle();
+  public function label();
+  public function save();
+  public function delete();
+  // ... other methods used by Deuteros
+}
+```
+
+### Development Workflow
+
+```bash
+# Development setup (recommended)
+COMPOSER=composer.dev.json composer install
+composer phpcs
+composer phpstan
+composer test
+
+# Production setup (verify stubs work)
+composer install
+composer test
+```
+
+### Benefits
+
+1. **No Circular Dependency**: Drupal core can now depend on Deuteros
+2. **Minimal Production Footprint**: No drupal/core in production dependencies
+3. **Full Test Coverage**: Tests pass with both real interfaces and stubs
+4. **Transparent**: Users with Drupal installed get real interfaces automatically

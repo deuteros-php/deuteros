@@ -14,13 +14,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Test Commands
 
+This project uses two Composer configurations:
+- `composer.dev.json` - Development (includes Drupal core, phpcs, phpstan)
+- `composer.json` - Production (uses interface stubs, minimal dependencies)
+
 ```bash
-composer install              # Install dependencies
+# Development setup (recommended for working on the package)
+COMPOSER=composer.dev.json composer install
+
+# Run tests
 composer test                 # Run all tests (alias for phpunit)
 ./vendor/bin/phpunit          # Run all tests directly
 ./vendor/bin/phpunit tests/Unit        # Unit tests only
 ./vendor/bin/phpunit tests/Integration # Integration tests only
 ./vendor/bin/phpunit --filter TestName # Run specific test by name
+
+# Production setup (for testing stub compatibility)
+composer install              # Uses stubs instead of Drupal core
 ```
 
 ## Coding Standards
@@ -28,6 +38,7 @@ composer test                 # Run all tests (alias for phpunit)
 The codebase follows Drupal coding standards (Drupal + DrupalPractice sniffs).
 
 ```bash
+# Requires development setup (COMPOSER=composer.dev.json composer install)
 composer phpcs                # Check coding standards
 composer phpcbf               # Auto-fix coding standard violations
 ```
@@ -49,6 +60,7 @@ Additional formatting rules:
 PHPStan is configured at level 10 (max) with a baseline for existing issues.
 
 ```bash
+# Requires development setup (COMPOSER=composer.dev.json composer install)
 composer phpstan             # Run static analysis
 ```
 
@@ -131,9 +143,10 @@ These constraints must never be violated:
 
 ## Directory Layout
 
-After running `composer install` the following directories are available:
-- `web/core` contains Drupal core
-- `vendor` contains all the remaining Composer dependencies
+After running `COMPOSER=composer.dev.json composer install`:
+- `stubs/` contains interface stubs (used when Drupal core is not available)
+- `vendor` contains all Composer dependencies
+- `web/core` contains Drupal core (only in development mode)
 
 ## Documentation
 

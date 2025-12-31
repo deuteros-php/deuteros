@@ -5,3 +5,4 @@
 /vendor
 /web
 /composer.lock
+/composer.dev.lock

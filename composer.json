@@ -7,34 +7,23 @@
     "php": ">=8.3"
   },
   "require-dev": {
-    "composer/installers": "^2.3",
-    "drupal/coder": "^8.3",
-    "drupal/core": "^10.0 || ^11.0",
     "phpunit/phpunit": "^9.0 || ^10.0 || ^11.0",
     "phpspec/prophecy": "^1.15",
-    "phpspec/prophecy-phpunit": "^2.0",
-    "phpstan/phpstan": "^2.1",
-    "mglaman/phpstan-drupal": "^2.0",
-    "phpstan/phpstan-phpunit": "^2.0"
+    "phpspec/prophecy-phpunit": "^2.0"
   },
   "autoload": {
     "psr-4": {
       "Deuteros\\": "src/"
-    }
+    },
+    "files": ["stubs/bootstrap.php"]
   },
   "autoload-dev": {
     "psr-4": {
-      "Deuteros\\Tests\\": "tests/",
-      "Drupal\\node\\": "web/core/modules/node/src/",
-      "Drupal\\user\\": "web/core/modules/user/src/"
+      "Deuteros\\Tests\\": "tests/"
     }
   },
   "scripts": {
-    "test": "phpunit",
-    "phpcs": "phpcs --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
-    "phpcbf": "phpcbf --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
-    "phpstan": "phpstan analyse",
-    "phpstan-b": "phpstan analyse -b phpstan-baseline.neon"
+    "test": "phpunit"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -43,21 +32,6 @@
       "composer/installers": true,
       "dealerdirect/phpcodesniffer-composer-installer": true,
       "drupal/core-composer-scaffold": true
-    }
-  },
-  "extra": {
-    "drupal-scaffold": {
-      "locations": {
-        "web-root": "web/"
-      },
-      "file-mapping": {
-        "[project-root]/.editorconfig": false,
-        "[project-root]/.gitattributes": false,
-        "[project-root]/recipes/README.txt": false
-      }
-    },
-    "installer-paths": {
-      "web/core": ["type:drupal-core"]
     }
   }
 }

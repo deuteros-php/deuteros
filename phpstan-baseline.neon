@@ -309,7 +309,7 @@ parameters:
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
-			count: 3
+			count: 4
 			path: tests/Integration/EntityDoubleFactoryTestBase.php
 
 		-
@@ -389,18 +389,6 @@ parameters:
 			identifier: method.impossibleType
 			count: 1
 			path: tests/Integration/NodeInterfaceTest.php
-
-		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Integration/PhpUnit/MockEntityDoubleFactoryTest.php
-
-		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Integration/Prophecy/ProphecyEntityDoubleFactoryTest.php
 
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Deuteros\\\\Common\\\\FieldDefinition'' and Deuteros\\Common\\FieldDefinition will always evaluate to true\.$#'

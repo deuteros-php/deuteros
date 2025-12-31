@@ -9,6 +9,7 @@ use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\TestCase;
@@ -408,6 +409,26 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
 
     $this->assertNull($entity->get('field_tags')->get(99));
+  }
+
+  /**
+   * Tests implementing multiple interfaces with method overrides.
+   */
+  public function testInterfaceComposition(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(FieldableEntityInterface::class)
+        ->interface(EntityChangedInterface::class)
+        ->methodOverride('getChangedTime', fn() => 1704067200)
+        ->methodOverride('setChangedTime', fn() => throw new \LogicException('Read-only'))
+        ->build()
+    );
+
+    $this->assertInstanceOf(EntityInterface::class, $entity);
+    $this->assertInstanceOf(FieldableEntityInterface::class, $entity);
+    $this->assertInstanceOf(EntityChangedInterface::class, $entity);
+    $this->assertSame(1704067200, $entity->getChangedTime());
   }
 
   /**

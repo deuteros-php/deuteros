@@ -33,7 +33,8 @@
     "test": "phpunit",
     "phpcs": "phpcs --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
     "phpcbf": "phpcbf --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
-    "phpstan": "phpstan analyse"
+    "phpstan": "phpstan analyse",
+    "phpstan-b": "phpstan analyse -b phpstan-baseline.neon"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

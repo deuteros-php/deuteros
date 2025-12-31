@@ -9,6 +9,7 @@ use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Tests\Integration\EntityDoubleFactoryTestBase;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -27,24 +28,17 @@ class MockEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
   }
 
   /**
-   * Tests interface composition with method overrides.
+   * Tests implementing multiple interfaces with method overrides.
    *
-   * Note: PHPUnit cannot mock intersection of interfaces that share a common
-   * parent (they have duplicate methods). When FieldableEntityInterface and
-   * EntityChangedInterface are both specified, only FieldableEntityInterface
-   * is mocked. For full interface composition, use the Prophecy adapter.
-   *
-   * This test demonstrates that method overrides work even when the interface
-   * that declares them is not directly mocked.
+   * PHPUnit can handle multiple interfaces that share a common parent via
+   * dynamically generated combined interfaces.
    */
   public function testInterfaceComposition(): void {
-    // For PHPUnit: use only "EntityChangedInterface" (which extends
-    // "EntityInterface") and configure field-related methods via overrides
-    // if needed.
     $entity = $this->factory->create([
       'entity_type' => 'node',
       'bundle' => 'article',
       'interfaces' => [
+        FieldableEntityInterface::class,
         EntityChangedInterface::class,
       ],
       'method_overrides' => [
@@ -54,6 +48,7 @@ class MockEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
     ]);
 
     $this->assertInstanceOf(EntityInterface::class, $entity);
+    $this->assertInstanceOf(FieldableEntityInterface::class, $entity);
     $this->assertInstanceOf(EntityChangedInterface::class, $entity);
     $this->assertSame(1704067200, $entity->getChangedTime());
   }

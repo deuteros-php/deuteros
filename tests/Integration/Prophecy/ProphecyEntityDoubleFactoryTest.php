@@ -34,8 +34,7 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
    * Tests implementing multiple interfaces with method overrides.
    *
    * Prophecy can handle multiple interfaces that share a common parent via
-   * willImplement(), unlike PHPUnit which cannot mock interface intersections
-   * with duplicate methods.
+   * willImplement().
    */
   public function testInterfaceComposition(): void {
     $entity = $this->factory->create([

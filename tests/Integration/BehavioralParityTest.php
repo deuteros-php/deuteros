@@ -197,6 +197,52 @@ class BehavioralParityTest extends TestCase {
   }
 
   /**
+   * Tests that both adapters handle multiple overlapping interfaces.
+   *
+   * Both FieldableEntityInterface and EntityChangedInterface extend
+   * EntityInterface. Both adapters should create doubles that implement all
+   * specified interfaces.
+   */
+  public function testMultiInterfaceParity(): void {
+    $timestamp = 1704067200;
+    $definition = [
+      'entity_type' => 'node',
+      'bundle' => 'article',
+      'fields' => [
+        'field_text' => 'Test Value',
+      ],
+      'interfaces' => [
+        FieldableEntityInterface::class,
+        EntityChangedInterface::class,
+      ],
+      'method_overrides' => [
+        'getChangedTime' => fn() => $timestamp,
+        'setChangedTime' => fn() => NULL,
+      ],
+    ];
+
+    $mock = $this->createMockDouble($definition);
+    $prophecy = $this->createProphecyDouble($definition);
+
+    // Both should implement all interfaces.
+    $this->assertInstanceOf(EntityInterface::class, $mock);
+    $this->assertInstanceOf(EntityInterface::class, $prophecy);
+    $this->assertInstanceOf(FieldableEntityInterface::class, $mock);
+    $this->assertInstanceOf(FieldableEntityInterface::class, $prophecy);
+    $this->assertInstanceOf(EntityChangedInterface::class, $mock);
+    $this->assertInstanceOf(EntityChangedInterface::class, $prophecy);
+
+    // Field access should work identically.
+    $this->assertSame(
+      $mock->get('field_text')->value,
+      $prophecy->get('field_text')->value
+    );
+
+    // Method overrides should work identically.
+    $this->assertSame($mock->getChangedTime(), $prophecy->getChangedTime());
+  }
+
+  /**
    * Creates a PHPUnit mock double.
    */
   private function createMockDouble(array $definition, array $context = []): EntityInterface {

@@ -22,6 +22,15 @@ use PHPUnit\Framework\TestCase;
 final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
   /**
+   * Cache of generated combined interfaces.
+   *
+   * Maps sorted interface list (as cache key) to generated interface name.
+   *
+   * @var array<string, class-string>
+   */
+  private static array $combinedInterfaceCache = [];
+
+  /**
    * Constructs a MockEntityDoubleFactory.
    *
    * @param \PHPUnit\Framework\TestCase $testCase
@@ -39,8 +48,93 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       return $this->invokeProtectedMethod('createMock', $interfaces[0]);
     }
 
-    // PHPUnit 10.1+ supports createMockForIntersectionOfInterfaces.
-    return $this->invokeProtectedMethod('createMockForIntersectionOfInterfaces', $interfaces);
+    // Create a combined interface to work around PHPUnit's limitation
+    // with intersection types for interfaces sharing a common parent.
+    $combinedInterface = $this->getOrCreateCombinedInterface($interfaces);
+    return $this->invokeProtectedMethod('createMock', $combinedInterface);
+  }
+
+  /**
+   * Gets or creates a combined interface for multiple interfaces.
+   *
+   * When PHPUnit's createMockForIntersectionOfInterfaces() fails due to
+   * interfaces sharing a common parent, this method generates a single
+   * interface that extends all requested interfaces.
+   *
+   * @param list<class-string> $interfaces
+   *   The interfaces to combine.
+   *
+   * @return class-string
+   *   The combined interface name.
+   *
+   * @throws \InvalidArgumentException
+   *   If any of the provided names are not valid interfaces.
+   */
+  private function getOrCreateCombinedInterface(array $interfaces): string {
+    // Validate all interfaces exist.
+    foreach ($interfaces as $interface) {
+      if (!interface_exists($interface)) {
+        throw new \InvalidArgumentException(sprintf(
+          "Cannot create combined interface: '%s' is not a valid interface.",
+          $interface
+        ));
+      }
+    }
+
+    // Sort for deterministic cache key.
+    $sorted = $interfaces;
+    sort($sorted);
+    $cacheKey = implode('|', $sorted);
+
+    // Check cache.
+    if (isset(self::$combinedInterfaceCache[$cacheKey])) {
+      return self::$combinedInterfaceCache[$cacheKey];
+    }
+
+    // Generate unique interface name.
+    $hash = substr(md5($cacheKey), 0, 12);
+    $interfaceName = "Deuteros\\Generated\\CombinedInterface_{$hash}";
+
+    // Check if already declared (e.g., from a previous test run in same
+    // process).
+    if (!interface_exists($interfaceName, FALSE)) {
+      $this->declareCombinedInterface($interfaceName, $interfaces);
+    }
+
+    self::$combinedInterfaceCache[$cacheKey] = $interfaceName;
+    return $interfaceName;
+  }
+
+  /**
+   * Declares a combined interface via eval.
+   *
+   * @param string $interfaceName
+   *   The fully-qualified interface name to declare.
+   * @param list<class-string> $interfaces
+   *   The interfaces to extend.
+   */
+  private function declareCombinedInterface(
+    string $interfaceName,
+    array $interfaces,
+  ): void {
+    $parts = explode('\\', $interfaceName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $extends = implode(', ', array_map(
+      fn(string $interface) => '\\' . $interface,
+      $interfaces
+    ));
+
+    $code = sprintf(
+      'namespace %s { interface %s extends %s {} }',
+      $namespace,
+      $shortName,
+      $extends
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
   }
 
   /**

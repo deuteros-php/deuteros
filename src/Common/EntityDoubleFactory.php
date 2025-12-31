@@ -7,7 +7,6 @@ namespace Deuteros\Common;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use PHPUnit\Framework\TestCase;
@@ -173,13 +172,13 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Resolves the interfaces to mock.
    *
-   * Deduplicates interfaces to avoid errors when interfaces extend each other
-   * (e.g., "FieldableEntityInterface" extending "EntityInterface").
+   * Deduplicates interfaces to avoid redundancy when interfaces extend each
+   * other (e.g., if both "FieldableEntityInterface" and "EntityInterface" are
+   * declared, only "FieldableEntityInterface" is kept since it already extends
+   * "EntityInterface").
    *
-   * When multiple interfaces share a common parent (like "EntityInterface"),
-   * PHPUnit's createMockForIntersectionOfInterfaces fails. In such cases, we
-   * prioritize "FieldableEntityInterface" over other "EntityInterface"
-   * children.
+   * Also ensures "EntityInterface" is always covered by at least one of the
+   * declared interfaces.
    *
    * @param \Deuteros\Common\EntityDefinition $definition
    *   The entity definition.
@@ -197,7 +196,8 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     }
 
     // Filter out interfaces that are parents of other interfaces in the list.
-    // This avoids errors about duplicate methods.
+    // This avoids redundancy (if A extends B and both are declared, keep only
+    // A).
     $filtered = [];
     foreach ($interfaces as $interface) {
       $isParent = FALSE;
@@ -210,35 +210,6 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
       }
       if (!$isParent) {
         $filtered[] = $interface;
-      }
-    }
-
-    // Can't mock intersection of interfaces that share a common parent
-    // interface (they'd have duplicate method signatures).
-    // If we have multiple "EntityInterface" children, keep only
-    // "FieldableEntityInterface" if present, as it's the most feature-rich.
-    if (count($filtered) > 1) {
-      $entityChildren = [];
-      foreach ($filtered as $interface) {
-        if (is_a($interface, EntityInterface::class, TRUE)) {
-          $entityChildren[] = $interface;
-        }
-      }
-
-      // If multiple interfaces extend "EntityInterface", we can only mock one.
-      if (count($entityChildren) > 1) {
-        // Prefer "FieldableEntityInterface" as it's the most comprehensive.
-        $preferred = in_array(FieldableEntityInterface::class, $entityChildren, TRUE)
-          ? FieldableEntityInterface::class
-          : $entityChildren[0];
-
-        // Keep only the preferred interface from EntityInterface children.
-        $filtered = array_filter(
-          $filtered, function ($interface) use ($entityChildren, $preferred) {
-            return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
-          }
-        );
-        $filtered = array_values($filtered);
       }
     }
 

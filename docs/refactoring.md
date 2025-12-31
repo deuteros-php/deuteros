@@ -110,3 +110,66 @@ EntityDoubleFactoryTestBase (abstract)
 2. **Type Safety**: Interface enables implementation-agnostic test code
 3. **Extensibility**: New factory implementations only need to implement interface
 4. **Clear Contract**: Public API documented via interface docblocks
+
+## Task 3 - Dynamic Interface Generation for Multiple Interfaces
+
+**Status:** Complete
+
+### Overview
+
+Enabled MockEntityDoubleFactory to handle multiple interfaces that share a common
+parent (e.g., both `FieldableEntityInterface` and `EntityChangedInterface` extend
+`EntityInterface`), achieving full parity with ProphecyEntityDoubleFactory.
+
+### Problem
+
+PHPUnit's `createMockForIntersectionOfInterfaces()` fails when interfaces share
+a common parent because they have duplicate method signatures. The previous
+workaround filtered interfaces to keep only one per parent hierarchy, limiting
+the PHPUnit adapter's capabilities.
+
+### Solution
+
+Generate a combined interface at runtime via `eval()` that extends all requested
+interfaces:
+
+```php
+// Instead of: createMockForIntersectionOfInterfaces([A, B, C])
+// Generate: interface Deuteros\Generated\CombinedInterface_abc123 extends A, B, C {}
+// Then: createMock(CombinedInterface_abc123::class)
+```
+
+This works because PHP interfaces can extend multiple interfaces that share a
+parent - there's no conflict since interfaces have no implementations.
+
+### Changes
+
+**Modified:**
+- `src/PhpUnit/MockEntityDoubleFactory.php` - Added dynamic interface generation
+- `src/Common/EntityDoubleFactory.php` - Simplified `resolveInterfaces()`
+- `tests/Integration/PhpUnit/MockEntityDoubleFactoryTest.php` - Updated tests
+- `tests/Integration/Prophecy/ProphecyEntityDoubleFactoryTest.php` - Updated docs
+- `tests/Integration/BehavioralParityTest.php` - Added multi-interface parity test
+
+### Architecture
+
+```
+MockEntityDoubleFactory
+├── $combinedInterfaceCache (static)    # Caches generated interfaces
+├── getOrCreateCombinedInterface()      # Gets/creates combined interface
+├── declareCombinedInterface()          # Uses eval() to declare interface
+└── createDoubleForInterfaces()         # Uses combined interface for multi
+
+Generated namespace: Deuteros\Generated\CombinedInterface_<hash>
+Hash: First 12 chars of MD5 of sorted interface names
+```
+
+### Benefits
+
+1. **Full Parity**: PHPUnit and Prophecy adapters now have identical interface
+   capabilities
+2. **No Filtering**: Users can specify any combination of interfaces
+3. **Cached**: Combined interfaces are cached statically to avoid redundant
+   `eval()` calls
+4. **Deterministic**: Same interface combination always produces the same
+   generated interface name

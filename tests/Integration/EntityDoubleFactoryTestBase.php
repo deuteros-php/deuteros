@@ -7,7 +7,10 @@ namespace Deuteros\Tests\Integration;
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactoryInterface;
+use Drupal\Core\Config\Entity\ConfigEntityInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -405,6 +408,82 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
 
     $this->assertNull($entity->get('field_tags')->get(99));
+  }
+
+  /**
+   * Tests fromInterface() creates a working double for ContentEntityInterface.
+   */
+  public function testFromInterfaceWithContentEntity(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+        ->bundle('article')
+        ->id(42)
+        ->field('field_test', 'value')
+        ->build()
+    );
+
+    $this->assertInstanceOf(EntityInterface::class, $entity);
+    $this->assertInstanceOf(ContentEntityInterface::class, $entity);
+    $this->assertInstanceOf(FieldableEntityInterface::class, $entity);
+    $this->assertSame('node', $entity->getEntityTypeId());
+    $this->assertSame('article', $entity->bundle());
+    $this->assertSame(42, $entity->id());
+    $this->assertSame('value', $entity->get('field_test')->value);
+  }
+
+  /**
+   * Tests fromInterface() creates a working double for ConfigEntityInterface.
+   */
+  public function testFromInterfaceWithConfigEntity(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::fromInterface('view', ConfigEntityInterface::class)
+        ->id('frontpage')
+        ->label('Frontpage View')
+        ->methodOverride('status', fn() => TRUE)
+        ->build()
+    );
+
+    $this->assertInstanceOf(EntityInterface::class, $entity);
+    $this->assertInstanceOf(ConfigEntityInterface::class, $entity);
+    $this->assertSame('view', $entity->getEntityTypeId());
+    $this->assertSame('frontpage', $entity->id());
+    $this->assertSame('Frontpage View', $entity->label());
+    $this->assertTrue($entity->status());
+  }
+
+  /**
+   * Tests lenient mode allows unsupported methods to return null.
+   */
+  public function testLenientModeAllowsUnsupportedMethods(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+        ->bundle('article')
+        ->lenient()
+        ->build()
+    );
+
+    // In lenient mode, save() should return null instead of throwing.
+    // PHPStan: save() returns int per PHPDoc, but in lenient mode we return
+    // null. This is intentional - we're testing our mock behavior.
+    $result = $entity->save();
+    /** @phpstan-ignore method.impossibleType */
+    $this->assertNull($result);
+  }
+
+  /**
+   * Tests that without lenient mode, unsupported methods still throw.
+   */
+  public function testNonLenientModeThrowsForUnsupportedMethods(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+        ->bundle('article')
+        ->build()
+    );
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage("Method 'save' is not supported");
+
+    $entity->save();
   }
 
 }

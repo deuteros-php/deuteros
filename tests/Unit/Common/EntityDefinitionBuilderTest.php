@@ -6,7 +6,9 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\Common\FieldDefinition;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -245,6 +247,108 @@ class EntityDefinitionBuilderTest extends TestCase {
 
     $this->assertSame($idCallback, $definition->id);
     $this->assertSame($labelCallback, $definition->label);
+  }
+
+  /**
+   * Tests fromInterface() auto-detects the interface hierarchy.
+   */
+  public function testFromInterfaceDetectsHierarchy(): void {
+    $definition = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )->build();
+
+    // ContentEntityInterface extends FieldableEntityInterface.
+    $this->assertContains(ContentEntityInterface::class, $definition->interfaces);
+    $this->assertContains(FieldableEntityInterface::class, $definition->interfaces);
+    $this->assertContains(EntityInterface::class, $definition->interfaces);
+  }
+
+  /**
+   * Tests fromInterface() keeps Traversable and IteratorAggregate.
+   */
+  public function testFromInterfaceKeepsTraversable(): void {
+    $definition = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )->build();
+
+    // ContentEntityInterface extends Traversable.
+    $this->assertContains(\Traversable::class, $definition->interfaces);
+  }
+
+  /**
+   * Tests fromInterface() throws for non-existent interface.
+   */
+  public function testFromInterfaceValidatesInterfaceExists(): void {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Interface 'NonExistentInterface' does not exist.");
+
+    EntityDefinitionBuilder::fromInterface('node', 'NonExistentInterface');
+  }
+
+  /**
+   * Tests fromInterface() throws for non-EntityInterface.
+   */
+  public function testFromInterfaceRequiresEntityInterface(): void {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("must extend EntityInterface");
+
+    EntityDefinitionBuilder::fromInterface('node', \Traversable::class);
+  }
+
+  /**
+   * Tests fromInterface() stores the primary interface.
+   */
+  public function testFromInterfaceStoresPrimaryInterface(): void {
+    $definition = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )->build();
+
+    $this->assertSame(ContentEntityInterface::class, $definition->primaryInterface);
+  }
+
+  /**
+   * Tests the lenient() method.
+   */
+  public function testLenientFlag(): void {
+    $definition = EntityDefinitionBuilder::create('node')
+      ->lenient()
+      ->build();
+
+    $this->assertTrue($definition->lenient);
+  }
+
+  /**
+   * Tests lenient(false) disables lenient mode.
+   */
+  public function testLenientFlagFalse(): void {
+    $definition = EntityDefinitionBuilder::create('node')
+      ->lenient()
+      ->lenient(FALSE)
+      ->build();
+
+    $this->assertFalse($definition->lenient);
+  }
+
+  /**
+   * Tests from() preserves primaryInterface and lenient.
+   */
+  public function testFromPreservesNewProperties(): void {
+    $original = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )
+      ->lenient()
+      ->build();
+
+    $modified = EntityDefinitionBuilder::from($original)
+      ->label('Test')
+      ->build();
+
+    $this->assertSame(ContentEntityInterface::class, $modified->primaryInterface);
+    $this->assertTrue($modified->lenient);
   }
 
 }

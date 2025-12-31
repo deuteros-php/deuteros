@@ -129,6 +129,12 @@ These constraints must never be violated:
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/BehavioralParityTest.php` - Ensures both adapters produce identical behavior
 
+## Directory Layout
+
+After running `composer install` the following directories are available:
+- `web/core` contains Drupal core
+- `vendor` contains all the remaining Composer dependencies
+
 ## Documentation
 
 - `docs/init.md` - Implementation requirements and constraints

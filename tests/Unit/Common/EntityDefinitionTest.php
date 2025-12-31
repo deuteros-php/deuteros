@@ -6,6 +6,8 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\FieldDefinition;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -197,6 +199,89 @@ class EntityDefinitionTest extends TestCase {
     $new = $original->withMutable(TRUE);
 
     $this->assertSame($original, $new);
+  }
+
+  /**
+   * Tests ::getDeclaringInterface() finds the correct interface for a method.
+   */
+  public function testGetDeclaringInterface(): void {
+    $definition = new EntityDefinition(
+      entityType: 'node',
+      interfaces: [
+        ContentEntityInterface::class,
+        EntityChangedInterface::class,
+      ],
+      primaryInterface: ContentEntityInterface::class,
+    );
+
+    // getChangedTime is declared in EntityChangedInterface.
+    $this->assertSame(
+      EntityChangedInterface::class,
+      $definition->getDeclaringInterface('getChangedTime')
+    );
+
+    // hasField is declared in FieldableEntityInterface (parent of
+    // ContentEntityInterface).
+    $interface = $definition->getDeclaringInterface('hasField');
+    $this->assertSame(FieldableEntityInterface::class, $interface);
+  }
+
+  /**
+   * Tests ::getDeclaringInterface() returns null for unknown method.
+   */
+  public function testGetDeclaringInterfaceReturnsNullForUnknown(): void {
+    $definition = new EntityDefinition(
+      entityType: 'node',
+      interfaces: [FieldableEntityInterface::class],
+    );
+
+    $this->assertNull($definition->getDeclaringInterface('unknownMethod'));
+  }
+
+  /**
+   * Tests construction with primaryInterface and lenient.
+   */
+  public function testConstructionWithNewProperties(): void {
+    $definition = new EntityDefinition(
+      entityType: 'node',
+      primaryInterface: ContentEntityInterface::class,
+      lenient: TRUE,
+    );
+
+    $this->assertSame(ContentEntityInterface::class, $definition->primaryInterface);
+    $this->assertTrue($definition->lenient);
+  }
+
+  /**
+   * Tests ::withContext() preserves primaryInterface and lenient.
+   */
+  public function testWithContextPreservesNewProperties(): void {
+    $original = new EntityDefinition(
+      entityType: 'node',
+      primaryInterface: ContentEntityInterface::class,
+      lenient: TRUE,
+    );
+
+    $new = $original->withContext(['key' => 'value']);
+
+    $this->assertSame(ContentEntityInterface::class, $new->primaryInterface);
+    $this->assertTrue($new->lenient);
+  }
+
+  /**
+   * Tests ::withMutable() preserves primaryInterface and lenient.
+   */
+  public function testWithMutablePreservesNewProperties(): void {
+    $original = new EntityDefinition(
+      entityType: 'node',
+      primaryInterface: ContentEntityInterface::class,
+      lenient: TRUE,
+    );
+
+    $new = $original->withMutable(TRUE);
+
+    $this->assertSame(ContentEntityInterface::class, $new->primaryInterface);
+    $this->assertTrue($new->lenient);
   }
 
 }

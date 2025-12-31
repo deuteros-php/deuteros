@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Common;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
@@ -93,7 +94,17 @@ final class EntityDefinitionBuilder {
   private array $context = [];
 
   /**
-   * Private constructor - use create() or from() factory methods.
+   * The primary interface for improved error messages.
+   */
+  private ?string $primaryInterface = NULL;
+
+  /**
+   * Whether to use lenient mode.
+   */
+  private bool $lenient = FALSE;
+
+  /**
+   * Private constructor - use create(), from(), or fromInterface() methods.
    *
    * @param string $entityType
    *   The entity type ID.
@@ -113,6 +124,56 @@ final class EntityDefinitionBuilder {
    */
   public static function create(string $entityType): self {
     return new self($entityType);
+  }
+
+  /**
+   * Creates a builder from an interface, auto-detecting the hierarchy.
+   *
+   * Uses reflection to discover all interfaces extended by the given
+   * interface and automatically adds them to the builder. Also stores
+   * the primary interface for improved error messages.
+   *
+   * @param string $entityType
+   *   The entity type ID (e.g., 'node', 'user', 'taxonomy_term').
+   * @param class-string $interface
+   *   The primary interface (must extend EntityInterface).
+   *
+   * @return self
+   *   A new builder instance with all interfaces from the hierarchy.
+   *
+   * @throws \InvalidArgumentException
+   *   If the interface does not exist or does not extend EntityInterface.
+   */
+  public static function fromInterface(string $entityType, string $interface): self {
+    // Validate interface exists.
+    if (!interface_exists($interface)) {
+      throw new \InvalidArgumentException(sprintf(
+        "Interface '%s' does not exist.",
+        $interface
+      ));
+    }
+
+    // Validate it extends EntityInterface.
+    if (!is_a($interface, EntityInterface::class, TRUE)) {
+      throw new \InvalidArgumentException(sprintf(
+        "Interface '%s' must extend EntityInterface.",
+        $interface
+      ));
+    }
+
+    $builder = new self($entityType);
+    $builder->primaryInterface = $interface;
+
+    // Add the primary interface.
+    $builder->interface($interface);
+
+    // Use reflection to get all parent interfaces.
+    $reflection = new \ReflectionClass($interface);
+    foreach ($reflection->getInterfaces() as $parentInterface) {
+      $builder->interface($parentInterface->getName());
+    }
+
+    return $builder;
   }
 
   /**
@@ -136,6 +197,8 @@ final class EntityDefinitionBuilder {
     $builder->interfaces = $definition->interfaces;
     $builder->methodOverrides = $definition->methodOverrides;
     $builder->context = $definition->context;
+    $builder->primaryInterface = $definition->primaryInterface;
+    $builder->lenient = $definition->lenient;
     return $builder;
   }
 
@@ -324,6 +387,23 @@ final class EntityDefinitionBuilder {
   }
 
   /**
+   * Enables or disables lenient mode.
+   *
+   * In lenient mode, unconfigured methods return null instead of throwing
+   * exceptions. This includes both regular methods and explicitly unsupported
+   * methods (save, delete, etc.).
+   *
+   * @param bool $lenient
+   *   Whether to enable lenient mode. Defaults to TRUE.
+   *
+   * @return $this
+   */
+  public function lenient(bool $lenient = TRUE): self {
+    $this->lenient = $lenient;
+    return $this;
+  }
+
+  /**
    * Builds the EntityDefinition.
    *
    * @return \Deuteros\Common\EntityDefinition
@@ -350,6 +430,8 @@ final class EntityDefinitionBuilder {
       interfaces: $interfaces,
       methodOverrides: $this->methodOverrides,
       context: $this->context,
+      primaryInterface: $this->primaryInterface,
+      lenient: $this->lenient,
     );
   }
 

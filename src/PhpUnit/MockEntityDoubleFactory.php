@@ -256,9 +256,17 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       }
 
       if ($methodExists) {
-        $mock->method($method)->willReturnCallback(
-          fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
-        );
+        if ($definition->lenient) {
+          // In lenient mode, return null instead of throwing.
+          $mock->method($method)->willReturnCallback(
+            fn() => GuardrailEnforcer::getLenientDefault()
+          );
+        }
+        else {
+          $mock->method($method)->willReturnCallback(
+            fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
+          );
+        }
       }
     }
   }

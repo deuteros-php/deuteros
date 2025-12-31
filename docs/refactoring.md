@@ -295,3 +295,122 @@ promotion and benefit from multi-line formatting for readability.
 1. **Readability**: Signatures are easier to scan when on a single line
 2. **Consistency**: All non-constructor signatures follow the same pattern
 3. **Documented**: Rule added to CLAUDE.md for future contributions
+
+## Task 6 - Add fromInterface() with Lenient Mode
+
+**Status:** Complete
+
+### Overview
+
+Added a `fromInterface()` factory method to `EntityDefinitionBuilder` that uses
+reflection to auto-detect the full interface hierarchy. Also added a lenient
+mode that returns `null` for unconfigured methods instead of throwing.
+
+### Problem
+
+Users had to manually specify all interfaces in the hierarchy when creating
+entity doubles for complex types like `NodeInterface`. This was error-prone
+and required knowledge of Drupal's interface inheritance.
+
+### Solution
+
+The `fromInterface()` method uses PHP reflection to automatically detect and
+add all interfaces in the hierarchy:
+
+```php
+// Before - manual interface specification
+EntityDefinitionBuilder::create('node')
+  ->interface(NodeInterface::class)
+  ->interface(ContentEntityInterface::class)
+  ->interface(EntityChangedInterface::class)
+  ->interface(EntityOwnerInterface::class)
+  ->interface(EntityPublishedInterface::class)
+  ->interface(FieldableEntityInterface::class)
+  // ... more interfaces
+  ->build();
+
+// After - automatic detection
+EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+  ->bundle('article')
+  ->build();
+```
+
+### Changes
+
+**Modified:**
+- `src/Common/EntityDefinition.php`:
+  - Added `primaryInterface` property for improved error messages
+  - Added `lenient` property for lenient mode
+  - Added `getDeclaringInterface()` helper method
+  - Updated `withContext()` and `withMutable()` to preserve new properties
+- `src/Common/EntityDefinitionBuilder.php`:
+  - Added `fromInterface(string $entityType, string $interface)` factory method
+  - Added `lenient(bool $lenient = TRUE)` method
+  - Updated `from()` to copy new properties
+  - Updated `build()` to pass new properties
+- `src/Common/GuardrailEnforcer.php`:
+  - Added `getLenientDefault()` method
+- `src/PhpUnit/MockEntityDoubleFactory.php`:
+  - Updated `wireGuardrails()` to handle lenient mode
+- `src/Prophecy/ProphecyEntityDoubleFactory.php`:
+  - Updated `wireGuardrails()` to handle lenient mode
+- `composer.json`:
+  - Added autoload-dev entries for `Drupal\node` and `Drupal\user` namespaces
+
+**Created:**
+- `tests/Integration/NodeInterfaceTest.php` - Tests for NodeInterface hierarchy
+
+**Test Files Updated:**
+- `tests/Unit/Common/EntityDefinitionBuilderTest.php` - Added fromInterface tests
+- `tests/Unit/Common/EntityDefinitionTest.php` - Added getDeclaringInterface tests
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Added shared tests
+- `tests/Integration/BehavioralParityTest.php` - Added parity tests
+
+### API
+
+```php
+// Auto-detect interface hierarchy
+EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+  ->bundle('article')
+  ->id(42)
+  ->methodOverride('getTitle', fn() => 'My Title')
+  ->build();
+
+// Lenient mode - unconfigured methods return null
+EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+  ->bundle('article')
+  ->lenient()
+  ->build();
+
+// In lenient mode:
+$entity->save();       // Returns null instead of throwing
+$entity->delete();     // Returns null instead of throwing
+$entity->getTitle();   // Returns null (unconfigured method)
+```
+
+### Interface Hierarchy Detection
+
+`fromInterface()` uses `ReflectionClass::getInterfaces()` to get all interfaces
+in the hierarchy:
+
+- Includes all parent interfaces (e.g., `ContentEntityInterface`,
+  `FieldableEntityInterface`, `EntityInterface`)
+- Keeps `Traversable` and `IteratorAggregate` for foreach support
+- Validates that the interface exists and extends `EntityInterface`
+- Stores the primary interface for improved error messages
+
+### Lenient Mode Behavior
+
+- Default: `lenient(false)` - throws for unconfigured methods (existing behavior)
+- `lenient(true)`:
+  - Unconfigured methods return `null`
+  - Explicitly unsupported methods (`save`, `delete`, etc.) also return `null`
+  - Identical behavior between PHPUnit and Prophecy adapters
+
+### Benefits
+
+1. **Zero Maintenance**: No need to manually track interface hierarchies
+2. **Works for Any Interface**: Core, contrib, or custom entity types
+3. **Minimal API Surface**: Single new method on existing builder
+4. **Forwards Compatible**: New Drupal interfaces automatically supported
+5. **Lenient Testing**: Exploratory testing without configuring every method

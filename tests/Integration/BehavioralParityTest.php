@@ -8,6 +8,7 @@ use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\EntityDefinitionBuilder;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -254,6 +255,66 @@ class BehavioralParityTest extends TestCase {
     array $context = [],
   ): EntityInterface {
     return $this->prophecyFactory->create($definition, $context);
+  }
+
+  /**
+   * Tests fromInterface() parity between adapters.
+   */
+  public function testFromInterfaceParity(): void {
+    $definition = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )
+      ->bundle('article')
+      ->id(42)
+      ->field('field_test', 'value')
+      ->build();
+
+    $mock = $this->createMockDouble($definition);
+    $prophecy = $this->createProphecyDouble($definition);
+
+    // Both should implement ContentEntityInterface.
+    $this->assertInstanceOf(ContentEntityInterface::class, $mock);
+    $this->assertInstanceOf(ContentEntityInterface::class, $prophecy);
+
+    // Core methods should work identically.
+    $this->assertSame($mock->getEntityTypeId(), $prophecy->getEntityTypeId());
+    $this->assertSame($mock->bundle(), $prophecy->bundle());
+    $this->assertSame($mock->id(), $prophecy->id());
+
+    // Field access should work identically.
+    $this->assertSame(
+      $mock->get('field_test')->value,
+      $prophecy->get('field_test')->value
+    );
+  }
+
+  /**
+   * Tests lenient mode parity between adapters.
+   */
+  public function testLenientModeParity(): void {
+    $definition = EntityDefinitionBuilder::fromInterface(
+      'node',
+      ContentEntityInterface::class
+    )
+      ->bundle('article')
+      ->lenient()
+      ->build();
+
+    $mock = $this->createMockDouble($definition);
+    $prophecy = $this->createProphecyDouble($definition);
+
+    // Both should return null for save() in lenient mode.
+    // PHPStan: save() returns int per PHPDoc, but in lenient mode we return
+    // null. This is intentional - we're testing our mock behavior.
+    /** @phpstan-ignore method.impossibleType */
+    $this->assertNull($mock->save());
+    /** @phpstan-ignore method.impossibleType */
+    $this->assertNull($prophecy->save());
+
+    // Both should return null for delete() in lenient mode.
+    $this->assertNull($mock->delete());
+    $this->assertNull($prophecy->delete());
   }
 
 }

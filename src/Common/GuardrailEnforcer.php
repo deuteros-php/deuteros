@@ -138,4 +138,17 @@ final class GuardrailEnforcer {
     ));
   }
 
+  /**
+   * Gets the default return value for lenient mode.
+   *
+   * In lenient mode, unconfigured methods return null instead of throwing.
+   * This applies to all methods, including explicitly unsupported ones.
+   *
+   * @return null
+   *   Always returns null.
+   */
+  public static function getLenientDefault(): mixed {
+    return NULL;
+  }
+
 }

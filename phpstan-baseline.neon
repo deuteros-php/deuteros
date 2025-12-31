@@ -1,6 +1,12 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Common/EntityDefinition.php
+
+		-
 			message: '#^Anonymous function should return object but returns mixed\.$#'
 			identifier: return.type
 			count: 1
@@ -177,7 +183,7 @@ parameters:
 		-
 			message: '#^Cannot call method will\(\) on mixed\.$#'
 			identifier: method.nonObject
-			count: 21
+			count: 22
 			path: src/Prophecy/ProphecyEntityDoubleFactory.php
 
 		-
@@ -303,6 +309,12 @@ parameters:
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\FieldableEntityInterface'' and Drupal\\Core\\Entity\\ContentEntityInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
 			count: 1
 			path: tests/Integration/EntityDoubleFactoryTestBase.php
 
@@ -367,6 +379,18 @@ parameters:
 			path: tests/Integration/EntityDoubleFactoryTestBase.php
 
 		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with bool will always evaluate to false\.$#'
+			identifier: method.impossibleType
+			count: 3
+			path: tests/Integration/NodeInterfaceTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNull\(\) with int will always evaluate to false\.$#'
+			identifier: method.impossibleType
+			count: 1
+			path: tests/Integration/NodeInterfaceTest.php
+
+		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 1
@@ -381,6 +405,12 @@ parameters:
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Deuteros\\\\Common\\\\FieldDefinition'' and Deuteros\\Common\\FieldDefinition will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Common/EntityDefinitionBuilderTest.php
+
+		-
+			message: '#^Parameter \#2 \$interface of static method Deuteros\\Common\\EntityDefinitionBuilder\:\:fromInterface\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
 			count: 1
 			path: tests/Unit/Common/EntityDefinitionBuilderTest.php
 

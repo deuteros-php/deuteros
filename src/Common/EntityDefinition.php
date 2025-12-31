@@ -48,6 +48,10 @@ final readonly class EntityDefinition {
    *   Context data for callback resolution.
    * @param bool $mutable
    *   Whether the entity double should be mutable.
+   * @param string|null $primaryInterface
+   *   The primary interface for improved error messages.
+   * @param bool $lenient
+   *   Whether to use lenient mode (return null for unconfigured methods).
    *
    * @throws \InvalidArgumentException
    *   If fields are defined but FieldableEntityInterface is not in interfaces.
@@ -63,6 +67,8 @@ final readonly class EntityDefinition {
     public array $methodOverrides = [],
     public array $context = [],
     public bool $mutable = FALSE,
+    public ?string $primaryInterface = NULL,
+    public bool $lenient = FALSE,
   ) {
     // Validate that fields are only used with FieldableEntityInterface.
     if ($fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
@@ -164,6 +170,8 @@ final readonly class EntityDefinition {
       methodOverrides: $this->methodOverrides,
       context: array_merge($this->context, $additionalContext),
       mutable: $this->mutable,
+      primaryInterface: $this->primaryInterface,
+      lenient: $this->lenient,
     );
   }
 
@@ -191,7 +199,48 @@ final readonly class EntityDefinition {
       methodOverrides: $this->methodOverrides,
       context: $this->context,
       mutable: $mutable,
+      primaryInterface: $this->primaryInterface,
+      lenient: $this->lenient,
     );
+  }
+
+  /**
+   * Gets the interface that declares a specific method.
+   *
+   * Uses reflection to find which interface in the hierarchy declares
+   * the given method. Returns the primary interface first if it declares
+   * the method, otherwise searches through all interfaces.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return string|null
+   *   The fully qualified interface name, or NULL if not found.
+   */
+  public function getDeclaringInterface(string $method): ?string {
+    // Check primary interface first if set.
+    if ($this->primaryInterface !== NULL) {
+      if (method_exists($this->primaryInterface, $method)) {
+        // Find the most specific interface that declares this method.
+        /** @var \ReflectionClass<object> $reflection */
+        $reflection = new \ReflectionClass($this->primaryInterface);
+        foreach ($reflection->getInterfaces() as $parent) {
+          if ($parent->hasMethod($method)) {
+            return $parent->getName();
+          }
+        }
+        return $this->primaryInterface;
+      }
+    }
+
+    // Search through all declared interfaces.
+    foreach ($this->interfaces as $interface) {
+      if (method_exists($interface, $method)) {
+        return $interface;
+      }
+    }
+
+    return NULL;
   }
 
 }

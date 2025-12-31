@@ -24,7 +24,9 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Deuteros\\Tests\\": "tests/"
+      "Deuteros\\Tests\\": "tests/",
+      "Drupal\\node\\": "web/core/modules/node/src/",
+      "Drupal\\user\\": "web/core/modules/user/src/"
     }
   },
   "scripts": {

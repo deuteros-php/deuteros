@@ -153,9 +153,17 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       }
 
       if ($methodExists) {
-        $prophecy->$method(Argument::cetera())->will(
-          fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
-        );
+        if ($definition->lenient) {
+          // In lenient mode, return null instead of throwing.
+          $prophecy->$method(Argument::cetera())->will(
+            fn() => GuardrailEnforcer::getLenientDefault()
+          );
+        }
+        else {
+          $prophecy->$method(Argument::cetera())->will(
+            fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
+          );
+        }
       }
     }
   }

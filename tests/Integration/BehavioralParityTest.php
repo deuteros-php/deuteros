@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\EntityDoubleBuilder;
-use Deuteros\Common\FieldDefinition;
-use Deuteros\Common\FieldItemDoubleBuilder;
-use Deuteros\Common\FieldItemListDoubleBuilder;
+use Deuteros\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
-use Drupal\Core\Field\FieldItemInterface;
-use Drupal\Core\Field\FieldItemListInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
-use Prophecy\Prophecy\MethodProphecy;
 
 /**
  * Tests that PHPUnit and Prophecy adapters have identical behavior.
@@ -30,6 +23,28 @@ use Prophecy\Prophecy\MethodProphecy;
 class BehavioralParityTest extends TestCase {
 
   use ProphecyTrait;
+
+  /**
+   * The PhpUnit Mock double factory.
+   *
+   * @var \Deuteros\PhpUnit\MockEntityDoubleFactory
+   */
+  private MockEntityDoubleFactory $mockFactory;
+
+  /**
+   * The Prophecy double factory.
+   *
+   * @var \Deuteros\Prophecy\ProphecyEntityDoubleFactory
+   */
+  private ProphecyEntityDoubleFactory $prophecyFactory;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    $this->mockFactory = new MockEntityDoubleFactory($this);
+    $this->prophecyFactory = new ProphecyEntityDoubleFactory($this->getProphet());
+  }
 
   /**
    * Tests that both adapters return identical entity metadata.
@@ -183,273 +198,16 @@ class BehavioralParityTest extends TestCase {
 
   /**
    * Creates a PHPUnit mock double.
-   *
-   * This is a simplified version of the trait method for testing purposes.
    */
   private function createMockDouble(array $definition, array $context = []): EntityInterface {
-    $entityDefinition = EntityDefinition::fromArray(array_merge(
-      $definition,
-      ['context' => array_merge($definition['context'] ?? [], $context)]
-    ));
-
-    $builder = new EntityDoubleBuilder($entityDefinition, NULL);
-    $builder->setFieldListFactory(
-      fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
-        $this->createMockFieldItemList($fieldName, $fieldDefinition, $context)
-    );
-
-    $interfaces = $this->resolveInterfacesForMock($entityDefinition);
-
-    $mock = count($interfaces) === 1
-      ? $this->createMock($interfaces[0])
-      : $this->createMockForIntersectionOfInterfaces($interfaces);
-    $resolvers = $builder->getResolvers();
-
-    $mock->method('id')->willReturnCallback(fn() => $resolvers['id']($entityDefinition->context));
-    $mock->method('uuid')->willReturnCallback(fn() => $resolvers['uuid']($entityDefinition->context));
-    $mock->method('label')->willReturnCallback(fn() => $resolvers['label']($entityDefinition->context));
-    $mock->method('bundle')->willReturnCallback(fn() => $resolvers['bundle']($entityDefinition->context));
-    $mock->method('getEntityTypeId')->willReturnCallback(fn() => $resolvers['getEntityTypeId']($entityDefinition->context));
-
-    if ($entityDefinition->hasInterface(FieldableEntityInterface::class)) {
-      $mock->method('hasField')->willReturnCallback(
-        fn(string $fieldName) => $resolvers['hasField']($entityDefinition->context, $fieldName)
-      );
-      $mock->method('get')->willReturnCallback(
-        fn(string $fieldName) => $resolvers['get']($entityDefinition->context, $fieldName)
-      );
-      // Note: __get is not declared in FieldableEntityInterface, so magic
-      // property access ($entity->field_name) is not supported on interface
-      // mocks.
-    }
-
-    foreach ($entityDefinition->methodOverrides as $method => $override) {
-      $resolver = $builder->getMethodOverrideResolver($method);
-      $mock->method($method)->willReturnCallback(
-        fn(mixed ...$args) => $resolver($entityDefinition->context, ...$args)
-      );
-    }
-
-    assert($mock instanceof EntityInterface);
-    return $mock;
+    return $this->mockFactory->create($definition + ['context' => $context]);
   }
 
   /**
-   * Creates a Prophecy double.
-   *
-   * This is a simplified version of the trait method for testing purposes.
+   * Creates a PHPUnit mock double.
    */
   private function createProphecyDouble(array $definition, array $context = []): EntityInterface {
-    $entityDefinition = EntityDefinition::fromArray(array_merge(
-      $definition,
-      ['context' => array_merge($definition['context'] ?? [], $context)]
-    ));
-
-    $builder = new EntityDoubleBuilder($entityDefinition, NULL);
-    $builder->setFieldListFactory(
-      fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
-        $this->createProphecyFieldItemList($fieldName, $fieldDefinition, $context)
-    );
-
-    $interfaces = [EntityInterface::class];
-    foreach ($entityDefinition->interfaces as $interface) {
-      if (!in_array($interface, $interfaces, TRUE)) {
-        $interfaces[] = $interface;
-      }
-    }
-
-    $primaryInterface = array_shift($interfaces);
-    $prophecy = $this->prophesize($primaryInterface);
-    foreach ($interfaces as $interface) {
-      $prophecy->willImplement($interface);
-    }
-
-    $resolvers = $builder->getResolvers();
-
-    $prophecy->id()->will(fn() => $resolvers['id']($entityDefinition->context));
-    $prophecy->uuid()->will(fn() => $resolvers['uuid']($entityDefinition->context));
-    $prophecy->label()->will(fn() => $resolvers['label']($entityDefinition->context));
-    $prophecy->bundle()->will(fn() => $resolvers['bundle']($entityDefinition->context));
-    $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($entityDefinition->context));
-
-    if ($entityDefinition->hasInterface(FieldableEntityInterface::class)) {
-      $prophecy->hasField(Argument::type('string'))->will(
-        fn(array $args) => $resolvers['hasField']($entityDefinition->context, $args[0])
-      );
-      $prophecy->get(Argument::type('string'))->will(
-        fn(array $args) => $resolvers['get']($entityDefinition->context, $args[0])
-      );
-      // Note: __get is not declared in FieldableEntityInterface, so magic
-      // property access ($entity->field_name) is not supported on interface
-      // prophecies.
-    }
-
-    foreach ($entityDefinition->methodOverrides as $method => $override) {
-      $resolver = $builder->getMethodOverrideResolver($method);
-      $prophecy->$method(Argument::cetera())->will(
-        fn(array $args) => $resolver($entityDefinition->context, ...$args)
-      );
-    }
-
-    $entity = $prophecy->reveal();
-    assert($entity instanceof EntityInterface);
-    return $entity;
-  }
-
-  /**
-   * Creates a mock field item list.
-   */
-  private function createMockFieldItemList(string $fieldName, FieldDefinition $fieldDefinition, array $context): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, FALSE);
-    $builder->setFieldItemFactory(
-      fn(int $delta, mixed $value, array $context) =>
-        $this->createMockFieldItem($delta, $value, $fieldName, $context)
-    );
-
-    $mock = $this->createMock(FieldItemListInterface::class);
-    $resolvers = $builder->getResolvers();
-
-    $mock->method('first')->willReturnCallback(fn() => $resolvers['first']($context));
-    $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));
-    $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
-    $mock->method('get')->willReturnCallback(fn(int $delta) => $resolvers['get']($context, $delta));
-    $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
-
-    return $mock;
-  }
-
-  /**
-   * Creates a prophecy field item list.
-   */
-  private function createProphecyFieldItemList(string $fieldName, FieldDefinition $fieldDefinition, array $context): FieldItemListInterface {
-    $builder = new FieldItemListDoubleBuilder($fieldDefinition, $fieldName, FALSE);
-    $builder->setFieldItemFactory(
-      fn(int $delta, mixed $value, array $context) =>
-        $this->createProphecyFieldItem($delta, $value, $fieldName, $context)
-    );
-
-    $prophecy = $this->prophesize(FieldItemListInterface::class);
-    $resolvers = $builder->getResolvers();
-
-    $prophecy->first()->will(fn() => $resolvers['first']($context));
-    $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
-    $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
-    $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, $args[0]));
-
-    // Manually add MethodProphecy for __get since Prophecy's ObjectProphecy
-    // intercepts __get calls instead of treating them as method stubs.
-    $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
-    $prophecy->addMethodProphecy($getMethodProphecy);
-
-    return $prophecy->reveal();
-  }
-
-  /**
-   * Creates a mock field item.
-   */
-  private function createMockFieldItem(int $delta, mixed $value, string $fieldName, array $context): FieldItemInterface {
-    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, FALSE);
-    $mock = $this->createMock(FieldItemInterface::class);
-    $resolvers = $builder->getResolvers();
-
-    $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
-    $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
-    $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));
-
-    return $mock;
-  }
-
-  /**
-   * Creates a prophecy field item.
-   */
-  private function createProphecyFieldItem(int $delta, mixed $value, string $fieldName, array $context): FieldItemInterface {
-    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, FALSE);
-    $prophecy = $this->prophesize(FieldItemInterface::class);
-    $resolvers = $builder->getResolvers();
-
-    // Manually add MethodProphecy for __get since Prophecy's ObjectProphecy
-    // intercepts __get calls instead of treating them as method stubs.
-    $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
-    $prophecy->addMethodProphecy($getMethodProphecy);
-
-    $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
-    $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
-
-    return $prophecy->reveal();
-  }
-
-  /**
-   * Resolves interfaces for mocking, handling deduplication.
-   *
-   * PHPUnit cannot mock intersection of interfaces that share a common parent
-   * (e.g., "FieldableEntityInterface" and "EntityChangedInterface" both extend
-   * "EntityInterface"). This method detects and resolves such conflicts.
-   *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
-   *
-   * @return array<class-string>
-   *   The deduplicated interfaces to mock.
-   */
-  private function resolveInterfacesForMock(EntityDefinition $definition): array {
-    $interfaces = $definition->interfaces;
-
-    if (empty($interfaces)) {
-      return [EntityInterface::class];
-    }
-
-    // Filter out parent interfaces when child interfaces are also present.
-    $filtered = [];
-    foreach ($interfaces as $interface) {
-      $isParent = FALSE;
-      foreach ($interfaces as $other) {
-        if ($interface !== $other && is_a($other, $interface, TRUE)) {
-          $isParent = TRUE;
-          break;
-        }
-      }
-      if (!$isParent) {
-        $filtered[] = $interface;
-      }
-    }
-
-    // Handle case where multiple interfaces extend EntityInterface.
-    // PHPUnit cannot mock their intersection due to duplicate methods.
-    if (count($filtered) > 1) {
-      $entityChildren = [];
-      foreach ($filtered as $interface) {
-        if (is_a($interface, EntityInterface::class, TRUE)) {
-          $entityChildren[] = $interface;
-        }
-      }
-
-      if (count($entityChildren) > 1) {
-        // Prefer FieldableEntityInterface if present.
-        $preferred = in_array(FieldableEntityInterface::class, $entityChildren, TRUE)
-          ? FieldableEntityInterface::class
-          : $entityChildren[0];
-        $filtered = array_filter($filtered, function ($interface) use ($entityChildren, $preferred) {
-          return !in_array($interface, $entityChildren, TRUE) || $interface === $preferred;
-        });
-        $filtered = array_values($filtered);
-      }
-    }
-
-    // Ensure EntityInterface functionality is covered.
-    $hasEntityChild = FALSE;
-    foreach ($filtered as $interface) {
-      if (is_a($interface, EntityInterface::class, TRUE)) {
-        $hasEntityChild = TRUE;
-        break;
-      }
-    }
-    if (!$hasEntityChild) {
-      array_unshift($filtered, EntityInterface::class);
-    }
-
-    return $filtered;
+    return $this->prophecyFactory->create($definition + ['context' => $context]);
   }
 
 }

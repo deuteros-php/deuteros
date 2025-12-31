@@ -118,3 +118,4 @@ These constraints must never be violated:
 - `docs/plan.md` - Detailed implementation plan (single source of truth for scope/architecture)
 - `docs/refactoring.md` - Detailed implementation plan of changes performed
   after the initial implementation (source of truth updates)
+- `docs/todo.md` - To Do list

@@ -1,0 +1,451 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to function assert\(\) with true will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 3
+			path: src/Common/EntityDefinition.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Common/EntityDefinition.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<class\-string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Common/EntityDefinition.php
+
+		-
+			message: '#^Anonymous function should return object but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Common/EntityDoubleBuilder.php
+
+		-
+			message: '#^Parameter \#2 \$context of method Deuteros\\Common\\EntityDoubleBuilder\:\:resolveValue\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Common/EntityDoubleBuilder.php
+
+		-
+			message: '#^Method Deuteros\\Common\\EntityDoubleFactory\:\:createFieldItemListDouble\(\) return type has no value type specified in iterable type Drupal\\Core\\Field\\FieldItemListInterface\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Common\\EntityDoubleFactory\:\:createFieldItemListDouble\(\) return type with generic interface Drupal\\Core\\Field\\FieldItemListInterface does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Common\\EntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type has no value type specified in iterable type Drupal\\Core\\Field\\FieldItemListInterface\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Common\\EntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type with generic interface Drupal\\Core\\Field\\FieldItemListInterface does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Parameter \#5 \$context of method Deuteros\\Common\\EntityDoubleFactory\:\:createFieldItemDouble\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Parameter \#5 \$context of method Deuteros\\Common\\EntityDoubleFactory\:\:createFieldItemListDouble\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Common/EntityDoubleFactory.php
+
+		-
+			message: '#^Cannot call method __get\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Common/FieldItemListDoubleBuilder.php
+
+		-
+			message: '#^Parameter \#1 \$context of method Deuteros\\Common\\FieldItemListDoubleBuilder\:\:resolveValues\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Common/FieldItemListDoubleBuilder.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Common/FieldItemListDoubleBuilder.php
+
+		-
+			message: '#^Parameter \#3 \$context of method Deuteros\\Common\\FieldItemListDoubleBuilder\:\:getFieldItemDouble\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Common/FieldItemListDoubleBuilder.php
+
+		-
+			message: '#^Method Deuteros\\PhpUnit\\MockEntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type has no value type specified in iterable type Drupal\\Core\\Field\\FieldItemListInterface\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PhpUnit/MockEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\PhpUnit\\MockEntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type with generic interface Drupal\\Core\\Field\\FieldItemListInterface does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/PhpUnit/MockEntityDoubleFactory.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$double contains generic interface Drupal\\Core\\Field\\FieldItemListInterface but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/PhpUnit/MockEntityDoubleFactory.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$double has no value type specified in iterable type Drupal\\Core\\Field\\FieldItemListInterface\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/PhpUnit/MockEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:bundle\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:first\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:getEntityTypeId\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:getValue\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:hasField\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:id\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:isEmpty\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:label\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:set\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:setValue\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method Prophecy\\Prophecy\\ObjectProphecy\:\:uuid\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Call to an undefined method object\:\:reveal\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Cannot call method will\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 21
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Prophecy\\ProphecyEntityDoubleFactory\:\:instantiateDouble\(\) should return Drupal\\Core\\Entity\\EntityInterface but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Prophecy\\ProphecyEntityDoubleFactory\:\:instantiateFieldItemDouble\(\) should return Drupal\\Core\\Field\\FieldItemInterface but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Prophecy\\ProphecyEntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type has no value type specified in iterable type Drupal\\Core\\Field\\FieldItemListInterface\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Prophecy\\ProphecyEntityDoubleFactory\:\:instantiateFieldListDouble\(\) return type with generic interface Drupal\\Core\\Field\\FieldItemListInterface does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Method Deuteros\\Prophecy\\ProphecyEntityDoubleFactory\:\:instantiateFieldListDouble\(\) should return Drupal\\Core\\Field\\FieldItemListInterface but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^PHPDoc tag @var for variable \$prophecy contains generic class Prophecy\\Prophecy\\ObjectProphecy but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 7
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Part \$args\[0\] \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 2
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Variable \$prophecy in PHPDoc tag @var does not exist\.$#'
+			identifier: varTag.variableNotFound
+			count: 3
+			path: src/Prophecy/ProphecyEntityDoubleFactory.php
+
+		-
+			message: '#^Binary operation "\*" between mixed and 2 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Call to an undefined method Drupal\\Core\\Entity\\EntityInterface\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 16
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Call to an undefined method Drupal\\Core\\Entity\\EntityInterface\:\:getChangedTime\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Cannot access property \$target_id on mixed\.$#'
+			identifier: property.nonObject
+			count: 6
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Cannot access property \$value on mixed\.$#'
+			identifier: property.nonObject
+			count: 8
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Cannot call method first\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Cannot call method get\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Method Deuteros\\Tests\\Integration\\BehavioralParityTest\:\:createMockDouble\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Method Deuteros\\Tests\\Integration\\BehavioralParityTest\:\:createMockDouble\(\) has parameter \$definition with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Method Deuteros\\Tests\\Integration\\BehavioralParityTest\:\:createProphecyDouble\(\) has parameter \$context with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Method Deuteros\\Tests\\Integration\\BehavioralParityTest\:\:createProphecyDouble\(\) has parameter \$definition with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Parameter \#1 \$definition of method Deuteros\\Common\\EntityDoubleFactory\:\:create\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Integration/BehavioralParityTest.php
+
+		-
+			message: '#^Binary operation "\." between mixed and '' Field'' results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to an undefined method Drupal\\Core\\Entity\\EntityInterface\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 25
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to an undefined method Drupal\\Core\\Entity\\EntityInterface\:\:hasField\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to an undefined method Drupal\\Core\\Entity\\EntityInterface\:\:set\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot access offset 0 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot access offset 1 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot access property \$target_id on mixed\.$#'
+			identifier: property.nonObject
+			count: 7
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot access property \$value on mixed\.$#'
+			identifier: property.nonObject
+			count: 8
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot call method first\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot call method get\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot call method getValue\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Cannot call method isEmpty\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of method PHPUnit\\Framework\\Assert\:\:assertCount\(\) expects Countable\|iterable, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Part \$context\[''title''\] \(mixed\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: tests/Integration/EntityDoubleFactoryTestBase.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/PhpUnit/MockEntityDoubleFactoryTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Drupal\\\\Core\\\\Entity\\\\EntityInterface'' and Drupal\\Core\\Entity\\EntityInterface will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Integration/Prophecy/ProphecyEntityDoubleFactoryTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Deuteros\\\\Common\\\\FieldDefinition'' and Deuteros\\Common\\FieldDefinition will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 2
+			path: tests/Unit/Common/EntityDefinitionTest.php
+
+		-
+			message: '#^Parameter \#1 \$interface of method Deuteros\\Common\\EntityDefinition\:\:hasInterface\(\) expects class\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Common/EntityDefinitionTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''LogicException'' and LogicException will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 3
+			path: tests/Unit/Common/GuardrailEnforcerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<string, string\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Common/GuardrailEnforcerTest.php

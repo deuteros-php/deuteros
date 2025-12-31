@@ -108,24 +108,45 @@ final readonly class EntityDefinition {
     }
 
     // Convert raw field values to FieldDefinition objects.
+    /** @var array<string, FieldDefinition> $fields */
     $fields = [];
     if (isset($data['fields']) && is_array($data['fields'])) {
       foreach ($data['fields'] as $fieldName => $value) {
+        assert(is_string($fieldName));
         $fields[$fieldName] = $value instanceof FieldDefinition ? $value : new FieldDefinition($value);
       }
     }
 
+    // Extract and validate optional parameters.
+    $bundle = $data['bundle'] ?? '';
+    assert(is_string($bundle));
+
+    /** @var list<class-string> $interfaces */
+    $interfaces = $data['interfaces'] ?? [];
+    assert(is_array($interfaces));
+
+    /** @var array<string, mixed> $methodOverrides */
+    $methodOverrides = $data['method_overrides'] ?? [];
+    assert(is_array($methodOverrides));
+
+    /** @var array<string, mixed> $context */
+    $context = $data['context'] ?? [];
+    assert(is_array($context));
+
+    $mutable = $data['mutable'] ?? FALSE;
+    assert(is_bool($mutable));
+
     return new self(
-      entityType: $data['entity_type'],
-      bundle: $data['bundle'] ?? '',
+      entityType: $entityType,
+      bundle: $bundle,
       id: $data['id'] ?? NULL,
       uuid: $data['uuid'] ?? NULL,
       label: $data['label'] ?? NULL,
       fields: $fields,
-      interfaces: $data['interfaces'] ?? [],
-      methodOverrides: $data['method_overrides'] ?? [],
-      context: $data['context'] ?? [],
-      mutable: $data['mutable'] ?? FALSE,
+      interfaces: $interfaces,
+      methodOverrides: $methodOverrides,
+      context: $context,
+      mutable: $mutable,
     );
   }
 

@@ -154,6 +154,9 @@ final class EntityDoubleBuilder {
    *   The resolver callable.
    */
   private function buildGetResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context, string $fieldName): object {
       // Return cached field list if available.
       if (isset($this->fieldListCache[$fieldName])) {
@@ -168,6 +171,7 @@ final class EntityDoubleBuilder {
 
       // Create and cache the field list double.
       $fieldList = ($this->fieldListFactory)($fieldName, $fieldDefinition, $context);
+      assert(is_object($fieldList));
       $this->fieldListCache[$fieldName] = $fieldList;
 
       return $fieldList;
@@ -184,6 +188,9 @@ final class EntityDoubleBuilder {
    */
   private function buildMagicGetResolver(): callable {
     $getResolver = $this->buildGetResolver();
+    /**
+     * @param array<string, mixed> $context
+     */
     return fn(array $context, string $fieldName): object => $getResolver($context, $fieldName);
   }
 

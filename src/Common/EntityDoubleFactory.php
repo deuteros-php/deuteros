@@ -78,13 +78,15 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param \PHPUnit\Framework\TestCase $test
    *   The test case instance.
    *
-   * @return static
+   * @return self
    *   The appropriate factory implementation.
    */
-  public static function fromTest(TestCase $test): static {
+  public static function fromTest(TestCase $test): self {
     // Check if test uses ProphecyTrait (has getProphet() method).
     if (method_exists($test, 'getProphet')) {
-      return new ProphecyEntityDoubleFactory($test->getProphet());
+      /** @var \Prophecy\Prophet $prophet */
+      $prophet = $test->getProphet();
+      return new ProphecyEntityDoubleFactory($prophet);
     }
     return new MockEntityDoubleFactory($test);
   }
@@ -124,6 +126,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
     // Set up field list factory.
     $builder->setFieldListFactory(
+      /**
+       * @param array<string, mixed> $context
+       */
       fn(string $fieldName, FieldDefinition $fieldDefinition, array $context) =>
         $this->createFieldItemListDouble($fieldName, $fieldDefinition, $definition, $mutableState, $context)
     );
@@ -160,7 +165,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   ): EntityDefinition {
     // Merge context into definition.
     if ($context !== []) {
-      $definition['context'] = array_merge($definition['context'] ?? [], $context);
+      /** @var array<string, mixed> $existingContext */
+      $existingContext = $definition['context'] ?? [];
+      $definition['context'] = array_merge($existingContext, $context);
     }
 
     // Set mutability.
@@ -256,6 +263,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
     // Set up field item factory.
     $builder->setFieldItemFactory(
+      /**
+       * @param array<string, mixed> $ctx
+       */
       fn(int $delta, mixed $value, array $ctx) =>
         $this->createFieldItemDouble($delta, $value, $fieldName, $entityDefinition->mutable, $ctx)
     );

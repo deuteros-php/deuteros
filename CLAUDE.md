@@ -40,6 +40,18 @@ Key requirements enforced by phpcs:
 - Parentheses required for anonymous class constructors (`new class ()`)
 - No empty doc comments
 
+## Static Analysis
+
+PHPStan is configured at level 10 (max) with a baseline for existing issues.
+
+```bash
+composer phpstan             # Run static analysis
+```
+
+Configuration files:
+- `phpstan.neon` - Main configuration
+- `phpstan-baseline.neon` - Baseline with ignored errors (to be reviewed/fixed)
+
 ## Architecture
 
 ### Layer Structure
@@ -104,6 +116,7 @@ These constraints must never be violated:
 - **PHPUnit and Prophecy adapters must behave identically**
 - **Use term "Double"** everywhere except when referring to PHPUnit mock objects
 - **All code must pass `composer phpcs`** - Run before completing any code change
+- **All code must pass `composer phpstan`** - Run before completing any code change
 
 ## Test Structure
 

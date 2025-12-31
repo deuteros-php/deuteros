@@ -98,7 +98,7 @@ final class FieldItemDoubleBuilder {
     return function (array $context, mixed $value, bool $notify = TRUE): object {
       if (!$this->mutable) {
         throw new \LogicException(
-         "Cannot modify field item at delta {$this->delta} on immutable entity double. "
+         "Cannot modify field '{$this->fieldName}' item at delta {$this->delta} on immutable entity double. "
           . "Use createMutableEntityDouble() if you need to test mutations."
         );
       }

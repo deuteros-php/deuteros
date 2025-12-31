@@ -112,6 +112,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildFirstResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context): ?object {
       $values = $this->resolveValues($context);
 
@@ -130,6 +133,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildIsEmptyResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context): bool {
       $values = $this->resolveValues($context);
       return $values === [];
@@ -143,6 +149,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildGetValueResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context): array {
       return $this->resolveValues($context);
     };
@@ -155,6 +164,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildGetResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context, int $delta): ?object {
       $values = $this->resolveValues($context);
 
@@ -175,6 +187,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildMagicGetResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context, string $property): mixed {
       $firstItem = ($this->buildFirstResolver())($context);
 
@@ -184,6 +199,7 @@ final class FieldItemListDoubleBuilder {
 
       // The field item double should have a __get resolver.
       // We'll call it directly since we control the double.
+      assert(method_exists($firstItem, '__get'));
       return $firstItem->__get($property);
     };
   }
@@ -195,6 +211,9 @@ final class FieldItemListDoubleBuilder {
    *   The resolver callable.
    */
   private function buildSetValueResolver(): callable {
+    /**
+     * @param array<string, mixed> $context
+     */
     return function (array $context, mixed $values, bool $notify = TRUE): object {
       if (!$this->mutable) {
         throw new \LogicException(
@@ -262,7 +281,8 @@ final class FieldItemListDoubleBuilder {
 
     // Resolve callable.
     if ($this->fieldDefinition->isCallable()) {
-      $rawValue = ($rawValue)($context);
+      assert(is_callable($rawValue));
+      $rawValue = $rawValue($context);
     }
 
     $this->resolvedValue = $rawValue;
@@ -291,7 +311,7 @@ final class FieldItemListDoubleBuilder {
   /**
    * Checks if an array is an indexed (sequential) array.
    *
-   * @param array $array
+   * @param array<mixed> $array
    *   The array to check.
    *
    * @return bool
@@ -336,6 +356,7 @@ final class FieldItemListDoubleBuilder {
     }
 
     $fieldItem = ($this->fieldItemFactory)($delta, $value, $context);
+    assert(is_object($fieldItem));
     $this->fieldItemCache[$delta] = $fieldItem;
 
     return $fieldItem;

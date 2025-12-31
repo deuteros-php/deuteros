@@ -45,13 +45,17 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
     if (count($interfaces) === 1) {
-      return $this->invokeProtectedMethod('createMock', $interfaces[0]);
+      $mock = $this->invokeProtectedMethod('createMock', $interfaces[0]);
+      assert(is_object($mock));
+      return $mock;
     }
 
     // Create a combined interface to work around PHPUnit's limitation
     // with intersection types for interfaces sharing a common parent.
     $combinedInterface = $this->getOrCreateCombinedInterface($interfaces);
-    return $this->invokeProtectedMethod('createMock', $combinedInterface);
+    $mock = $this->invokeProtectedMethod('createMock', $combinedInterface);
+    assert(is_object($mock));
+    return $mock;
   }
 
   /**
@@ -93,6 +97,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     // Generate unique interface name.
     $hash = substr(md5($cacheKey), 0, 12);
+    /** @var class-string $interfaceName */
     $interfaceName = "Deuteros\\Generated\\CombinedInterface_{$hash}";
 
     // Check if already declared (e.g., from a previous test run in same
@@ -273,7 +278,9 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldListDoubleObject(): object {
-    return $this->invokeProtectedMethod('createMock', FieldItemListInterface::class);
+    $mock = $this->invokeProtectedMethod('createMock', FieldItemListInterface::class);
+    assert(is_object($mock));
+    return $mock;
   }
 
   /**
@@ -332,7 +339,9 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldItemDoubleObject(): object {
-    return $this->invokeProtectedMethod('createMock', FieldItemInterface::class);
+    $mock = $this->invokeProtectedMethod('createMock', FieldItemInterface::class);
+    assert(is_object($mock));
+    return $mock;
   }
 
   /**

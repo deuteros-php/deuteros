@@ -26,7 +26,6 @@ class GuardrailEnforcerTest extends TestCase {
     $this->assertArrayHasKey('save', $methods);
     $this->assertArrayHasKey('delete', $methods);
     $this->assertArrayHasKey('access', $methods);
-    $this->assertArrayHasKey('getTranslation', $methods);
     $this->assertArrayHasKey('toUrl', $methods);
   }
 

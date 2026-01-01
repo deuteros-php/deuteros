@@ -153,11 +153,10 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
     // Set up field list factory.
     $builder->setFieldListFactory(
-      /**
-       * @param array<string, mixed> $context
-       */
-      fn(string $fieldName, FieldDoubleDefinition $fieldDoubleDefinition, array $context) =>
-        $this->createFieldItemListDouble($fieldName, $fieldDoubleDefinition, $definition, $mutableState, $context)
+      function (string $fieldName, FieldDoubleDefinition $fieldDoubleDefinition, array $context) use ($definition, $mutableState) {
+        /** @var array<string, mixed> $context */
+        return $this->createFieldItemListDouble($fieldName, $fieldDoubleDefinition, $definition, $mutableState, $context);
+      }
     );
 
     // Create the double.
@@ -245,7 +244,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param array<string, mixed> $context
    *   The context.
    *
-   * @return \Drupal\Core\Field\FieldItemListInterface
+   * @return \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>
    *   The field item list double.
    */
   protected function createFieldItemListDouble(string $fieldName, FieldDoubleDefinition $fieldDoubleDefinition, EntityDoubleDefinition $entityDoubleDefinition, ?MutableStateContainer $mutableState, array $context): FieldItemListInterface {
@@ -253,11 +252,10 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
     // Set up field item factory.
     $builder->setFieldItemFactory(
-      /**
-       * @param array<string, mixed> $ctx
-       */
-      fn(int $delta, mixed $value, array $ctx) =>
-        $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $ctx)
+      function (int $delta, mixed $value, array $context) use ($fieldName, $entityDoubleDefinition) {
+        /** @var array<string, mixed> $context */
+        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context);
+      }
     );
 
     // Set up mutable state updater if applicable.
@@ -472,7 +470,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param object $double
    *   The mock/prophecy object.
    *
-   * @return \Drupal\Core\Field\FieldItemListInterface
+   * @return \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>
    *   The revealed field item list.
    */
   abstract protected function instantiateFieldListDouble(object $double): FieldItemListInterface;

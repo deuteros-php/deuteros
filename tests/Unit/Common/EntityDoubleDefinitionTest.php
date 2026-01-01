@@ -105,6 +105,7 @@ class EntityDoubleDefinitionTest extends TestCase {
     );
 
     $this->assertTrue($definition->hasInterface(FieldableEntityInterface::class));
+    // @phpstan-ignore argument.type
     $this->assertFalse($definition->hasInterface('NonExistent'));
   }
 

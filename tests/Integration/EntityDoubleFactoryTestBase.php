@@ -53,6 +53,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
       new EntityDoubleDefinition('node')
     );
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(EntityInterface::class, $entity);
     $this->assertSame('node', $entity->getEntityTypeId());
     $this->assertSame('node', $entity->bundle());
@@ -89,6 +90,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_count', 42)
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertSame('Test Title', $entity->get('field_title')->value);
     $this->assertSame(42, $entity->get('field_count')->value);
@@ -105,6 +107,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->build(),
       ['dynamic_value' => 'Resolved from context'],
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertSame('Resolved from context', $entity->get('field_dynamic')->value);
   }
@@ -117,7 +120,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
       EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(fn(array $context) => $context['computed_id'])
+        // @phpstan-ignore-next-line
         ->label(fn(array $context) => "Label: {$context['title']}")
+        // @phpstan-ignore-next-line
         ->field('field_computed', fn(array $context) => $context['title'] . ' Field')
         ->build(),
       [
@@ -125,6 +130,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         'title' => 'Dynamic',
       ],
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertSame(100, $entity->id());
     $this->assertSame('Label: Dynamic', $entity->label());
@@ -145,16 +151,28 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ])
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     // Access via first().
-    $this->assertSame(1, $entity->get('field_tags')->first()->target_id);
+    $first = $entity->get('field_tags')->first();
+    assert($first !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(1, $first->target_id);
 
     // Access via get(delta).
-    $this->assertSame(1, $entity->get('field_tags')->get(0)->target_id);
-    $this->assertSame(2, $entity->get('field_tags')->get(1)->target_id);
-    $this->assertSame(3, $entity->get('field_tags')->get(2)->target_id);
+    $item0 = $entity->get('field_tags')->get(0);
+    $item1 = $entity->get('field_tags')->get(1);
+    $item2 = $entity->get('field_tags')->get(2);
+    assert($item0 !== NULL && $item1 !== NULL && $item2 !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(1, $item0->target_id);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(2, $item1->target_id);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(3, $item2->target_id);
 
     // Access via shorthand.
+    // @phpstan-ignore method.impossibleType
     $this->assertSame(1, $entity->get('field_tags')->target_id);
   }
 
@@ -168,10 +186,14 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_text', 'Plain text value')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     // Chain: entity -> field list -> first item -> value property.
     $this->assertSame('Plain text value', $entity->get('field_text')->value);
-    $this->assertSame('Plain text value', $entity->get('field_text')->first()->value);
+    $first = $entity->get('field_text')->first();
+    assert($first !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame('Plain text value', $first->value);
   }
 
   /**
@@ -184,6 +206,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_existing', 'value')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertTrue($entity->hasField('field_existing'));
     $this->assertFalse($entity->hasField('field_nonexistent'));
@@ -200,6 +223,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_null', NULL)
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertFalse($entity->get('field_with_value')->isEmpty());
     $this->assertTrue($entity->get('field_null')->isEmpty());
@@ -250,6 +274,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_defined', 'value')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("Field 'field_undefined' is not defined");
@@ -282,6 +307,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_test', 'value')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $firstAccess = $entity->get('field_test');
     $secondAccess = $entity->get('field_test');
@@ -300,6 +326,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_status', 'draft')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     // Initial value.
     $this->assertSame('draft', $entity->get('field_status')->value);
@@ -321,6 +348,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_status', 'draft')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage("Cannot modify field 'field_status' on immutable entity double");
@@ -339,6 +367,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_status', 'draft')
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $result = $entity->set('field_status', 'published');
 
@@ -356,9 +385,14 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_author', ['target_id' => 42])
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
+    // @phpstan-ignore method.impossibleType
     $this->assertSame(42, $entity->get('field_author')->target_id);
-    $this->assertSame(42, $entity->get('field_author')->first()->target_id);
+    $first = $entity->get('field_author')->first();
+    assert($first !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(42, $first->target_id);
   }
 
   /**
@@ -374,8 +408,10 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ])
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $values = $entity->get('field_tags')->getValue();
+    assert(is_array($values));
     $this->assertCount(2, $values);
     $this->assertSame(['target_id' => 1], $values[0]);
     $this->assertSame(['target_id' => 2], $values[1]);
@@ -391,6 +427,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_empty', [])
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertNull($entity->get('field_empty')->first());
     $this->assertNull($entity->get('field_empty')->get(0));
@@ -409,6 +446,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ])
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
     $this->assertNull($entity->get('field_tags')->get(99));
   }
@@ -426,9 +464,8 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->methodOverride('setChangedTime', fn() => throw new \LogicException('Read-only'))
         ->build()
     );
+    assert($entity instanceof FieldableEntityInterface);
 
-    $this->assertInstanceOf(EntityInterface::class, $entity);
-    $this->assertInstanceOf(FieldableEntityInterface::class, $entity);
     $this->assertInstanceOf(EntityChangedInterface::class, $entity);
     $this->assertSame(1704067200, $entity->getChangedTime());
   }
@@ -444,10 +481,8 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_test', 'value')
         ->build()
     );
+    assert($entity instanceof ContentEntityInterface);
 
-    $this->assertInstanceOf(EntityInterface::class, $entity);
-    $this->assertInstanceOf(ContentEntityInterface::class, $entity);
-    $this->assertInstanceOf(FieldableEntityInterface::class, $entity);
     $this->assertSame('node', $entity->getEntityTypeId());
     $this->assertSame('article', $entity->bundle());
     $this->assertSame(42, $entity->id());
@@ -465,9 +500,8 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->methodOverride('status', fn() => TRUE)
         ->build()
     );
+    assert($entity instanceof ConfigEntityInterface);
 
-    $this->assertInstanceOf(EntityInterface::class, $entity);
-    $this->assertInstanceOf(ConfigEntityInterface::class, $entity);
     $this->assertSame('view', $entity->getEntityTypeId());
     $this->assertSame('frontpage', $entity->id());
     $this->assertSame('Frontpage View', $entity->label());
@@ -522,7 +556,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
 
     // Magic property access should work.
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame('Test Title', $entity->field_title->value);
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame(42, $entity->field_author->target_id);
   }
 
@@ -538,12 +574,15 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
 
     // Initial value via magic get.
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame('draft', $entity->field_status->value);
 
     // Update via magic set.
+    // @phpstan-ignore property.notFound
     $entity->field_status = 'published';
 
     // New value should be accessible.
+    // @phpstan-ignore property.nonObject
     $this->assertSame('published', $entity->field_status->value);
   }
 
@@ -561,6 +600,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage("Cannot modify field 'field_status' on immutable entity double");
 
+    // @phpstan-ignore property.notFound
     $entity->field_status = 'published';
   }
 
@@ -579,6 +619,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->expectExceptionMessage("Field 'field_undefined' is not defined");
 
     // Access undefined field via magic property.
+    // @phpstan-ignore property.notFound, expr.resultUnused
     $entity->field_undefined;
   }
 

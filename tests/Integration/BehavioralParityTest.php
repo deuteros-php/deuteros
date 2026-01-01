@@ -88,14 +88,18 @@ class BehavioralParityTest extends TestCase {
       ->build();
 
     $mock = $this->createMockDouble($definition);
+    assert($mock instanceof FieldableEntityInterface);
     $prophecy = $this->createProphecyDouble($definition);
+    assert($prophecy instanceof FieldableEntityInterface);
 
     // Verify correctness against definition values.
     $this->assertSame('Test Value', $mock->get('field_text')->value);
     $this->assertSame('Test Value', $prophecy->get('field_text')->value);
     $this->assertSame(123, $mock->get('field_number')->value);
     $this->assertSame(123, $prophecy->get('field_number')->value);
+    // @phpstan-ignore method.impossibleType
     $this->assertSame(42, $mock->get('field_ref')->target_id);
+    // @phpstan-ignore method.impossibleType
     $this->assertSame(42, $prophecy->get('field_ref')->target_id);
   }
 
@@ -105,12 +109,15 @@ class BehavioralParityTest extends TestCase {
   public function testCallbackResolutionParity(): void {
     $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
-      ->field('field_dynamic', fn(array $context) => $context['value'] * 2)
+      // @phpstan-ignore-next-line
+      ->field('field_dynamic', fn(array $context) => (int) $context['value'] * 2)
       ->build();
     $context = ['value' => 21];
 
     $mock = $this->createMockDouble($definition, $context);
+    assert($mock instanceof FieldableEntityInterface);
     $prophecy = $this->createProphecyDouble($definition, $context);
+    assert($prophecy instanceof FieldableEntityInterface);
 
     // Verify correctness against definition values.
     $this->assertSame(42, $mock->get('field_dynamic')->value);
@@ -131,15 +138,27 @@ class BehavioralParityTest extends TestCase {
       ->build();
 
     $mock = $this->createMockDouble($definition);
+    assert($mock instanceof FieldableEntityInterface);
     $prophecy = $this->createProphecyDouble($definition);
+    assert($prophecy instanceof FieldableEntityInterface);
 
     // Verify correctness against definition values.
-    $this->assertSame(1, $mock->get('field_tags')->first()->target_id);
-    $this->assertSame(1, $prophecy->get('field_tags')->first()->target_id);
+    $mockFirst = $mock->get('field_tags')->first();
+    $prophecyFirst = $prophecy->get('field_tags')->first();
+    assert($mockFirst !== NULL && $prophecyFirst !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(1, $mockFirst->target_id);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(1, $prophecyFirst->target_id);
     $expectedIds = [1, 2, 3];
     for ($i = 0; $i < 3; $i++) {
-      $this->assertSame($expectedIds[$i], $mock->get('field_tags')->get($i)->target_id);
-      $this->assertSame($expectedIds[$i], $prophecy->get('field_tags')->get($i)->target_id);
+      $mockItem = $mock->get('field_tags')->get($i);
+      $prophecyItem = $prophecy->get('field_tags')->get($i);
+      assert($mockItem !== NULL && $prophecyItem !== NULL);
+      // @phpstan-ignore property.notFound
+      $this->assertSame($expectedIds[$i], $mockItem->target_id);
+      // @phpstan-ignore property.notFound
+      $this->assertSame($expectedIds[$i], $prophecyItem->target_id);
     }
     $this->assertNull($mock->get('field_tags')->get(99));
     $this->assertNull($prophecy->get('field_tags')->get(99));
@@ -159,7 +178,9 @@ class BehavioralParityTest extends TestCase {
     $context = ['time' => $timestamp];
 
     $mock = $this->createMockDouble($definition, $context);
+    assert($mock instanceof EntityChangedInterface);
     $prophecy = $this->createProphecyDouble($definition, $context);
+    assert($prophecy instanceof EntityChangedInterface);
 
     // Verify correctness against definition values.
     $this->assertSame($timestamp, $mock->getChangedTime());
@@ -184,15 +205,11 @@ class BehavioralParityTest extends TestCase {
       ->build();
 
     $mock = $this->createMockDouble($definition);
+    assert($mock instanceof FieldableEntityInterface);
+    assert($mock instanceof EntityChangedInterface);
     $prophecy = $this->createProphecyDouble($definition);
-
-    // Both should implement all interfaces.
-    $this->assertInstanceOf(EntityInterface::class, $mock);
-    $this->assertInstanceOf(EntityInterface::class, $prophecy);
-    $this->assertInstanceOf(FieldableEntityInterface::class, $mock);
-    $this->assertInstanceOf(FieldableEntityInterface::class, $prophecy);
-    $this->assertInstanceOf(EntityChangedInterface::class, $mock);
-    $this->assertInstanceOf(EntityChangedInterface::class, $prophecy);
+    assert($prophecy instanceof FieldableEntityInterface);
+    assert($prophecy instanceof EntityChangedInterface);
 
     // Verify correctness against definition values.
     $this->assertSame('Test Value', $mock->get('field_text')->value);
@@ -251,11 +268,9 @@ class BehavioralParityTest extends TestCase {
       ->build();
 
     $mock = $this->createMockDouble($definition);
+    assert($mock instanceof ContentEntityInterface);
     $prophecy = $this->createProphecyDouble($definition);
-
-    // Both should implement ContentEntityInterface.
-    $this->assertInstanceOf(ContentEntityInterface::class, $mock);
-    $this->assertInstanceOf(ContentEntityInterface::class, $prophecy);
+    assert($prophecy instanceof ContentEntityInterface);
 
     // Verify correctness against definition values.
     $this->assertSame('node', $mock->getEntityTypeId());
@@ -310,9 +325,13 @@ class BehavioralParityTest extends TestCase {
     $prophecy = $this->createProphecyDouble($definition);
 
     // Verify correctness against definition values.
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame('Test Value', $mock->field_text->value);
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame('Test Value', $prophecy->field_text->value);
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame(42, $mock->field_ref->target_id);
+    // @phpstan-ignore property.notFound, property.nonObject
     $this->assertSame(42, $prophecy->field_ref->target_id);
   }
 
@@ -329,11 +348,15 @@ class BehavioralParityTest extends TestCase {
     $prophecy = $this->prophecyFactory->createMutable($definition);
 
     // Both should support magic set.
+    // @phpstan-ignore property.notFound
     $mock->field_status = 'published';
+    // @phpstan-ignore property.notFound
     $prophecy->field_status = 'published';
 
     // Verify correctness of mutated values.
+    // @phpstan-ignore property.nonObject
     $this->assertSame('published', $mock->field_status->value);
+    // @phpstan-ignore property.nonObject
     $this->assertSame('published', $prophecy->field_status->value);
   }
 

@@ -95,6 +95,8 @@ final class EntityDoubleDefinitionBuilder {
 
   /**
    * The primary interface for improved error messages.
+   *
+   * @var class-string|null
    */
   private ?string $primaryInterface = NULL;
 

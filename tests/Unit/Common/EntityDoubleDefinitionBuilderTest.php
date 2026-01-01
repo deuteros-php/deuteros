@@ -203,6 +203,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
       ->field('field_test', 'raw value')
       ->build();
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(FieldDoubleDefinition::class, $definition->fields['field_test']);
     $this->assertSame('raw value', $definition->fields['field_test']->getValue());
   }
@@ -284,6 +285,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("Interface 'NonExistentInterface' does not exist.");
 
+    // @phpstan-ignore argument.type
     EntityDoubleDefinitionBuilder::fromInterface('node', 'NonExistentInterface');
   }
 

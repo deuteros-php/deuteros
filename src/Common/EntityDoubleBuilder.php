@@ -83,10 +83,10 @@ final class EntityDoubleBuilder {
    *   The resolver callable.
    */
   private function buildIdResolver(): callable {
-    return fn(array $context): mixed => $this->resolveValue(
-      $this->definition->id,
-      $context
-    );
+    return function (array $context): mixed {
+      /** @var array<string, mixed> $context */
+      return $this->resolveValue($this->definition->id, $context);
+    };
   }
 
   /**
@@ -96,10 +96,10 @@ final class EntityDoubleBuilder {
    *   The resolver callable.
    */
   private function buildUuidResolver(): callable {
-    return fn(array $context): mixed => $this->resolveValue(
-      $this->definition->uuid,
-      $context
-    );
+    return function (array $context): mixed {
+      /** @var array<string, mixed> $context */
+      return $this->resolveValue($this->definition->uuid, $context);
+    };
   }
 
   /**
@@ -109,10 +109,10 @@ final class EntityDoubleBuilder {
    *   The resolver callable.
    */
   private function buildLabelResolver(): callable {
-    return fn(array $context): mixed => $this->resolveValue(
-      $this->definition->label,
-      $context
-    );
+    return function (array $context): mixed {
+      /** @var array<string, mixed> $context */
+      return $this->resolveValue($this->definition->label, $context);
+    };
   }
 
   /**
@@ -191,7 +191,11 @@ final class EntityDoubleBuilder {
     /**
      * @param array<string, mixed> $context
      */
-    return fn(array $context, string $fieldName): object => $getResolver($context, $fieldName);
+    return function (array $context, string $fieldName) use ($getResolver): object {
+      $result = $getResolver($context, $fieldName);
+      assert(is_object($result));
+      return $result;
+    };
   }
 
   /**

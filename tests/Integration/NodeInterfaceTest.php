@@ -143,16 +143,18 @@ class NodeInterfaceTest extends TestCase {
     );
     $this->assertInstanceOf(NodeInterface::class, $node);
 
-    // Unconfigured NodeInterface methods should return null.
+    // Unconfigured NodeInterface methods should return null in lenient mode.
     $this->assertNull($node->getTitle());
+    /** @phpstan-ignore method.impossibleType */
     $this->assertNull($node->isPublished());
+    /** @phpstan-ignore method.impossibleType */
     $this->assertNull($node->getCreatedTime());
+    /** @phpstan-ignore method.impossibleType */
     $this->assertNull($node->isPromoted());
+    /** @phpstan-ignore method.impossibleType */
     $this->assertNull($node->isSticky());
 
     // Unsupported methods should also return null in lenient mode.
-    // PHPStan: save() returns int per PHPDoc, but in lenient mode we return
-    // null. This is intentional - we're testing our mock behavior.
     /** @phpstan-ignore method.impossibleType */
     $this->assertNull($node->save());
     $this->assertNull($node->delete());

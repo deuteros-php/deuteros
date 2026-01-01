@@ -48,7 +48,7 @@ final readonly class EntityDoubleDefinition {
    *   Context data for callback resolution.
    * @param bool $mutable
    *   Whether the entity double should be mutable.
-   * @param string|null $primaryInterface
+   * @param class-string|null $primaryInterface
    *   The primary interface for improved error messages.
    * @param bool $lenient
    *   Whether to use lenient mode (return null for unconfigured methods).

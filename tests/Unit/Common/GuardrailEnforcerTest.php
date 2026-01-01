@@ -22,6 +22,7 @@ class GuardrailEnforcerTest extends TestCase {
   public function testGetUnsupportedMethods(): void {
     $methods = GuardrailEnforcer::getUnsupportedMethods();
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertIsArray($methods);
     $this->assertArrayHasKey('save', $methods);
     $this->assertArrayHasKey('delete', $methods);
@@ -48,6 +49,7 @@ class GuardrailEnforcerTest extends TestCase {
   public function testCreateUnsupportedMethodException(): void {
     $exception = GuardrailEnforcer::createUnsupportedMethodException('save');
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'save' is not supported", $exception->getMessage());
     $this->assertStringContainsString('unit-test value object', $exception->getMessage());
@@ -63,6 +65,7 @@ class GuardrailEnforcerTest extends TestCase {
       'EntityOwnerInterface'
     );
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'getOwnerId'", $exception->getMessage());
     $this->assertStringContainsString("interface 'EntityOwnerInterface'", $exception->getMessage());
@@ -75,6 +78,7 @@ class GuardrailEnforcerTest extends TestCase {
   public function testCreateMissingResolverExceptionGeneric(): void {
     $exception = GuardrailEnforcer::createMissingResolverExceptionGeneric('customMethod');
 
+    // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'customMethod'", $exception->getMessage());
     $this->assertStringContainsString('methodOverrides', $exception->getMessage());

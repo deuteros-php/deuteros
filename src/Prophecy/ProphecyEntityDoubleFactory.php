@@ -80,32 +80,47 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDoubleDefinition $definition): void {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityInterface> $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
     $context = $definition->context;
 
     // Wire core entity methods.
+    // @phpstan-ignore-next-line
     $prophecy->id()->will(fn() => $resolvers['id']($context));
+    // @phpstan-ignore-next-line
     $prophecy->uuid()->will(fn() => $resolvers['uuid']($context));
+    // @phpstan-ignore-next-line
     $prophecy->label()->will(fn() => $resolvers['label']($context));
+    // @phpstan-ignore-next-line
     $prophecy->bundle()->will(fn() => $resolvers['bundle']($context));
+    // @phpstan-ignore-next-line
     $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($context));
 
     // Wire fieldable entity methods if applicable.
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
+      // @phpstan-ignore-next-line
       $prophecy->hasField(Argument::type('string'))->will(
-        fn(array $args) => $resolvers['hasField']($context, $args[0])
+        function (array $args) use ($resolvers, $context) {
+          // @phpstan-ignore-next-line
+          return $resolvers['hasField']($context, (string) $args[0]);
+        }
       );
+      // @phpstan-ignore-next-line
       $prophecy->get(Argument::type('string'))->will(
-        fn(array $args) => $resolvers['get']($context, $args[0])
+        function (array $args) use ($resolvers, $context) {
+          // @phpstan-ignore-next-line
+          return $resolvers['get']($context, (string) $args[0]);
+        }
       );
 
       if ($definition->mutable) {
         $revealed = NULL;
+        // @phpstan-ignore-next-line
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
-          function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
-            $resolvers['set']($context, $args[0], $args[1], $args[2] ?? TRUE);
+          function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
+            // @phpstan-ignore-next-line
+            $resolvers['set']($context, (string) $args[0], $args[1], $args[2] ?? TRUE);
             if ($revealed === NULL) {
               $revealed = $prophecy->reveal();
             }
@@ -114,10 +129,12 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
         );
       }
       else {
+        // @phpstan-ignore-next-line
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
-          function (array $args) {
+          function (array $args): never {
             throw new \LogicException(
-              "Cannot modify field '{$args[0]}' on immutable entity double. "
+              // @phpstan-ignore-next-line
+              "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
               . "Use createMutableEntityDouble() if you need to test mutations."
             );
           }
@@ -127,14 +144,16 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire magic accessors using MethodProphecy.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
+    // @phpstan-ignore-next-line
+    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
     if ($definition->mutable) {
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(
-        function (array $args) use ($resolvers, $context) {
-          $resolvers['set']($context, $args[0], $args[1], TRUE);
+        function (array $args) use ($resolvers, $context): void {
+          // @phpstan-ignore-next-line
+          $resolvers['set']($context, (string) $args[0], $args[1], TRUE);
         }
       );
       $prophecy->addMethodProphecy($setMethodProphecy);
@@ -142,9 +161,10 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     else {
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(
-        function (array $args) {
+        function (array $args): never {
           throw new \LogicException(
-            "Cannot modify field '{$args[0]}' on immutable entity double. "
+            // @phpstan-ignore-next-line
+            "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
           );
         }
@@ -155,6 +175,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     // Wire method overrides.
     foreach ($definition->methodOverrides as $method => $override) {
       $resolver = $builder->getMethodOverrideResolver($method);
+      // @phpstan-ignore-next-line
       $prophecy->$method(Argument::cetera())->will(fn(array $args) => $resolver($context, ...$args));
     }
   }
@@ -163,7 +184,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function wireGuardrails(object $double, EntityDoubleDefinition $definition, array $interfaces): void {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityInterface> $prophecy */
     $prophecy = $double;
     $unsupportedMethods = GuardrailEnforcer::getUnsupportedMethods();
 
@@ -185,11 +206,13 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       if ($methodExists) {
         if ($definition->lenient) {
           // In lenient mode, return null instead of throwing.
+          // @phpstan-ignore-next-line
           $prophecy->$method(Argument::cetera())->will(
             fn() => GuardrailEnforcer::getLenientDefault()
           );
         }
         else {
+          // @phpstan-ignore-next-line
           $prophecy->$method(Argument::cetera())->will(
             fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
           );
@@ -209,26 +232,32 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>> $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
     $fieldName = $builder->getFieldName();
 
+    // @phpstan-ignore-next-line
     $prophecy->first()->will(fn() => $resolvers['first']($context));
+    // @phpstan-ignore-next-line
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
+    // @phpstan-ignore-next-line
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
-    $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, $args[0]));
+    // @phpstan-ignore-next-line
+    $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, (int) $args[0]));
 
     // Manually add MethodProphecy for ::__get since Prophecy's "ObjectProphecy"
     // intercepts ::__get calls instead of treating them as method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
+    // @phpstan-ignore-next-line
+    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
     if ($definition->mutable) {
       $revealed = NULL;
+      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-        function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
+        function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
           $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
           if ($revealed === NULL) {
             $revealed = $prophecy->reveal();
@@ -239,12 +268,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
       // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, $args[0], $args[1]));
+      // @phpstan-ignore-next-line
+      $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, (string) $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
+      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-        function () use ($fieldName) {
+        function () use ($fieldName): never {
           throw new \LogicException(
             "Cannot modify field '$fieldName' on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
@@ -255,7 +286,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       // Manually add MethodProphecy for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(
-        function () use ($fieldName) {
+        function () use ($fieldName): never {
           throw new \LogicException(
             "Cannot modify field '$fieldName' on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
@@ -277,7 +308,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemInterface> $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
 
@@ -285,16 +316,20 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     // "ObjectProphecy" intercepts ::__get calls instead of treating them as
     // method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
+    // @phpstan-ignore-next-line
+    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
+    // @phpstan-ignore-next-line
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
+    // @phpstan-ignore-next-line
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
 
     if ($mutable) {
       $revealed = NULL;
+      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-        function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {
+        function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
           $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
           if ($revealed === NULL) {
             $revealed = $prophecy->reveal();
@@ -305,12 +340,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
       // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, $args[0], $args[1]));
+      // @phpstan-ignore-next-line
+      $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, (string) $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
+      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
-        function () use ($delta) {
+        function () use ($delta): never {
           throw new \LogicException(
             "Cannot modify field item at delta $delta on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
@@ -321,9 +358,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(
-        function (array $args) {
+        function (array $args): never {
+          $name = $args[0];
+          assert(is_string($name));
           throw new \LogicException(
-            "Cannot modify property '{$args[0]}' on immutable entity double. "
+            "Cannot modify property '" . $name . "' on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
           );
         }
@@ -336,24 +375,33 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function instantiateDouble(object $double): EntityInterface {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
-    return $double->reveal();
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityInterface> $prophecy */
+    $prophecy = $double;
+    /** @var \Drupal\Core\Entity\EntityInterface */
+    return $prophecy->reveal();
   }
 
   /**
    * {@inheritdoc}
+   *
+   * @return \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>
+   *   The field item list double.
    */
   protected function instantiateFieldListDouble(object $double): FieldItemListInterface {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
-    return $double->reveal();
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>> $prophecy */
+    $prophecy = $double;
+    /** @var \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface> */
+    return $prophecy->reveal();
   }
 
   /**
    * {@inheritdoc}
    */
   protected function instantiateFieldItemDouble(object $double): FieldItemInterface {
-    /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
-    return $double->reveal();
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemInterface> $prophecy */
+    $prophecy = $double;
+    /** @var \Drupal\Core\Field\FieldItemInterface */
+    return $prophecy->reveal();
   }
 
 }

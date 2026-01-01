@@ -305,10 +305,13 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
   /**
    * {@inheritdoc}
+   *
+   * @return \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>
+   *   The field item list double.
    */
   protected function instantiateFieldListDouble(object $double): FieldItemListInterface {
     // PHPUnit mocks are already usable as-is.
-    /** @var \Drupal\Core\Field\FieldItemListInterface $double */
+    /** @var \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface> $double */
     return $double;
   }
 

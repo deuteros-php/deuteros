@@ -12,3 +12,4 @@
 10. ~~Benchmarking: compare a Deuteros unit test with a Kernel test~~ (done)
 11. ~~Rename Definition Classes to Include "Double"~~ (done)
 12. ~~PHPDoc Readability Improvements~~ (done)
+13. ~~Fix all PHPStan errors~~ (done)

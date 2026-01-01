@@ -7,6 +7,7 @@ namespace Deuteros\Prophecy;
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\EntityDoubleBuilder;
 use Deuteros\Common\EntityDoubleFactory;
+use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\Common\FieldItemDoubleBuilder;
 use Deuteros\Common\FieldItemListDoubleBuilder;
 use Deuteros\Common\GuardrailEnforcer;
@@ -14,9 +15,10 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
+use PHPUnit\Framework\TestCase;
 use Prophecy\Argument;
-use Prophecy\Prophet;
 use Prophecy\Prophecy\MethodProphecy;
+use Prophecy\Prophet;
 
 /**
  * Factory for creating entity doubles using Prophecy.
@@ -32,6 +34,17 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   public function __construct(
     private readonly Prophet $prophet,
   ) {}
+
+  /**
+   * {@inheritdoc}
+   *
+   * @return static
+   */
+  public static function fromTest(TestCase $test): EntityDoubleFactoryInterface {
+    $prophet = static::invokeNonPublicMethod($test, 'getProphet');
+    assert($prophet instanceof Prophet);
+    return new ProphecyEntityDoubleFactory($prophet);
+  }
 
   /**
    * {@inheritdoc}

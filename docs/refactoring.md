@@ -39,8 +39,8 @@ $entity = $factory->create([
 ]);
 
 // Or explicit instantiation
-$factory = new \Deuteros\PhpUnit\MockEntityDoubleFactory($this);
-$factory = new \Deuteros\Prophecy\ProphecyEntityDoubleFactory($this->getProphet());
+$factory = new \Deuteros\PhpUnit\MockEntityDoubleFactory::fromTest($this);
+$factory = new \Deuteros\Prophecy\ProphecyEntityDoubleFactory::fromTest($this);
 ```
 
 ### Architecture

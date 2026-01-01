@@ -23,7 +23,7 @@ class ProphecyNodeBenchmarkTest extends BenchmarkTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->factory = new ProphecyEntityDoubleFactory($this->getProphet());
+    $this->factory = ProphecyEntityDoubleFactory::fromTest($this);
   }
 
 }

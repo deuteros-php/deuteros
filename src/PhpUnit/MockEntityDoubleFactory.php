@@ -7,6 +7,7 @@ namespace Deuteros\PhpUnit;
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\EntityDoubleBuilder;
 use Deuteros\Common\EntityDoubleFactory;
+use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\Common\FieldItemDoubleBuilder;
 use Deuteros\Common\FieldItemListDoubleBuilder;
 use Deuteros\Common\GuardrailEnforcer;
@@ -33,32 +34,22 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
   /**
    * {@inheritdoc}
+   *
+   * @return static
+   */
+  public static function fromTest(TestCase $test): EntityDoubleFactoryInterface {
+    return new MockEntityDoubleFactory($test);
+  }
+
+  /**
+   * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
     // Use runtime interface for __get/__set support.
     $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
-    $mock = $this->invokeProtectedMethod('createMock', $runtimeInterface);
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', $runtimeInterface);
     assert(is_object($mock));
     return $mock;
-  }
-
-  /**
-   * Invokes a protected method on the test case.
-   *
-   * PHPUnit's mock creation methods are protected, but we need to call them
-   * from outside the test case class.
-   *
-   * @param string $method
-   *   The method name.
-   * @param mixed ...$args
-   *   The method arguments.
-   *
-   * @return mixed
-   *   The method return value.
-   */
-  private function invokeProtectedMethod(string $method, mixed ...$args): mixed {
-    $reflection = new \ReflectionMethod($this->testCase, $method);
-    return $reflection->invoke($this->testCase, ...$args);
   }
 
   /**
@@ -198,7 +189,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldListDoubleObject(): object {
-    $mock = $this->invokeProtectedMethod('createMock', FieldItemListInterface::class);
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldItemListInterface::class);
     assert(is_object($mock));
     return $mock;
   }
@@ -254,7 +245,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldItemDoubleObject(): object {
-    $mock = $this->invokeProtectedMethod('createMock', FieldItemInterface::class);
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldItemInterface::class);
     assert(is_object($mock));
     return $mock;
   }

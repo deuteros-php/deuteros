@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration\Prophecy;
 
-use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Deuteros\Tests\Integration\EntityDoubleFactoryTestBase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,8 +22,16 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createFactory(): EntityDoubleFactoryInterface {
-    return new ProphecyEntityDoubleFactory($this->getProphet());
+  protected function getClassName(): string {
+    return ProphecyEntityDoubleFactory::class;
+  }
+
+  /**
+   * Checks that test and the factory share teh same prophet.
+   */
+  public function testProphet(): void {
+    $prophetProperty = new \ReflectionProperty($this->factory, 'prophet');
+    $this->assertSame($this->getProphet(), $prophetProperty->getValue($this->factory));
   }
 
 }

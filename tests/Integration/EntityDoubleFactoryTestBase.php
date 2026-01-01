@@ -6,6 +6,7 @@ namespace Deuteros\Tests\Integration;
 
 use Deuteros\Common\EntityDefinition;
 use Deuteros\Common\EntityDefinitionBuilder;
+use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -32,16 +33,17 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->factory = $this->createFactory();
+    $this->factory = EntityDoubleFactory::fromTest($this);
+    $this->assertInstanceOf($this->getClassName(), $this->factory);
   }
 
   /**
    * Creates the factory instance for this test.
    *
-   * @return \Deuteros\Common\EntityDoubleFactoryInterface
-   *   The factory to test.
+   * @return class-string<object>
+   *   The name of the class of the factory to test.
    */
-  abstract protected function createFactory(): EntityDoubleFactoryInterface;
+  abstract protected function getClassName(): string;
 
   /**
    * Tests creating an entity double with only "entity_type" specified.

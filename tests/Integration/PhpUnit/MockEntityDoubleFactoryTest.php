@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration\PhpUnit;
 
-use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Tests\Integration\EntityDoubleFactoryTestBase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -20,8 +19,8 @@ class MockEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function createFactory(): EntityDoubleFactoryInterface {
-    return new MockEntityDoubleFactory($this);
+  protected function getClassName(): string {
+    return MockEntityDoubleFactory::class;
   }
 
 }

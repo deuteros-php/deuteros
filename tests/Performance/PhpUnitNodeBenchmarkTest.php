@@ -21,7 +21,7 @@ class PhpUnitNodeBenchmarkTest extends BenchmarkTestBase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->factory = new MockEntityDoubleFactory($this);
+    $this->factory = MockEntityDoubleFactory::fromTest($this);
   }
 
 }

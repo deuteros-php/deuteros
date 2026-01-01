@@ -45,8 +45,8 @@ class BehavioralParityTest extends TestCase {
    * {@inheritdoc}
    */
   protected function setUp(): void {
-    $this->mockFactory = new MockEntityDoubleFactory($this);
-    $this->prophecyFactory = new ProphecyEntityDoubleFactory($this->getProphet());
+    $this->mockFactory = MockEntityDoubleFactory::fromTest($this);
+    $this->prophecyFactory = ProphecyEntityDoubleFactory::fromTest($this);
   }
 
   /**

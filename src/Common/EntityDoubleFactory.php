@@ -74,73 +74,6 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   private static array $runtimeInterfaceCache = [];
 
   /**
-   * Gets or creates a runtime interface with magic accessor support.
-   *
-   * Generates a single interface that extends all requested interfaces and
-   * declares __get/__set methods for magic property access.
-   *
-   * @param list<class-string> $interfaces
-   *   The interfaces to extend.
-   *
-   * @return class-string
-   *   The runtime interface name.
-   */
-  protected function getOrCreateRuntimeInterface(array $interfaces): string {
-    // Sort for deterministic cache key.
-    $sorted = $interfaces;
-    sort($sorted);
-    $cacheKey = implode('|', $sorted);
-
-    if (isset(self::$runtimeInterfaceCache[$cacheKey])) {
-      return self::$runtimeInterfaceCache[$cacheKey];
-    }
-
-    // Generate unique interface name.
-    $hash = substr(md5($cacheKey), 0, 12);
-    /** @var class-string $interfaceName */
-    $interfaceName = "Deuteros\\Generated\\RuntimeInterface_{$hash}";
-
-    if (!interface_exists($interfaceName, FALSE)) {
-      $this->declareRuntimeInterface($interfaceName, $interfaces);
-    }
-
-    self::$runtimeInterfaceCache[$cacheKey] = $interfaceName;
-    return $interfaceName;
-  }
-
-  /**
-   * Declares a runtime interface via eval.
-   *
-   * @param string $interfaceName
-   *   The fully-qualified interface name to declare.
-   * @param list<class-string> $interfaces
-   *   The interfaces to extend.
-   */
-  private function declareRuntimeInterface(string $interfaceName, array $interfaces): void {
-    $parts = explode('\\', $interfaceName);
-    $shortName = array_pop($parts);
-    $namespace = implode('\\', $parts);
-
-    $extends = implode(', ', array_map(
-      fn(string $interface) => '\\' . $interface,
-      $interfaces
-    ));
-
-    $code = sprintf(
-      'namespace %s { interface %s extends %s { '
-      . 'public function __get(string $name): mixed; '
-      . 'public function __set(string $name, mixed $value): void; '
-      . '} }',
-      $namespace,
-      $shortName,
-      $extends
-    );
-
-    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
-    eval($code);
-  }
-
-  /**
    * Creates the appropriate factory based on the test case's available traits.
    *
    * Detects whether the test uses Prophecy (ProphecyTrait) or PHPUnit mocks
@@ -149,17 +82,34 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * @param \PHPUnit\Framework\TestCase $test
    *   The test case instance.
    *
-   * @return self
+   * @return \Deuteros\Common\EntityDoubleFactoryInterface
    *   The appropriate factory implementation.
    */
-  public static function fromTest(TestCase $test): self {
-    // Check if test uses ProphecyTrait (has getProphet() method).
-    if (method_exists($test, 'getProphet')) {
-      /** @var \Prophecy\Prophet $prophet */
-      $prophet = $test->getProphet();
-      return new ProphecyEntityDoubleFactory($prophet);
-    }
-    return new MockEntityDoubleFactory($test);
+  public static function fromTest(TestCase $test): EntityDoubleFactoryInterface {
+    return method_exists($test, 'getProphet')
+      ? ProphecyEntityDoubleFactory::fromTest($test)
+      : MockEntityDoubleFactory::fromTest($test);
+  }
+
+  /**
+   * Invokes a protected method on the test case.
+   *
+   * PHPUnit's mock creation methods are protected, but we need to call them
+   * from outside the test case class.
+   *
+   * @param \PHPUnit\Framework\TestCase $test
+   *   The test being run.
+   * @param string $method
+   *   The method name.
+   * @param mixed ...$args
+   *   The method arguments.
+   *
+   * @return mixed
+   *   The method return value.
+   */
+  protected static function invokeNonPublicMethod(TestCase $test, string $method, mixed ...$args): mixed {
+    $reflection = new \ReflectionMethod($test, $method);
+    return $reflection->invoke($test, ...$args);
   }
 
   /**
@@ -353,6 +303,73 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $this->wireFieldItemResolvers($double, $builder, $mutable, $delta, $fieldName, $context);
 
     return $this->instantiateFieldItemDouble($double);
+  }
+
+  /**
+   * Gets or creates a runtime interface with magic accessor support.
+   *
+   * Generates a single interface that extends all requested interfaces and
+   * declares __get/__set methods for magic property access.
+   *
+   * @param list<class-string> $interfaces
+   *   The interfaces to extend.
+   *
+   * @return class-string
+   *   The runtime interface name.
+   */
+  protected function getOrCreateRuntimeInterface(array $interfaces): string {
+    // Sort for deterministic cache key.
+    $sorted = $interfaces;
+    sort($sorted);
+    $cacheKey = implode('|', $sorted);
+
+    if (isset(self::$runtimeInterfaceCache[$cacheKey])) {
+      return self::$runtimeInterfaceCache[$cacheKey];
+    }
+
+    // Generate unique interface name.
+    $hash = substr(md5($cacheKey), 0, 12);
+    /** @var class-string $interfaceName */
+    $interfaceName = "Deuteros\\Generated\\RuntimeInterface_{$hash}";
+
+    if (!interface_exists($interfaceName, FALSE)) {
+      $this->declareRuntimeInterface($interfaceName, $interfaces);
+    }
+
+    self::$runtimeInterfaceCache[$cacheKey] = $interfaceName;
+    return $interfaceName;
+  }
+
+  /**
+   * Declares a runtime interface via eval.
+   *
+   * @param string $interfaceName
+   *   The fully-qualified interface name to declare.
+   * @param list<class-string> $interfaces
+   *   The interfaces to extend.
+   */
+  private function declareRuntimeInterface(string $interfaceName, array $interfaces): void {
+    $parts = explode('\\', $interfaceName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $extends = implode(', ', array_map(
+      fn(string $interface) => '\\' . $interface,
+      $interfaces
+    ));
+
+    $code = sprintf(
+      'namespace %s { interface %s extends %s { '
+      . 'public function __get(string $name): mixed; '
+      . 'public function __set(string $name, mixed $value): void; '
+      . '} }',
+      $namespace,
+      $shortName,
+      $extends
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
   }
 
   /**

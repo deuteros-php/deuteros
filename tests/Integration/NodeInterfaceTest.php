@@ -67,7 +67,7 @@ class NodeInterfaceTest extends TestCase {
    * Tests creating a NodeInterface double with PHPUnit mocks.
    */
   public function testNodeInterfaceWithPhpUnit(): void {
-    $factory = new MockEntityDoubleFactory($this);
+    $factory = MockEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
       EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
@@ -100,7 +100,7 @@ class NodeInterfaceTest extends TestCase {
    * Tests creating a NodeInterface double with Prophecy.
    */
   public function testNodeInterfaceWithProphecy(): void {
-    $factory = new ProphecyEntityDoubleFactory($this->getProphet());
+    $factory = ProphecyEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
       EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
@@ -133,7 +133,7 @@ class NodeInterfaceTest extends TestCase {
    * Tests lenient mode with NodeInterface.
    */
   public function testNodeInterfaceLenientMode(): void {
-    $factory = new MockEntityDoubleFactory($this);
+    $factory = MockEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
       EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)

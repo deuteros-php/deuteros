@@ -11,3 +11,4 @@
 9. ~~Add Correctness Assertions to BehavioralParityTest~~ (done)
 10. ~~Benchmarking: compare a Deuteros unit test with a Kernel test~~ (done)
 11. ~~Rename Definition Classes to Include "Double"~~ (done)
+12. ~~PHPDoc Readability Improvements~~ (done)

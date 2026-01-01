@@ -55,6 +55,13 @@ Additional formatting rules:
 - Method/function signatures should be on a single line if ≤160 characters
 - Constructors are exempt (they use property promotion and can span multiple lines)
 
+PHPDoc description text formatting:
+- Method names should be prefixed with `::` without parentheses (e.g., `::fromTest`)
+- Non-fully-qualified class/interface/trait names should be double-quoted (e.g., `"EntityInterface"`)
+- String literals should be double-quoted (e.g., `"taxonomy_term"`)
+- Fully-qualified names with backslash prefix don't need quotes (e.g., `\Drupal\Core\Entity\EntityInterface`)
+- These rules apply to description text only, not `@param`/`@return` type hints
+
 ## Static Analysis
 
 PHPStan is configured at level 10 (max) with a baseline for existing issues.

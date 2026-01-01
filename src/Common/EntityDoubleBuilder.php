@@ -77,7 +77,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the id() resolver.
+   * Builds the ::id resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -90,7 +90,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the uuid() resolver.
+   * Builds the ::uuid resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -103,7 +103,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the label() resolver.
+   * Builds the ::label resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -116,7 +116,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the bundle() resolver.
+   * Builds the ::bundle resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -126,7 +126,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the getEntityTypeId() resolver.
+   * Builds the ::getEntityTypeId resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -136,7 +136,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the hasField() resolver.
+   * Builds the ::hasField resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -146,9 +146,9 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the get() resolver.
+   * Builds the ::get resolver.
    *
-   * Returns a FieldItemListInterface double for the requested field.
+   * Returns a "FieldItemListInterface" double for the requested field.
    *
    * @return callable
    *   The resolver callable.
@@ -179,9 +179,9 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the __get() resolver.
+   * Builds the ::__get resolver.
    *
-   * Proxies to get() for field access.
+   * Proxies to ::get for field access.
    *
    * @return callable
    *   The resolver callable.
@@ -195,7 +195,7 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Builds the set() resolver.
+   * Builds the ::set resolver.
    *
    * @return callable
    *   The resolver callable.

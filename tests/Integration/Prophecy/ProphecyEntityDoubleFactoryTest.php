@@ -27,7 +27,7 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
   }
 
   /**
-   * Checks that test and the factory share teh same prophet.
+   * Checks that test and the factory share the same prophet.
    */
   public function testProphet(): void {
     $prophetProperty = new \ReflectionProperty($this->factory, 'prophet');

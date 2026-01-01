@@ -32,7 +32,7 @@ interface EntityDoubleFactoryInterface {
   /**
    * Creates a mutable entity double.
    *
-   * Field values can be updated via set() methods for assertion purposes.
+   * Field values can be updated via ::set for assertion purposes.
    *
    * @param \Deuteros\Common\EntityDoubleDefinition $definition
    *   The entity double definition.

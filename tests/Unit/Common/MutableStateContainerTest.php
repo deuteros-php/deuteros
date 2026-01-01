@@ -63,7 +63,7 @@ class MutableStateContainerTest extends TestCase {
   }
 
   /**
-   * Tests reset::() clears all stored values.
+   * Tests ::reset clears all stored values.
    */
   public function testReset(): void {
     $container = new MutableStateContainer();

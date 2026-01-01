@@ -8,10 +8,10 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
- * Fluent builder for creating EntityDoubleDefinition instances.
+ * Fluent builder for creating "EntityDoubleDefinition" instances.
  *
  * Provides a type-safe, discoverable API for configuring entity doubles
- * without relying on array keys. Auto-adds FieldableEntityInterface when
+ * without relying on array keys. Auto-adds "FieldableEntityInterface" when
  * fields are defined.
  *
  * @example Basic usage
@@ -136,13 +136,13 @@ final class EntityDoubleDefinitionBuilder {
    * @param string $entityType
    *   The entity type ID (e.g., 'node', 'user', 'taxonomy_term').
    * @param class-string $interface
-   *   The primary interface (must extend EntityInterface).
+   *   The primary interface (must extend "EntityInterface").
    *
    * @return self
    *   A new builder instance with all interfaces from the hierarchy.
    *
    * @throws \InvalidArgumentException
-   *   If the interface does not exist or does not extend EntityInterface.
+   *   If the interface does not exist or does not extend "EntityInterface".
    */
   public static function fromInterface(string $entityType, string $interface): self {
     // Validate interface exists.
@@ -293,8 +293,8 @@ final class EntityDoubleDefinitionBuilder {
   /**
    * Adds an interface to implement.
    *
-   * Note: FieldableEntityInterface is auto-added when fields are defined.
-   * EntityInterface is always included by the factory.
+   * Note: "FieldableEntityInterface" is auto-added when fields are defined.
+   * "EntityInterface" is always included by the factory.
    *
    * @param class-string $interface
    *   The fully qualified interface name.
@@ -415,7 +415,7 @@ final class EntityDoubleDefinitionBuilder {
   public function build(): EntityDoubleDefinition {
     $interfaces = $this->interfaces;
 
-    // Auto-add FieldableEntityInterface when fields are defined.
+    // Auto-add "FieldableEntityInterface" when fields are defined.
     if ($this->fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
       $interfaces[] = FieldableEntityInterface::class;
     }

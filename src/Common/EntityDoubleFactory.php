@@ -29,10 +29,10 @@ use PHPUnit\Framework\TestCase;
  * - Mutable doubles for testing entity modifications
  *
  * Explicitly unsupported behaviors (will throw):
- * - save(), delete() - requires entity storage
- * - access() - requires access control services
- * - getTranslation() - requires translation services
- * - toUrl() - requires routing services
+ * - ::save, ::delete - requires entity storage
+ * - ::access - requires access control services
+ * - ::getTranslation - requires translation services
+ * - ::toUrl - requires routing services
  * - Entity reference traversal
  *
  * This is a unit-test value object only. Use Kernel tests for behaviors that
@@ -76,7 +76,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Creates the appropriate factory based on the test case's available traits.
    *
-   * Detects whether the test uses Prophecy (ProphecyTrait) or PHPUnit mocks
+   * Detects whether the test uses Prophecy ("ProphecyTrait") or PHPUnit mocks
    * and returns the matching factory implementation.
    *
    * @param \PHPUnit\Framework\TestCase $test
@@ -309,7 +309,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * Gets or creates a runtime interface with magic accessor support.
    *
    * Generates a single interface that extends all requested interfaces and
-   * declares __get/__set methods for magic property access.
+   * declares ::__get/::__set methods for magic property access.
    *
    * @param list<class-string> $interfaces
    *   The interfaces to extend.

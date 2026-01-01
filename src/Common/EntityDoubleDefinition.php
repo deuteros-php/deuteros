@@ -70,7 +70,7 @@ final readonly class EntityDoubleDefinition {
     public ?string $primaryInterface = NULL,
     public bool $lenient = FALSE,
   ) {
-    // Validate that fields are only used with FieldableEntityInterface.
+    // Validate that fields are only used with "FieldableEntityInterface".
     if ($fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
       throw new \InvalidArgumentException(
         "Fields can only be defined when FieldableEntityInterface is listed in interfaces. "

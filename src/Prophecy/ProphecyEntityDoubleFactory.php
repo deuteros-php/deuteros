@@ -50,11 +50,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    *
    * Prophecy can handle multiple interfaces that share a common parent via
-   * willImplement(), so we override the base implementation to keep all
+   * ::willImplement, so we override the base implementation to keep all
    * declared interfaces.
    */
   protected function resolveInterfaces(EntityDoubleDefinition $definition): array {
-    // Always include EntityInterface.
+    // Always include "EntityInterface".
     $interfaces = [EntityInterface::class];
 
     // Add declared interfaces.
@@ -71,7 +71,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    // Use runtime interface for __get/__set support.
+    // Use runtime interface for ::__get/::__set support.
     $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
     return $this->prophet->prophesize($runtimeInterface);
   }

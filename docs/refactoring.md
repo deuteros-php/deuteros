@@ -801,3 +801,81 @@ $factory->create($definition);
 2. **Consistent Naming**: Aligns with existing "Double" terminology used
    throughout the codebase (e.g., `EntityDoubleBuilder`, `FieldItemDoubleBuilder`)
 3. **Self-Documenting**: Class names immediately convey their purpose
+
+## Task 12 - PHPDoc Readability Improvements
+
+**Status:** Complete
+
+### Overview
+
+Improved PHPDoc readability by consistently applying formatting rules for method
+names and class/interface references in description text.
+
+### Rules Applied
+
+1. **Method names** in PHPDoc description text prefixed with `::` without
+   parentheses (e.g., `::fromTest`)
+2. **Non-fully-qualified class/interface/trait names** in PHPDoc description
+   text double-quoted (e.g., `"EntityInterface"`)
+3. **String literals** in PHPDoc description text double-quoted
+   (e.g., `"taxonomy_term"`)
+4. **Fully-qualified names** with backslash prefix don't need quotes
+   (e.g., `\Drupal\Core\Entity\EntityInterface`)
+
+These rules apply to description text only, not `@param`/`@return` type hints.
+
+### Changes
+
+**Modified Source Files:**
+- `src/Common/EntityDoubleBuilder.php` - Updated method resolver PHPDocs
+- `src/Common/FieldItemListDoubleBuilder.php` - Updated method resolver PHPDocs
+- `src/Common/FieldItemDoubleBuilder.php` - Updated method resolver PHPDocs
+- `src/Common/EntityDoubleFactory.php` - Updated class docblock and comments
+- `src/Common/EntityDoubleDefinition.php` - Updated comment
+- `src/Common/EntityDoubleDefinitionBuilder.php` - Updated docblocks
+- `src/Common/EntityDoubleFactoryInterface.php` - Updated method docblock
+- `src/PhpUnit/MockEntityDoubleFactory.php` - Updated comment
+- `src/Prophecy/ProphecyEntityDoubleFactory.php` - Updated docblock and comments
+
+**Modified Test Files:**
+- `tests/Unit/Common/MutableStateContainerTest.php` - Fixed malformed `reset::()`
+- `tests/Integration/Prophecy/ProphecyEntityDoubleFactoryTest.php` - Fixed typo
+
+**Updated Documentation:**
+- `CLAUDE.md` - Added PHPDoc description text formatting rules
+
+### Examples
+
+Before:
+```php
+/**
+ * Builds the id() resolver.
+ */
+```
+
+After:
+```php
+/**
+ * Builds the ::id resolver.
+ */
+```
+
+Before:
+```php
+/**
+ * Auto-adds FieldableEntityInterface when fields are defined.
+ */
+```
+
+After:
+```php
+/**
+ * Auto-adds "FieldableEntityInterface" when fields are defined.
+ */
+```
+
+### Benefits
+
+1. **Readability**: Method names and class references stand out in PHPDocs
+2. **Consistency**: All PHPDocs follow the same formatting conventions
+3. **Documented**: Rules added to CLAUDE.md for future contributions

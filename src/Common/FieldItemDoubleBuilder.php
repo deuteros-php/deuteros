@@ -7,7 +7,7 @@ namespace Deuteros\Common;
 /**
  * Builds callable resolvers for field item double methods.
  *
- * Produces framework-agnostic callable resolvers for FieldItemInterface
+ * Produces framework-agnostic callable resolvers for "FieldItemInterface"
  * methods. These resolvers are then wired to PHPUnit mocks or Prophecy doubles
  * by the adapter traits.
  */
@@ -55,9 +55,9 @@ final class FieldItemDoubleBuilder {
   }
 
   /**
-   * Builds the __get() resolver.
+   * Builds the ::__get resolver.
    *
-   * Provides access to common field properties: value, target_id, etc.
+   * Provides access to common field properties: "value", "target_id", etc.
    *
    * @return callable
    *   The resolver callable.
@@ -79,7 +79,7 @@ final class FieldItemDoubleBuilder {
   }
 
   /**
-   * Builds the getValue() resolver.
+   * Builds the ::getValue resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -89,7 +89,7 @@ final class FieldItemDoubleBuilder {
   }
 
   /**
-   * Builds the setValue() resolver.
+   * Builds the ::setValue resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -111,9 +111,9 @@ final class FieldItemDoubleBuilder {
   }
 
   /**
-   * Builds the __set() resolver.
+   * Builds the ::__set resolver.
    *
-   * Proxies property set to setValue() for 'value' property.
+   * Proxies property set to ::setValue for "value" property.
    *
    * @return callable
    *   The resolver callable.
@@ -140,7 +140,7 @@ final class FieldItemDoubleBuilder {
   }
 
   /**
-   * Builds the isEmpty() resolver.
+   * Builds the ::isEmpty resolver.
    *
    * @return callable
    *   The resolver callable.

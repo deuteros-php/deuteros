@@ -7,7 +7,7 @@ namespace Deuteros\Common;
 /**
  * Builds callable resolvers for field item list double methods.
  *
- * Produces framework-agnostic callable resolvers for FieldItemListInterface
+ * Produces framework-agnostic callable resolvers for "FieldItemListInterface"
  * methods. These resolvers are then wired to PHPUnit mocks or Prophecy doubles
  * by the adapter traits.
  */
@@ -101,7 +101,7 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the first() resolver.
+   * Builds the ::first resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -122,7 +122,7 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the isEmpty() resolver.
+   * Builds the ::isEmpty resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -138,7 +138,7 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the getValue() resolver.
+   * Builds the ::getValue resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -153,7 +153,7 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the get() resolver.
+   * Builds the ::get resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -174,9 +174,9 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the __get() resolver.
+   * Builds the ::__get resolver.
    *
-   * Proxies common property access to first() item.
+   * Proxies common property access to ::first item.
    *
    * @return callable
    *   The resolver callable.
@@ -200,7 +200,7 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the setValue() resolver.
+   * Builds the ::setValue resolver.
    *
    * @return callable
    *   The resolver callable.
@@ -236,9 +236,9 @@ final class FieldItemListDoubleBuilder {
   }
 
   /**
-   * Builds the __set() resolver.
+   * Builds the ::__set resolver.
    *
-   * Proxies 'value' property set to setValue().
+   * Proxies "value" property set to ::setValue.
    *
    * @return callable
    *   The resolver callable.

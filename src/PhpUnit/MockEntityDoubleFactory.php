@@ -45,7 +45,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    // Use runtime interface for __get/__set support.
+    // Use runtime interface for ::__get/::__set support.
     $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
     $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', $runtimeInterface);
     assert(is_object($mock));

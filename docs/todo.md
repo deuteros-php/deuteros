@@ -8,4 +8,5 @@
 6. ~~Add fromInterface() with Lenient Mode~~ (done)
 7. ~~Break core circular dependency~~ (done)
 8. ~~Magic Accessor Support (__get/__set)~~ (done)
-9. ~~Improve parity coverage~~ (done)
+9. ~~Add Correctness Assertions to BehavioralParityTest~~ (done)
+10. ~~Benchmarking: compare a Deuteros unit test with a Kernel test~~ (done)

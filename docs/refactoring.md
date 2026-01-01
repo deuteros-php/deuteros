@@ -644,3 +644,90 @@ $this->assertSame('Test Value', $prophecy->get('field_text')->value);
 2. **Clearer Intent**: Tests document what the expected values should be
 3. **Simpler**: Removed redundant parity assertions (transitivity)
 4. **Complete Coverage**: All 10 test methods now verify correctness
+
+## Task 10 - Performance Benchmarking
+
+**Status:** Complete
+
+### Overview
+
+Added performance benchmark tests comparing Deuteros entity doubles with Drupal
+Kernel tests. The benchmarks measure the overhead of entity creation and field
+operations across three implementations: PHPUnit mocks, Prophecy doubles, and
+Drupal Kernel tests.
+
+### Architecture
+
+```
+tests/Performance/
+├── NodeOperationsBenchmarkTrait.php   # Shared benchmark logic
+├── PhpUnitNodeBenchmarkTest.php       # PHPUnit mock benchmarks
+├── ProphecyNodeBenchmarkTest.php      # Prophecy double benchmarks
+└── KernelNodeBenchmarkTest.php        # Drupal Kernel test benchmarks
+```
+
+### Benchmark Design
+
+The benchmark uses a data provider with configurable iterations (default: 100)
+to run identical operations on each test implementation:
+
+**Operations Measured:**
+- Entity creation (per iteration)
+- Metadata access: `id()`, `uuid()`, `bundle()`, `label()`, `getEntityTypeId()`
+- Node-specific methods: `getTitle()`, `isPublished()`, `getCreatedTime()`,
+  `isPromoted()`, `isSticky()`, `getOwnerId()`
+- Field access: `get()`, `->value`, `getValue()`, `hasField()`
+- Multi-value fields: `first()`, `get(index)`, `isEmpty()`
+- Entity references: `->target_id`
+
+### Changes
+
+**Created:**
+- `tests/Performance/NodeOperationsBenchmarkTrait.php` - Trait with configurable
+  `ITERATION_COUNT`, data provider, and `performNodeOperations()` method
+- `tests/Performance/PhpUnitNodeBenchmarkTest.php` - Uses `MockEntityDoubleFactory`
+- `tests/Performance/ProphecyNodeBenchmarkTest.php` - Uses `ProphecyEntityDoubleFactory`
+- `tests/Performance/KernelNodeBenchmarkTest.php` - Uses `Node::create()` (no save)
+
+### Kernel Test Compatibility
+
+The Kernel test is conditionally defined based on whether
+`EntityKernelTestBase` is available:
+
+```php
+if (!class_exists(EntityKernelTestBase::class)) {
+  // Define placeholder that skips when Drupal core unavailable
+  class KernelNodeBenchmarkTest extends TestCase {
+    public function testSkipped(): void {
+      $this->markTestSkipped('Drupal core is not available.');
+    }
+  }
+  return;
+}
+
+// Real test class when Drupal core is available
+class KernelNodeBenchmarkTest extends EntityKernelTestBase { ... }
+```
+
+This allows:
+- Production composer (stubs only): Kernel test is skipped
+- Dev composer (Drupal core): Full Kernel test runs
+
+### Running Benchmarks
+
+```bash
+# Deuteros tests only (works with production composer)
+./vendor/bin/phpunit tests/Performance/PhpUnitNodeBenchmarkTest.php
+./vendor/bin/phpunit tests/Performance/ProphecyNodeBenchmarkTest.php
+
+# All tests including Kernel (requires dev composer)
+COMPOSER=composer.dev.json composer install
+./vendor/bin/phpunit tests/Performance/
+```
+
+### Benefits
+
+1. **Quantifiable Gains**: Demonstrates Deuteros performance advantage
+2. **Adapter Comparison**: PHPUnit vs Prophecy performance difference
+3. **Portable**: Works with production composer (Kernel test skipped gracefully)
+4. **Configurable**: `ITERATION_COUNT` constant allows tuning benchmark intensity

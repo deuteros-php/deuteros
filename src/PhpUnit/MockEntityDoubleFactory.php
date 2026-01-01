@@ -22,15 +22,6 @@ use PHPUnit\Framework\TestCase;
 final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
   /**
-   * Cache of generated combined interfaces.
-   *
-   * Maps sorted interface list (as cache key) to generated interface name.
-   *
-   * @var array<string, class-string>
-   */
-  private static array $combinedInterfaceCache = [];
-
-  /**
    * Constructs a MockEntityDoubleFactory.
    *
    * @param \PHPUnit\Framework\TestCase $testCase
@@ -44,99 +35,11 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    if (count($interfaces) === 1) {
-      $mock = $this->invokeProtectedMethod('createMock', $interfaces[0]);
-      assert(is_object($mock));
-      return $mock;
-    }
-
-    // Create a combined interface to work around PHPUnit's limitation
-    // with intersection types for interfaces sharing a common parent.
-    $combinedInterface = $this->getOrCreateCombinedInterface($interfaces);
-    $mock = $this->invokeProtectedMethod('createMock', $combinedInterface);
+    // Use runtime interface for __get/__set support.
+    $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
+    $mock = $this->invokeProtectedMethod('createMock', $runtimeInterface);
     assert(is_object($mock));
     return $mock;
-  }
-
-  /**
-   * Gets or creates a combined interface for multiple interfaces.
-   *
-   * When PHPUnit's createMockForIntersectionOfInterfaces() fails due to
-   * interfaces sharing a common parent, this method generates a single
-   * interface that extends all requested interfaces.
-   *
-   * @param list<class-string> $interfaces
-   *   The interfaces to combine.
-   *
-   * @return class-string
-   *   The combined interface name.
-   *
-   * @throws \InvalidArgumentException
-   *   If any of the provided names are not valid interfaces.
-   */
-  private function getOrCreateCombinedInterface(array $interfaces): string {
-    // Validate all interfaces exist.
-    foreach ($interfaces as $interface) {
-      if (!interface_exists($interface)) {
-        throw new \InvalidArgumentException(sprintf(
-          "Cannot create combined interface: '%s' is not a valid interface.",
-          $interface
-        ));
-      }
-    }
-
-    // Sort for deterministic cache key.
-    $sorted = $interfaces;
-    sort($sorted);
-    $cacheKey = implode('|', $sorted);
-
-    // Check cache.
-    if (isset(self::$combinedInterfaceCache[$cacheKey])) {
-      return self::$combinedInterfaceCache[$cacheKey];
-    }
-
-    // Generate unique interface name.
-    $hash = substr(md5($cacheKey), 0, 12);
-    /** @var class-string $interfaceName */
-    $interfaceName = "Deuteros\\Generated\\CombinedInterface_{$hash}";
-
-    // Check if already declared (e.g., from a previous test run in same
-    // process).
-    if (!interface_exists($interfaceName, FALSE)) {
-      $this->declareCombinedInterface($interfaceName, $interfaces);
-    }
-
-    self::$combinedInterfaceCache[$cacheKey] = $interfaceName;
-    return $interfaceName;
-  }
-
-  /**
-   * Declares a combined interface via eval.
-   *
-   * @param string $interfaceName
-   *   The fully-qualified interface name to declare.
-   * @param list<class-string> $interfaces
-   *   The interfaces to extend.
-   */
-  private function declareCombinedInterface(string $interfaceName, array $interfaces): void {
-    $parts = explode('\\', $interfaceName);
-    $shortName = array_pop($parts);
-    $namespace = implode('\\', $parts);
-
-    $extends = implode(', ', array_map(
-      fn(string $interface) => '\\' . $interface,
-      $interfaces
-    ));
-
-    $code = sprintf(
-      'namespace %s { interface %s extends %s {} }',
-      $namespace,
-      $shortName,
-      $extends
-    );
-
-    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
-    eval($code);
   }
 
   /**
@@ -190,9 +93,6 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       $wireMethod('hasField', fn(string $fieldName) => $resolvers['hasField']($context, $fieldName));
       $wireMethod('get', fn(string $fieldName) => $resolvers['get']($context, $fieldName));
 
-      // Note: __get is not declared in FieldableEntityInterface, so we cannot
-      // mock it on interface mocks. Use get() method instead.
-      // For property access syntax ($entity->field_name), use Prophecy adapter.
       if (!$definition->hasMethodOverride('set')) {
         if ($definition->mutable) {
           $self = $mock;
@@ -220,8 +120,31 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       }
     }
 
+    // Wire magic accessors for property-style field access.
+    $wireMethod('__get', fn(string $name) => $resolvers['__get']($context, $name));
+
+    if (!$definition->hasMethodOverride('__set')) {
+      if ($definition->mutable) {
+        $mock->method('__set')->willReturnCallback(
+          function (string $name, mixed $value) use ($resolvers, $context) {
+            $resolvers['set']($context, $name, $value, TRUE);
+          }
+        );
+      }
+      else {
+        $mock->method('__set')->willReturnCallback(
+          function (string $name) {
+            throw new \LogicException(
+              "Cannot modify field '$name' on immutable entity double. "
+              . "Use createMutableEntityDouble() if you need to test mutations."
+            );
+          }
+        );
+      }
+    }
+
     // Wire remaining method overrides (those not already wired above).
-    $coreMethodsWired = ['id', 'uuid', 'label', 'bundle', 'getEntityTypeId', 'hasField', 'get', 'set'];
+    $coreMethodsWired = ['id', 'uuid', 'label', 'bundle', 'getEntityTypeId', 'hasField', 'get', 'set', '__get', '__set'];
     foreach ($definition->methodOverrides as $method => $override) {
       if (in_array($method, $coreMethodsWired, TRUE)) {
         // Already handled above.

@@ -7,4 +7,4 @@
 5. ~~Unwrap Multi-Line Method Signatures~~ (done)
 6. ~~Add fromInterface() with Lenient Mode~~ (done)
 7. ~~Break core circular dependency~~ (done)
-8. __get/__set support
+8. ~~__get/__set support~~ (done)

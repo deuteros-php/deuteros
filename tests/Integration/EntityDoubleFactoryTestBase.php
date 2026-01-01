@@ -507,4 +507,77 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $entity->save();
   }
 
+  /**
+   * Tests magic __get for field access via property syntax.
+   */
+  public function testMagicGetFieldAccess(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->field('field_author', ['target_id' => 42])
+        ->build()
+    );
+
+    // Magic property access should work.
+    $this->assertSame('Test Title', $entity->field_title->value);
+    $this->assertSame(42, $entity->field_author->target_id);
+  }
+
+  /**
+   * Tests magic __set for mutable entities via property syntax.
+   */
+  public function testMagicSetOnMutableEntity(): void {
+    $entity = $this->factory->createMutable(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
+
+    // Initial value via magic get.
+    $this->assertSame('draft', $entity->field_status->value);
+
+    // Update via magic set.
+    $entity->field_status = 'published';
+
+    // New value should be accessible.
+    $this->assertSame('published', $entity->field_status->value);
+  }
+
+  /**
+   * Tests magic __set throws on immutable entities.
+   */
+  public function testMagicSetOnImmutableEntityThrows(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage("Cannot modify field 'field_status' on immutable entity double");
+
+    $entity->field_status = 'published';
+  }
+
+  /**
+   * Tests magic __get for undefined field throws.
+   */
+  public function testMagicGetUndefinedFieldThrows(): void {
+    $entity = $this->factory->create(
+      EntityDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_defined', 'value')
+        ->build()
+    );
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Field 'field_undefined' is not defined");
+
+    // Access undefined field via magic property.
+    $entity->field_undefined;
+  }
+
 }

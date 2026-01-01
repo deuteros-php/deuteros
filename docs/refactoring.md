@@ -501,3 +501,84 @@ composer test
 2. **Minimal Production Footprint**: No drupal/core in production dependencies
 3. **Full Test Coverage**: Tests pass with both real interfaces and stubs
 4. **Transparent**: Users with Drupal installed get real interfaces automatically
+
+## Task 8 - Magic Accessor Support (__get/__set)
+
+**Status:** Complete
+
+### Overview
+
+Added support for magic property access on entity doubles, allowing code like
+`$entity->field_name` instead of `$entity->get('field_name')`. This matches
+real Drupal entity behavior where fields can be accessed as properties.
+
+### Problem
+
+Entity doubles didn't support magic property access (`$entity->field_name`)
+because:
+1. `FieldableEntityInterface` doesn't declare `__get`/`__set` methods
+2. PHPUnit's `createMock()` can only mock methods declared in the interface
+3. The resolver existed in `EntityDoubleBuilder` but wasn't wired to entity mocks
+
+### Solution
+
+Used dynamic interface generation (via `eval()`) to create a runtime interface
+that extends all requested interfaces AND declares `__get`/`__set` methods.
+Moved this logic to the base `EntityDoubleFactory` class so both PHPUnit and
+Prophecy adapters can use it.
+
+### Changes
+
+**Modified:**
+- `src/Common/EntityDoubleFactory.php` - Added `getOrCreateRuntimeInterface()`
+  and `declareRuntimeInterface()` methods
+- `src/PhpUnit/MockEntityDoubleFactory.php` - Removed old combined interface
+  code, use base class method, wire `__get`/`__set` resolvers
+- `src/Prophecy/ProphecyEntityDoubleFactory.php` - Use runtime interface,
+  wire `__get`/`__set` via `MethodProphecy`
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Added magic accessor
+  tests
+- `tests/Integration/BehavioralParityTest.php` - Added parity tests
+
+### New Behavior
+
+```php
+// Before: Only explicit get() worked
+$title = $entity->get('field_title')->value;
+
+// After: Magic property access also works
+$title = $entity->field_title->value;
+
+// Magic set for mutable entities
+$entity = $factory->createMutable($definition);
+$entity->field_status = 'published';  // Works!
+
+// Immutable entities throw on magic set
+$entity = $factory->create($definition);
+$entity->field_status = 'published';  // Throws LogicException
+```
+
+### Architecture
+
+The solution leverages the existing runtime interface generation pattern
+(previously used only for multiple interface support) and extends it to also
+declare magic methods:
+
+```php
+// Generated at runtime
+interface RuntimeInterface_abc123 extends FieldableEntityInterface {
+    public function __get(string $name): mixed;
+    public function __set(string $name, mixed $value): void;
+}
+```
+
+Both adapters now use this unified approach:
+- PHPUnit: `$this->getOrCreateRuntimeInterface($interfaces)`
+- Prophecy: `$this->getOrCreateRuntimeInterface($interfaces)`
+
+### Benefits
+
+1. **Matches Real Drupal Behavior**: Entity fields work as properties
+2. **Full Parity**: Both PHPUnit and Prophecy adapters behave identically
+3. **Consistent with Existing Patterns**: Reuses dynamic interface generation
+4. **Immutability Preserved**: Immutable doubles throw on property assignment

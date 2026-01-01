@@ -65,6 +65,82 @@ use PHPUnit\Framework\TestCase;
 abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
   /**
+   * Cache of generated runtime interfaces.
+   *
+   * Maps sorted interface list (as cache key) to generated interface name.
+   *
+   * @var array<string, class-string>
+   */
+  private static array $runtimeInterfaceCache = [];
+
+  /**
+   * Gets or creates a runtime interface with magic accessor support.
+   *
+   * Generates a single interface that extends all requested interfaces and
+   * declares __get/__set methods for magic property access.
+   *
+   * @param list<class-string> $interfaces
+   *   The interfaces to extend.
+   *
+   * @return class-string
+   *   The runtime interface name.
+   */
+  protected function getOrCreateRuntimeInterface(array $interfaces): string {
+    // Sort for deterministic cache key.
+    $sorted = $interfaces;
+    sort($sorted);
+    $cacheKey = implode('|', $sorted);
+
+    if (isset(self::$runtimeInterfaceCache[$cacheKey])) {
+      return self::$runtimeInterfaceCache[$cacheKey];
+    }
+
+    // Generate unique interface name.
+    $hash = substr(md5($cacheKey), 0, 12);
+    /** @var class-string $interfaceName */
+    $interfaceName = "Deuteros\\Generated\\RuntimeInterface_{$hash}";
+
+    if (!interface_exists($interfaceName, FALSE)) {
+      $this->declareRuntimeInterface($interfaceName, $interfaces);
+    }
+
+    self::$runtimeInterfaceCache[$cacheKey] = $interfaceName;
+    return $interfaceName;
+  }
+
+  /**
+   * Declares a runtime interface via eval.
+   *
+   * @param string $interfaceName
+   *   The fully-qualified interface name to declare.
+   * @param list<class-string> $interfaces
+   *   The interfaces to extend.
+   */
+  private function declareRuntimeInterface(string $interfaceName, array $interfaces): void {
+    $parts = explode('\\', $interfaceName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $extends = implode(', ', array_map(
+      fn(string $interface) => '\\' . $interface,
+      $interfaces
+    ));
+
+    $code = sprintf(
+      'namespace %s { interface %s extends %s { '
+      . 'public function __get(string $name): mixed; '
+      . 'public function __set(string $name, mixed $value): void; '
+      . '} }',
+      $namespace,
+      $shortName,
+      $extends
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
+  }
+
+  /**
    * Creates the appropriate factory based on the test case's available traits.
    *
    * Detects whether the test uses Prophecy (ProphecyTrait) or PHPUnit mocks

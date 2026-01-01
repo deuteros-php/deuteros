@@ -58,16 +58,9 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    // Prophecy can only prophesize one interface at a time, but we can
-    // use willImplement() to add additional interfaces.
-    $primaryInterface = array_shift($interfaces);
-    $prophecy = $this->prophet->prophesize($primaryInterface);
-
-    foreach ($interfaces as $interface) {
-      $prophecy->willImplement($interface);
-    }
-
-    return $prophecy;
+    // Use runtime interface for __get/__set support.
+    $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
+    return $this->prophet->prophesize($runtimeInterface);
   }
 
   /**
@@ -95,9 +88,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
         fn(array $args) => $resolvers['get']($context, $args[0])
       );
 
-      // Note: ::__get is not declared in "FieldableEntityInterface", so magic
-      // property access ($entity->field_name) is not supported on interface
-      // prophecies. Use ::get() method instead: $entity->get('field_name').
       if ($definition->mutable) {
         $revealed = NULL;
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
@@ -120,6 +110,33 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
           }
         );
       }
+    }
+
+    // Wire magic accessors using MethodProphecy.
+    $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
+    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
+    $prophecy->addMethodProphecy($getMethodProphecy);
+
+    if ($definition->mutable) {
+      $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
+      $setMethodProphecy->will(
+        function (array $args) use ($resolvers, $context) {
+          $resolvers['set']($context, $args[0], $args[1], TRUE);
+        }
+      );
+      $prophecy->addMethodProphecy($setMethodProphecy);
+    }
+    else {
+      $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
+      $setMethodProphecy->will(
+        function (array $args) {
+          throw new \LogicException(
+            "Cannot modify field '{$args[0]}' on immutable entity double. "
+            . "Use createMutableEntityDouble() if you need to test mutations."
+          );
+        }
+      );
+      $prophecy->addMethodProphecy($setMethodProphecy);
     }
 
     // Wire method overrides.

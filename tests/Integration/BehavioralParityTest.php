@@ -317,4 +317,53 @@ class BehavioralParityTest extends TestCase {
     $this->assertNull($prophecy->delete());
   }
 
+  /**
+   * Tests that both adapters handle magic __get identically.
+   */
+  public function testMagicGetParity(): void {
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_text', 'Test Value')
+      ->field('field_ref', ['target_id' => 42])
+      ->build();
+
+    $mock = $this->createMockDouble($definition);
+    $prophecy = $this->createProphecyDouble($definition);
+
+    // Magic property access should work identically.
+    $this->assertSame(
+      $mock->field_text->value,
+      $prophecy->field_text->value
+    );
+    $this->assertSame(
+      $mock->field_ref->target_id,
+      $prophecy->field_ref->target_id
+    );
+  }
+
+  /**
+   * Tests that both adapters handle magic __set on mutable entities.
+   */
+  public function testMagicSetMutableParity(): void {
+    $definition = EntityDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_status', 'draft')
+      ->build();
+
+    $mock = $this->mockFactory->createMutable($definition);
+    $prophecy = $this->prophecyFactory->createMutable($definition);
+
+    // Both should support magic set.
+    $mock->field_status = 'published';
+    $prophecy->field_status = 'published';
+
+    // Values should be updated identically.
+    $this->assertSame(
+      $mock->field_status->value,
+      $prophecy->field_status->value
+    );
+    $this->assertSame('published', $mock->field_status->value);
+    $this->assertSame('published', $prophecy->field_status->value);
+  }
+
 }

@@ -283,29 +283,6 @@ final class EntityDoubleBuilder {
   }
 
   /**
-   * Gets the mutable state container.
-   *
-   * @return \Deuteros\Common\MutableStateContainer|null
-   *   The mutable state container, or NULL for immutable doubles.
-   */
-  public function getMutableState(): ?MutableStateContainer {
-    return $this->mutableState;
-  }
-
-  /**
-   * Checks if a method has an override in the definition.
-   *
-   * @param string $method
-   *   The method name.
-   *
-   * @return bool
-   *   TRUE if an override exists, FALSE otherwise.
-   */
-  public function hasMethodOverride(string $method): bool {
-    return $this->definition->hasMethodOverride($method);
-  }
-
-  /**
    * Gets the resolver for a method override.
    *
    * @param string $method

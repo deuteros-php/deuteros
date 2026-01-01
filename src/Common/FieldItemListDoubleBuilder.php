@@ -209,7 +209,7 @@ final class FieldItemListDoubleBuilder {
     /**
      * @param array<string, mixed> $context
      */
-    return function (array $context, mixed $values, bool $notify = TRUE): object {
+    return function (array $context, mixed $values): object {
       if (!$this->mutable) {
         throw new \LogicException(
           "Cannot modify field '{$this->fieldName}' on immutable entity double. "

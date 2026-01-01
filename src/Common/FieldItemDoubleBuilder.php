@@ -95,7 +95,7 @@ final class FieldItemDoubleBuilder {
    *   The resolver callable.
    */
   private function buildSetValueResolver(): callable {
-    return function (array $context, mixed $value, bool $notify = TRUE): object {
+    return function (array $context, mixed $value): object {
       if (!$this->mutable) {
         throw new \LogicException(
          "Cannot modify field '{$this->fieldName}' item at delta {$this->delta} on immutable entity double. "

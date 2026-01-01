@@ -582,3 +582,65 @@ Both adapters now use this unified approach:
 2. **Full Parity**: Both PHPUnit and Prophecy adapters behave identically
 3. **Consistent with Existing Patterns**: Reuses dynamic interface generation
 4. **Immutability Preserved**: Immutable doubles throw on property assignment
+
+## Task 9 - Add Correctness Assertions to BehavioralParityTest
+
+**Status:** Complete
+
+### Overview
+
+Enhanced `BehavioralParityTest` to verify that returned values match the expected
+values from entity/field definitions, not just that PHPUnit and Prophecy adapters
+return the same values.
+
+### Problem
+
+Several test methods only verified parity (PHPUnit result == Prophecy result)
+without verifying correctness (result == expected definition value). This meant
+both adapters could return the same *wrong* value and the test would still pass.
+
+### Solution
+
+Added explicit correctness assertions that verify returned values match the
+expected values from `EntityDefinition` and `FieldDefinition`. Since verifying
+both adapters return the expected value implicitly verifies parity by transitivity,
+redundant parity checks were removed.
+
+### Changes
+
+**Modified:**
+- `tests/Integration/BehavioralParityTest.php`:
+  - `testMetadataParity()` - Verify entity type, bundle, id, uuid, label
+  - `testFieldValueParity()` - Verify field_text, field_number, field_ref
+  - `testCallbackResolutionParity()` - Added comment, already had correctness
+  - `testMultiValueFieldParity()` - Verify first(), get(0/1/2), get(99)
+  - `testMethodOverrideParity()` - Added comment, already had correctness
+  - `testMultiInterfaceParity()` - Verify field_text and getChangedTime
+  - `testFromInterfaceParity()` - Verify entity type, bundle, id, field_test
+  - `testMagicGetParity()` - Verify field_text and field_ref
+  - `testMagicSetMutableParity()` - Removed redundant parity check
+- `phpstan-baseline.neon` - Updated error occurrence counts
+
+### Pattern
+
+Before (only parity):
+```php
+$this->assertSame(
+  $mock->get('field_text')->value,
+  $prophecy->get('field_text')->value
+);
+```
+
+After (correctness, which implies parity):
+```php
+// Verify correctness against definition values.
+$this->assertSame('Test Value', $mock->get('field_text')->value);
+$this->assertSame('Test Value', $prophecy->get('field_text')->value);
+```
+
+### Benefits
+
+1. **Catches Bugs**: Will detect if both adapters return the same wrong value
+2. **Clearer Intent**: Tests document what the expected values should be
+3. **Simpler**: Removed redundant parity assertions (transitivity)
+4. **Complete Coverage**: All 10 test methods now verify correctness

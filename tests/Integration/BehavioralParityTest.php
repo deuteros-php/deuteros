@@ -63,11 +63,17 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
 
-    $this->assertSame($mock->getEntityTypeId(), $prophecy->getEntityTypeId());
-    $this->assertSame($mock->bundle(), $prophecy->bundle());
-    $this->assertSame($mock->id(), $prophecy->id());
-    $this->assertSame($mock->uuid(), $prophecy->uuid());
-    $this->assertSame($mock->label(), $prophecy->label());
+    // Verify correctness against definition values.
+    $this->assertSame('node', $mock->getEntityTypeId());
+    $this->assertSame('node', $prophecy->getEntityTypeId());
+    $this->assertSame('article', $mock->bundle());
+    $this->assertSame('article', $prophecy->bundle());
+    $this->assertSame(42, $mock->id());
+    $this->assertSame(42, $prophecy->id());
+    $this->assertSame('test-uuid', $mock->uuid());
+    $this->assertSame('test-uuid', $prophecy->uuid());
+    $this->assertSame('Test Label', $mock->label());
+    $this->assertSame('Test Label', $prophecy->label());
   }
 
   /**
@@ -84,23 +90,13 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
 
-    // Scalar field.
-    $this->assertSame(
-      $mock->get('field_text')->value,
-      $prophecy->get('field_text')->value
-    );
-
-    // Number field.
-    $this->assertSame(
-      $mock->get('field_number')->value,
-      $prophecy->get('field_number')->value
-    );
-
-    // Reference field.
-    $this->assertSame(
-      $mock->get('field_ref')->target_id,
-      $prophecy->get('field_ref')->target_id
-    );
+    // Verify correctness against definition values.
+    $this->assertSame('Test Value', $mock->get('field_text')->value);
+    $this->assertSame('Test Value', $prophecy->get('field_text')->value);
+    $this->assertSame(123, $mock->get('field_number')->value);
+    $this->assertSame(123, $prophecy->get('field_number')->value);
+    $this->assertSame(42, $mock->get('field_ref')->target_id);
+    $this->assertSame(42, $prophecy->get('field_ref')->target_id);
   }
 
   /**
@@ -116,12 +112,9 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition, $context);
     $prophecy = $this->createProphecyDouble($definition, $context);
 
+    // Verify correctness against definition values.
     $this->assertSame(42, $mock->get('field_dynamic')->value);
     $this->assertSame(42, $prophecy->get('field_dynamic')->value);
-    $this->assertSame(
-      $mock->get('field_dynamic')->value,
-      $prophecy->get('field_dynamic')->value
-    );
   }
 
   /**
@@ -140,21 +133,14 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
 
-    // First item.
-    $this->assertSame(
-      $mock->get('field_tags')->first()->target_id,
-      $prophecy->get('field_tags')->first()->target_id
-    );
-
-    // Delta access.
+    // Verify correctness against definition values.
+    $this->assertSame(1, $mock->get('field_tags')->first()->target_id);
+    $this->assertSame(1, $prophecy->get('field_tags')->first()->target_id);
+    $expectedIds = [1, 2, 3];
     for ($i = 0; $i < 3; $i++) {
-      $this->assertSame(
-        $mock->get('field_tags')->get($i)->target_id,
-        $prophecy->get('field_tags')->get($i)->target_id
-      );
+      $this->assertSame($expectedIds[$i], $mock->get('field_tags')->get($i)->target_id);
+      $this->assertSame($expectedIds[$i], $prophecy->get('field_tags')->get($i)->target_id);
     }
-
-    // Out of range.
     $this->assertNull($mock->get('field_tags')->get(99));
     $this->assertNull($prophecy->get('field_tags')->get(99));
   }
@@ -175,12 +161,9 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition, $context);
     $prophecy = $this->createProphecyDouble($definition, $context);
 
+    // Verify correctness against definition values.
     $this->assertSame($timestamp, $mock->getChangedTime());
     $this->assertSame($timestamp, $prophecy->getChangedTime());
-    $this->assertSame(
-      $mock->getChangedTime(),
-      $prophecy->getChangedTime()
-    );
   }
 
   /**
@@ -211,14 +194,11 @@ class BehavioralParityTest extends TestCase {
     $this->assertInstanceOf(EntityChangedInterface::class, $mock);
     $this->assertInstanceOf(EntityChangedInterface::class, $prophecy);
 
-    // Field access should work identically.
-    $this->assertSame(
-      $mock->get('field_text')->value,
-      $prophecy->get('field_text')->value
-    );
-
-    // Method overrides should work identically.
-    $this->assertSame($mock->getChangedTime(), $prophecy->getChangedTime());
+    // Verify correctness against definition values.
+    $this->assertSame('Test Value', $mock->get('field_text')->value);
+    $this->assertSame('Test Value', $prophecy->get('field_text')->value);
+    $this->assertSame($timestamp, $mock->getChangedTime());
+    $this->assertSame($timestamp, $prophecy->getChangedTime());
   }
 
   /**
@@ -277,16 +257,15 @@ class BehavioralParityTest extends TestCase {
     $this->assertInstanceOf(ContentEntityInterface::class, $mock);
     $this->assertInstanceOf(ContentEntityInterface::class, $prophecy);
 
-    // Core methods should work identically.
-    $this->assertSame($mock->getEntityTypeId(), $prophecy->getEntityTypeId());
-    $this->assertSame($mock->bundle(), $prophecy->bundle());
-    $this->assertSame($mock->id(), $prophecy->id());
-
-    // Field access should work identically.
-    $this->assertSame(
-      $mock->get('field_test')->value,
-      $prophecy->get('field_test')->value
-    );
+    // Verify correctness against definition values.
+    $this->assertSame('node', $mock->getEntityTypeId());
+    $this->assertSame('node', $prophecy->getEntityTypeId());
+    $this->assertSame('article', $mock->bundle());
+    $this->assertSame('article', $prophecy->bundle());
+    $this->assertSame(42, $mock->id());
+    $this->assertSame(42, $prophecy->id());
+    $this->assertSame('value', $mock->get('field_test')->value);
+    $this->assertSame('value', $prophecy->get('field_test')->value);
   }
 
   /**
@@ -330,15 +309,11 @@ class BehavioralParityTest extends TestCase {
     $mock = $this->createMockDouble($definition);
     $prophecy = $this->createProphecyDouble($definition);
 
-    // Magic property access should work identically.
-    $this->assertSame(
-      $mock->field_text->value,
-      $prophecy->field_text->value
-    );
-    $this->assertSame(
-      $mock->field_ref->target_id,
-      $prophecy->field_ref->target_id
-    );
+    // Verify correctness against definition values.
+    $this->assertSame('Test Value', $mock->field_text->value);
+    $this->assertSame('Test Value', $prophecy->field_text->value);
+    $this->assertSame(42, $mock->field_ref->target_id);
+    $this->assertSame(42, $prophecy->field_ref->target_id);
   }
 
   /**
@@ -357,11 +332,7 @@ class BehavioralParityTest extends TestCase {
     $mock->field_status = 'published';
     $prophecy->field_status = 'published';
 
-    // Values should be updated identically.
-    $this->assertSame(
-      $mock->field_status->value,
-      $prophecy->field_status->value
-    );
+    // Verify correctness of mutated values.
     $this->assertSame('published', $mock->field_status->value);
     $this->assertSame('published', $prophecy->field_status->value);
   }

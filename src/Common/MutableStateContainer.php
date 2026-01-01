@@ -7,7 +7,8 @@ namespace Deuteros\Common;
 /**
  * Container for mutable field state in entity doubles.
  *
- * Tracks field value changes separately from the immutable EntityDefinition.
+ * Tracks field value changes separately from the immutable
+ * EntityDoubleDefinition.
  * Used only for mutable entity doubles where field values can be updated for
  * assertion purposes.
  */

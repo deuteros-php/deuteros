@@ -18,7 +18,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *
  * @see \Deuteros\Common\EntityDoubleBuilder
  */
-final readonly class EntityDefinition {
+final readonly class EntityDoubleDefinition {
 
   /**
    * The bundle (defaults to entityType if not provided).
@@ -26,7 +26,7 @@ final readonly class EntityDefinition {
   public string $bundle;
 
   /**
-   * Constructs an EntityDefinition.
+   * Constructs an EntityDoubleDefinition.
    *
    * @param string $entityType
    *   The entity type ID.
@@ -38,8 +38,8 @@ final readonly class EntityDefinition {
    *   The entity UUID.
    * @param mixed $label
    *   The entity label.
-   * @param array<string, \Deuteros\Common\FieldDefinition> $fields
-   *   Field definitions keyed by field name.
+   * @param array<string, \Deuteros\Common\FieldDoubleDefinition> $fields
+   *   Field double definitions keyed by field name.
    * @param list<class-string> $interfaces
    *   List of interfaces to implement.
    * @param array<string, callable|mixed> $methodOverrides
@@ -139,10 +139,10 @@ final readonly class EntityDefinition {
    * @param string $fieldName
    *   The field name.
    *
-   * @return \Deuteros\Common\FieldDefinition|null
-   *   The field definition, or NULL if not defined.
+   * @return \Deuteros\Common\FieldDoubleDefinition|null
+   *   The field double definition, or NULL if not defined.
    */
-  public function getField(string $fieldName): ?FieldDefinition {
+  public function getField(string $fieldName): ?FieldDoubleDefinition {
     return $this->fields[$fieldName] ?? NULL;
   }
 
@@ -153,7 +153,7 @@ final readonly class EntityDefinition {
    *   Additional context to merge.
    *
    * @return self
-   *   A new EntityDefinition with merged context.
+   *   A new EntityDoubleDefinition with merged context.
    */
   public function withContext(array $additionalContext): self {
     if ($additionalContext === []) {
@@ -182,7 +182,7 @@ final readonly class EntityDefinition {
    *   Whether the entity double should be mutable.
    *
    * @return self
-   *   A new EntityDefinition with the specified mutability.
+   *   A new EntityDoubleDefinition with the specified mutability.
    */
   public function withMutable(bool $mutable): self {
     if ($this->mutable === $mutable) {

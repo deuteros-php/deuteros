@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\PhpUnit;
 
-use Deuteros\Common\EntityDefinition;
+use Deuteros\Common\EntityDoubleDefinition;
 use Deuteros\Common\EntityDoubleBuilder;
 use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
@@ -55,7 +55,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
+  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDoubleDefinition $definition): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();
@@ -149,7 +149,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireGuardrails(object $double, EntityDefinition $definition, array $interfaces): void {
+  protected function wireGuardrails(object $double, EntityDoubleDefinition $definition, array $interfaces): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $unsupportedMethods = GuardrailEnforcer::getUnsupportedMethods();
@@ -197,7 +197,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDefinition $entityDefinition, array $context): void {
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();
@@ -209,7 +209,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $mock->method('get')->willReturnCallback(fn(int $delta) => $resolvers['get']($context, $delta));
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
 
-    if ($entityDefinition->mutable) {
+    if ($definition->mutable) {
       $self = $mock;
       $mock->method('setValue')->willReturnCallback(
         function (mixed $values, bool $notify = TRUE) use ($resolvers, $context, $self) {

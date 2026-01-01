@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Unit\Common;
 
-use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\FieldDefinition;
+use Deuteros\Common\EntityDoubleDefinition;
+use Deuteros\Common\FieldDoubleDefinition;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -14,11 +14,11 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests the EntityDefinition value object.
+ * Tests the EntityDoubleDefinition value object.
  */
-#[CoversClass(EntityDefinition::class)]
+#[CoversClass(EntityDoubleDefinition::class)]
 #[Group('deuteros')]
-class EntityDefinitionTest extends TestCase {
+class EntityDoubleDefinitionTest extends TestCase {
 
   /**
    * Tests construction with only required "entity_type" parameter.
@@ -26,7 +26,7 @@ class EntityDefinitionTest extends TestCase {
    * Verifies all optional parameters have sensible defaults.
    */
   public function testMinimalConstruction(): void {
-    $definition = new EntityDefinition(entityType: 'node');
+    $definition = new EntityDoubleDefinition(entityType: 'node');
 
     $this->assertSame('node', $definition->entityType);
     $this->assertSame('node', $definition->bundle);
@@ -44,12 +44,12 @@ class EntityDefinitionTest extends TestCase {
    * Tests construction with all parameters specified.
    */
   public function testFullConstruction(): void {
-    $fields = ['field_test' => new FieldDefinition('value')];
+    $fields = ['field_test' => new FieldDoubleDefinition('value')];
     $interfaces = [FieldableEntityInterface::class];
     $methodOverrides = ['getOwnerId' => fn() => 1];
     $context = ['key' => 'value'];
 
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       bundle: 'article',
       id: 1,
@@ -78,7 +78,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests that bundle defaults to "entity_type" when not specified.
    */
   public function testBundleDefaultsToEntityType(): void {
-    $definition = new EntityDefinition(entityType: 'user');
+    $definition = new EntityDoubleDefinition(entityType: 'user');
     $this->assertSame('user', $definition->bundle);
   }
 
@@ -89,9 +89,9 @@ class EntityDefinitionTest extends TestCase {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Fields can only be defined when FieldableEntityInterface is listed');
 
-    new EntityDefinition(
+    new EntityDoubleDefinition(
       entityType: 'node',
-      fields: ['field_test' => new FieldDefinition('value')],
+      fields: ['field_test' => new FieldDoubleDefinition('value')],
     );
   }
 
@@ -99,7 +99,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::hasInterface() returns correct boolean for declared interfaces.
    */
   public function testHasInterface(): void {
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       interfaces: [FieldableEntityInterface::class],
     );
@@ -113,7 +113,7 @@ class EntityDefinitionTest extends TestCase {
    */
   public function testMethodOverrides(): void {
     $callable = fn() => 1;
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       methodOverrides: ['getOwnerId' => $callable],
     );
@@ -128,16 +128,16 @@ class EntityDefinitionTest extends TestCase {
    * Tests field definition detection and retrieval.
    */
   public function testFieldAccess(): void {
-    $fieldDefinition = new FieldDefinition('value');
-    $definition = new EntityDefinition(
+    $definitioninition = new FieldDoubleDefinition('value');
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
-      fields: ['field_test' => $fieldDefinition],
+      fields: ['field_test' => $definitioninition],
       interfaces: [FieldableEntityInterface::class],
     );
 
     $this->assertTrue($definition->hasField('field_test'));
     $this->assertFalse($definition->hasField('nonexistent'));
-    $this->assertSame($fieldDefinition, $definition->getField('field_test'));
+    $this->assertSame($definitioninition, $definition->getField('field_test'));
     $this->assertNull($definition->getField('nonexistent'));
   }
 
@@ -145,7 +145,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withContext() creates a new instance with merged context.
    */
   public function testWithContext(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       context: ['a' => 1],
     );
@@ -161,7 +161,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withContext() returns same instance when context is empty.
    */
   public function testWithContextReturnsSameInstanceWhenEmpty(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       context: ['a' => 1],
     );
@@ -175,7 +175,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withMutable() creates a new instance with different mutability.
    */
   public function testWithMutable(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       mutable: FALSE,
     );
@@ -191,7 +191,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withMutable() returns same instance when mutability unchanged.
    */
   public function testWithMutableReturnsSameInstanceWhenUnchanged(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       mutable: TRUE,
     );
@@ -205,7 +205,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::getDeclaringInterface() finds the correct interface for a method.
    */
   public function testGetDeclaringInterface(): void {
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       interfaces: [
         ContentEntityInterface::class,
@@ -230,7 +230,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::getDeclaringInterface() returns null for unknown method.
    */
   public function testGetDeclaringInterfaceReturnsNullForUnknown(): void {
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       interfaces: [FieldableEntityInterface::class],
     );
@@ -242,7 +242,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests construction with primaryInterface and lenient.
    */
   public function testConstructionWithNewProperties(): void {
-    $definition = new EntityDefinition(
+    $definition = new EntityDoubleDefinition(
       entityType: 'node',
       primaryInterface: ContentEntityInterface::class,
       lenient: TRUE,
@@ -256,7 +256,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withContext() preserves primaryInterface and lenient.
    */
   public function testWithContextPreservesNewProperties(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       primaryInterface: ContentEntityInterface::class,
       lenient: TRUE,
@@ -272,7 +272,7 @@ class EntityDefinitionTest extends TestCase {
    * Tests ::withMutable() preserves primaryInterface and lenient.
    */
   public function testWithMutablePreservesNewProperties(): void {
-    $original = new EntityDefinition(
+    $original = new EntityDoubleDefinition(
       entityType: 'node',
       primaryInterface: ContentEntityInterface::class,
       lenient: TRUE,

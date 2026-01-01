@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Unit\Common;
 
-use Deuteros\Common\FieldDefinition;
+use Deuteros\Common\FieldDoubleDefinition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests the FieldDefinition value object.
+ * Tests the FieldDoubleDefinition value object.
  */
-#[CoversClass(FieldDefinition::class)]
+#[CoversClass(FieldDoubleDefinition::class)]
 #[Group('deuteros')]
-class FieldDefinitionTest extends TestCase {
+class FieldDoubleDefinitionTest extends TestCase {
 
   /**
    * Tests storing and retrieving a scalar string value.
    */
   public function testScalarValue(): void {
-    $definition = new FieldDefinition('test value');
+    $definition = new FieldDoubleDefinition('test value');
     $this->assertSame('test value', $definition->getValue());
   }
 
@@ -28,7 +28,7 @@ class FieldDefinitionTest extends TestCase {
    * Tests that NULL values are stored correctly.
    */
   public function testNullValue(): void {
-    $definition = new FieldDefinition(NULL);
+    $definition = new FieldDoubleDefinition(NULL);
     $this->assertNull($definition->getValue());
   }
 
@@ -37,7 +37,7 @@ class FieldDefinitionTest extends TestCase {
    */
   public function testArrayValue(): void {
     $value = [['target_id' => 1], ['target_id' => 2]];
-    $definition = new FieldDefinition($value);
+    $definition = new FieldDoubleDefinition($value);
     $this->assertSame($value, $definition->getValue());
     $this->assertTrue($definition->isMultiValue());
   }
@@ -47,7 +47,7 @@ class FieldDefinitionTest extends TestCase {
    */
   public function testIsCallable(): void {
     $callable = fn() => 'dynamic';
-    $definition = new FieldDefinition($callable);
+    $definition = new FieldDoubleDefinition($callable);
     $this->assertTrue($definition->isCallable());
     $this->assertFalse($definition->isMultiValue());
   }
@@ -56,7 +56,7 @@ class FieldDefinitionTest extends TestCase {
    * Tests that non-callable values return false from ::isCallable().
    */
   public function testNonCallableIsNotCallable(): void {
-    $definition = new FieldDefinition('static');
+    $definition = new FieldDoubleDefinition('static');
     $this->assertFalse($definition->isCallable());
   }
 
@@ -64,7 +64,7 @@ class FieldDefinitionTest extends TestCase {
    * Tests that scalar values are not detected as multi-value.
    */
   public function testScalarIsNotMultiValue(): void {
-    $definition = new FieldDefinition('scalar');
+    $definition = new FieldDoubleDefinition('scalar');
     $this->assertFalse($definition->isMultiValue());
   }
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\EntityDefinitionBuilder;
+use Deuteros\Common\EntityDoubleDefinition;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -53,7 +53,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters return identical entity metadata.
    */
   public function testMetadataParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->id(42)
       ->uuid('test-uuid')
@@ -80,7 +80,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters return identical field values.
    */
   public function testFieldValueParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_text', 'Test Value')
       ->field('field_number', 123)
@@ -103,7 +103,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters resolve callbacks identically.
    */
   public function testCallbackResolutionParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_dynamic', fn(array $context) => $context['value'] * 2)
       ->build();
@@ -121,7 +121,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters handle multi-value fields identically.
    */
   public function testMultiValueFieldParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_tags', [
         ['target_id' => 1],
@@ -150,7 +150,7 @@ class BehavioralParityTest extends TestCase {
    */
   public function testMethodOverrideParity(): void {
     $timestamp = 1704067200;
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->interface(EntityChangedInterface::class)
       ->methodOverride('getChangedTime', fn(array $context) => $context['time'])
@@ -175,7 +175,7 @@ class BehavioralParityTest extends TestCase {
    */
   public function testMultiInterfaceParity(): void {
     $timestamp = 1704067200;
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_text', 'Test Value')
       ->interface(EntityChangedInterface::class)
@@ -204,8 +204,8 @@ class BehavioralParityTest extends TestCase {
   /**
    * Creates a PHPUnit mock double.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
+   *   The entity double definition.
    * @param array<string, mixed> $context
    *   Optional context data.
    *
@@ -213,7 +213,7 @@ class BehavioralParityTest extends TestCase {
    *   The entity double.
    */
   private function createMockDouble(
-    EntityDefinition $definition,
+    EntityDoubleDefinition $definition,
     array $context = [],
   ): EntityInterface {
     return $this->mockFactory->create($definition, $context);
@@ -222,8 +222,8 @@ class BehavioralParityTest extends TestCase {
   /**
    * Creates a Prophecy double.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
+   *   The entity double definition.
    * @param array<string, mixed> $context
    *   Optional context data.
    *
@@ -231,7 +231,7 @@ class BehavioralParityTest extends TestCase {
    *   The entity double.
    */
   private function createProphecyDouble(
-    EntityDefinition $definition,
+    EntityDoubleDefinition $definition,
     array $context = [],
   ): EntityInterface {
     return $this->prophecyFactory->create($definition, $context);
@@ -241,7 +241,7 @@ class BehavioralParityTest extends TestCase {
    * Tests fromInterface() parity between adapters.
    */
   public function testFromInterfaceParity(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )
@@ -272,7 +272,7 @@ class BehavioralParityTest extends TestCase {
    * Tests lenient mode parity between adapters.
    */
   public function testLenientModeParity(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )
@@ -300,7 +300,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters handle magic __get identically.
    */
   public function testMagicGetParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_text', 'Test Value')
       ->field('field_ref', ['target_id' => 42])
@@ -320,7 +320,7 @@ class BehavioralParityTest extends TestCase {
    * Tests that both adapters handle magic __set on mutable entities.
    */
   public function testMagicSetMutableParity(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->field('field_status', 'draft')
       ->build();

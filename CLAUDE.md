@@ -72,8 +72,8 @@ Configuration files:
 
 ### Layer Structure
 
-1. **Definition Layer** (`Deuteros\Common\EntityDefinition`, `FieldDefinition`)
-   - Immutable value objects storing entity metadata and field values
+1. **Definition Layer** (`Deuteros\Common\EntityDoubleDefinition`, `FieldDoubleDefinition`)
+   - Immutable value objects storing entity double metadata and field values
    - Pure PHP, no Drupal dependencies
 
 2. **Core Resolution Layer** (`Deuteros\Common\*DoubleBuilder`)
@@ -114,7 +114,7 @@ fn(array $context, ...$args): mixed
 
 The codebase leverages modern PHP features:
 
-- **Readonly classes** (PHP 8.2): `EntityDefinition`, `FieldDefinition` are `final readonly class`
+- **Readonly classes** (PHP 8.2): `EntityDoubleDefinition`, `FieldDoubleDefinition` are `final readonly class`
 - **Constructor property promotion**: Used throughout for cleaner constructors
 - **Typed class constants** (PHP 8.3): `GuardrailEnforcer::UNSUPPORTED_METHODS` uses `const array`
 - **Match expressions**: Used in `resolveValue()` and `normalizeToArray()` methods

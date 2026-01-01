@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDefinitionBuilder;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -33,7 +33,7 @@ class NodeInterfaceTest extends TestCase {
    * Tests fromInterface() detects full NodeInterface hierarchy.
    */
   public function testNodeInterfaceHierarchyDetection(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       NodeInterface::class
     )->build();
@@ -70,7 +70,7 @@ class NodeInterfaceTest extends TestCase {
     $factory = MockEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
-      EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
         ->bundle('article')
         ->id(42)
         ->label('Test Article')
@@ -103,7 +103,7 @@ class NodeInterfaceTest extends TestCase {
     $factory = ProphecyEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
-      EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
         ->bundle('article')
         ->id(42)
         ->label('Test Article')
@@ -136,7 +136,7 @@ class NodeInterfaceTest extends TestCase {
     $factory = MockEntityDoubleFactory::fromTest($this);
 
     $node = $factory->create(
-      EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
         ->bundle('article')
         ->lenient()
         ->build()

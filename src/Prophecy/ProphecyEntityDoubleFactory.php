@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Prophecy;
 
-use Deuteros\Common\EntityDefinition;
+use Deuteros\Common\EntityDoubleDefinition;
 use Deuteros\Common\EntityDoubleBuilder;
 use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
@@ -53,7 +53,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * willImplement(), so we override the base implementation to keep all
    * declared interfaces.
    */
-  protected function resolveInterfaces(EntityDefinition $definition): array {
+  protected function resolveInterfaces(EntityDoubleDefinition $definition): array {
     // Always include EntityInterface.
     $interfaces = [EntityInterface::class];
 
@@ -79,7 +79,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDefinition $definition): void {
+  protected function wireEntityResolvers(object $double, EntityDoubleBuilder $builder, EntityDoubleDefinition $definition): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
@@ -162,7 +162,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireGuardrails(object $double, EntityDefinition $definition, array $interfaces): void {
+  protected function wireGuardrails(object $double, EntityDoubleDefinition $definition, array $interfaces): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $unsupportedMethods = GuardrailEnforcer::getUnsupportedMethods();
@@ -208,7 +208,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDefinition $entityDefinition, array $context): void {
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
@@ -225,7 +225,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
-    if ($entityDefinition->mutable) {
+    if ($definition->mutable) {
       $revealed = NULL;
       $prophecy->setValue(Argument::any(), Argument::any())->will(
         function (array $args) use ($resolvers, $context, &$revealed, $prophecy) {

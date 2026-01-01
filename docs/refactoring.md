@@ -731,3 +731,73 @@ COMPOSER=composer.dev.json composer install
 2. **Adapter Comparison**: PHPUnit vs Prophecy performance difference
 3. **Portable**: Works with production composer (Kernel test skipped gracefully)
 4. **Configurable**: `ITERATION_COUNT` constant allows tuning benchmark intensity
+
+## Task 11 - Rename Definition Classes to Include "Double"
+
+**Status:** Complete
+
+### Overview
+
+Renamed entity and field definition classes to include "Double" in their names
+to avoid confusion with Drupal core field definitions. This makes it clear that
+these classes define test doubles, not actual Drupal entities or fields.
+
+### Changes
+
+**Renamed Classes:**
+- `EntityDefinition` → `EntityDoubleDefinition`
+- `FieldDefinition` → `FieldDoubleDefinition`
+- `EntityDefinitionBuilder` → `EntityDoubleDefinitionBuilder`
+
+**Renamed Files:**
+- `src/Common/EntityDefinition.php` → `src/Common/EntityDoubleDefinition.php`
+- `src/Common/FieldDefinition.php` → `src/Common/FieldDoubleDefinition.php`
+- `src/Common/EntityDefinitionBuilder.php` → `src/Common/EntityDoubleDefinitionBuilder.php`
+- `tests/Unit/Common/EntityDefinitionTest.php` → `tests/Unit/Common/EntityDoubleDefinitionTest.php`
+- `tests/Unit/Common/FieldDefinitionTest.php` → `tests/Unit/Common/FieldDoubleDefinitionTest.php`
+- `tests/Unit/Common/EntityDefinitionBuilderTest.php` → `tests/Unit/Common/EntityDoubleDefinitionBuilderTest.php`
+
+**Updated References:**
+- All source files in `src/Common/`, `src/PhpUnit/`, `src/Prophecy/`
+- All test files in `tests/Unit/`, `tests/Integration/`, `tests/Performance/`
+- PHPStan baseline file (`phpstan-baseline.neon`)
+- CLAUDE.md architecture documentation
+
+**Additional Cleanup:**
+- Standardized parameter naming: `$definition` instead of `$entityDefinition`
+  in `wireFieldListResolvers()` methods
+- Made `FieldItemListDoubleBuilder::$definition` property mutable (removed
+  readonly) to allow updates when field values change via `setValue()`
+- Renamed test variables to use "Double" terminology (e.g., `$fieldDoubleDefinition`)
+
+### New API
+
+```php
+// Before
+use Deuteros\Common\EntityDefinition;
+use Deuteros\Common\FieldDefinition;
+use Deuteros\Common\EntityDefinitionBuilder;
+
+$definition = EntityDefinitionBuilder::create('node')
+  ->field('title', new FieldDefinition('Test'))
+  ->build();
+$factory->create($definition);
+
+// After
+use Deuteros\Common\EntityDoubleDefinition;
+use Deuteros\Common\FieldDoubleDefinition;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
+
+$definition = EntityDoubleDefinitionBuilder::create('node')
+  ->field('title', new FieldDoubleDefinition('Test'))
+  ->build();
+$factory->create($definition);
+```
+
+### Benefits
+
+1. **Avoids Confusion**: Clear distinction from Drupal core's `FieldDefinition`
+   and related classes
+2. **Consistent Naming**: Aligns with existing "Double" terminology used
+   throughout the codebase (e.g., `EntityDoubleBuilder`, `FieldItemDoubleBuilder`)
+3. **Self-Documenting**: Class names immediately convey their purpose

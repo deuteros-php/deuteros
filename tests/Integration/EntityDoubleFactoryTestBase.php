@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\EntityDefinitionBuilder;
+use Deuteros\Common\EntityDoubleDefinition;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
@@ -50,7 +50,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMinimalEntityDouble(): void {
     $entity = $this->factory->create(
-      new EntityDefinition('node')
+      new EntityDoubleDefinition('node')
     );
 
     $this->assertInstanceOf(EntityInterface::class, $entity);
@@ -63,7 +63,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testEntityWithMetadata(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(42)
         ->uuid('test-uuid-123')
@@ -83,7 +83,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testScalarFieldAccess(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_title', 'Test Title')
         ->field('field_count', 42)
@@ -99,7 +99,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testCallbackFieldResolution(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_dynamic', fn(array $context) => $context['dynamic_value'])
         ->build(),
@@ -114,7 +114,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testContextPropagation(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(fn(array $context) => $context['computed_id'])
         ->label(fn(array $context) => "Label: {$context['title']}")
@@ -136,7 +136,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMultiValueFieldAccess(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_tags', [
           ['target_id' => 1],
@@ -163,7 +163,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testNestedFieldAccess(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_text', 'Plain text value')
         ->build()
@@ -179,7 +179,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testHasField(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_existing', 'value')
         ->build()
@@ -194,7 +194,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testFieldIsEmpty(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_with_value', 'value')
         ->field('field_null', NULL)
@@ -210,7 +210,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMethodOverridesPrecedence(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(1)
         ->methodOverride('id', fn() => 999)
@@ -230,7 +230,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMethodOverridesReceiveContext(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->methodOverride('id', fn(array $context) => $context['computed_id'])
         ->build(),
@@ -245,7 +245,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testUndefinedFieldThrows(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_defined', 'value')
         ->build()
@@ -262,7 +262,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testUnsupportedMethodThrows(): void {
     $entity = $this->factory->create(
-      new EntityDefinition(entityType: 'node', bundle: 'article')
+      new EntityDoubleDefinition(entityType: 'node', bundle: 'article')
     );
 
     $this->expectException(\LogicException::class);
@@ -277,7 +277,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testFieldListCaching(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_test', 'value')
         ->build()
@@ -295,7 +295,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMutableEntityFieldSet(): void {
     $entity = $this->factory->createMutable(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_status', 'draft')
         ->build()
@@ -316,7 +316,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testImmutableEntityRejectsSet(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_status', 'draft')
         ->build()
@@ -334,7 +334,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMutableEntitySetReturnsEntity(): void {
     $entity = $this->factory->createMutable(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_status', 'draft')
         ->build()
@@ -351,7 +351,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testEntityReferenceFieldWithTargetId(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_author', ['target_id' => 42])
         ->build()
@@ -366,7 +366,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testFieldGetValue(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_tags', [
           ['target_id' => 1],
@@ -386,7 +386,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testNullFieldItem(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_empty', [])
         ->build()
@@ -402,7 +402,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testOutOfRangeDeltaReturnsNull(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_tags', [
           ['target_id' => 1],
@@ -418,7 +418,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testInterfaceComposition(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->interface(FieldableEntityInterface::class)
         ->interface(EntityChangedInterface::class)
@@ -438,7 +438,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testFromInterfaceWithContentEntity(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
         ->bundle('article')
         ->id(42)
         ->field('field_test', 'value')
@@ -459,7 +459,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testFromInterfaceWithConfigEntity(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::fromInterface('view', ConfigEntityInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('view', ConfigEntityInterface::class)
         ->id('frontpage')
         ->label('Frontpage View')
         ->methodOverride('status', fn() => TRUE)
@@ -479,7 +479,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testLenientModeAllowsUnsupportedMethods(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
         ->bundle('article')
         ->lenient()
         ->build()
@@ -498,7 +498,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testNonLenientModeThrowsForUnsupportedMethods(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
+      EntityDoubleDefinitionBuilder::fromInterface('node', ContentEntityInterface::class)
         ->bundle('article')
         ->build()
     );
@@ -514,7 +514,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMagicGetFieldAccess(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_title', 'Test Title')
         ->field('field_author', ['target_id' => 42])
@@ -531,7 +531,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMagicSetOnMutableEntity(): void {
     $entity = $this->factory->createMutable(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_status', 'draft')
         ->build()
@@ -552,7 +552,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMagicSetOnImmutableEntityThrows(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_status', 'draft')
         ->build()
@@ -569,7 +569,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testMagicGetUndefinedFieldThrows(): void {
     $entity = $this->factory->create(
-      EntityDefinitionBuilder::create('node')
+      EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->field('field_defined', 'value')
         ->build()

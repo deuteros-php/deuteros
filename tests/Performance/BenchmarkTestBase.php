@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Performance;
 
-use Deuteros\Common\EntityDefinition;
-use Deuteros\Common\EntityDefinitionBuilder;
+use Deuteros\Common\EntityDoubleDefinition;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Drupal\node\NodeInterface;
 use PHPUnit\Framework\TestCase;
@@ -34,11 +34,11 @@ abstract class BenchmarkTestBase extends TestCase {
   /**
    * Builds the node entity definition for benchmarking.
    *
-   * @return \Deuteros\Common\EntityDefinition
-   *   The entity definition.
+   * @return \Deuteros\Common\EntityDoubleDefinition
+   *   The entity double definition.
    */
-  private function buildNodeDefinition(): EntityDefinition {
-    return EntityDefinitionBuilder::fromInterface('node', NodeInterface::class)
+  private function buildNodeDefinition(): EntityDoubleDefinition {
+    return EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
       ->bundle('article')
       ->id(42)
       ->uuid('benchmark-uuid-1234')

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Unit\Common;
 
-use Deuteros\Common\EntityDefinitionBuilder;
-use Deuteros\Common\FieldDefinition;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Common\FieldDoubleDefinition;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -15,17 +15,17 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests the EntityDefinitionBuilder.
+ * Tests the EntityDoubleDefinitionBuilder.
  */
-#[CoversClass(EntityDefinitionBuilder::class)]
+#[CoversClass(EntityDoubleDefinitionBuilder::class)]
 #[Group('deuteros')]
-class EntityDefinitionBuilderTest extends TestCase {
+class EntityDoubleDefinitionBuilderTest extends TestCase {
 
   /**
    * Tests building a minimal definition with only entity_type.
    */
   public function testMinimalBuilder(): void {
-    $definition = EntityDefinitionBuilder::create('node')->build();
+    $definition = EntityDoubleDefinitionBuilder::create('node')->build();
 
     $this->assertSame('node', $definition->entityType);
     $this->assertSame('node', $definition->bundle);
@@ -45,7 +45,7 @@ class EntityDefinitionBuilderTest extends TestCase {
   public function testFullBuilder(): void {
     $callback = fn() => 1;
 
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->id(42)
       ->uuid('test-uuid')
@@ -72,7 +72,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests that adding a field auto-adds FieldableEntityInterface.
    */
   public function testFieldAutoAddsFieldableInterface(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->field('field_test', 'value')
       ->build();
 
@@ -83,7 +83,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests that adding a field with FieldableEntityInterface already present.
    */
   public function testFieldWithExistingFieldableInterface(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->interface(FieldableEntityInterface::class)
       ->field('field_test', 'value')
       ->build();
@@ -97,7 +97,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests that interface() deduplicates interfaces.
    */
   public function testInterfaceDeduplication(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->interface(EntityChangedInterface::class)
       ->interface(EntityChangedInterface::class)
       ->build();
@@ -110,7 +110,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests the interfaces() bulk method.
    */
   public function testInterfacesBulk(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->interfaces([
         FieldableEntityInterface::class,
         EntityChangedInterface::class,
@@ -125,7 +125,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests the fields() bulk method.
    */
   public function testFieldsBulk(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->fields([
         'field_one' => 'value1',
         'field_two' => 'value2',
@@ -145,7 +145,7 @@ class EntityDefinitionBuilderTest extends TestCase {
     $callback1 = fn() => 1;
     $callback2 = fn() => 2;
 
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->methodOverrides([
         'method1' => $callback1,
         'method2' => $callback2,
@@ -160,7 +160,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests the withContext() bulk method.
    */
   public function testWithContextBulk(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->context('a', 1)
       ->withContext(['b' => 2, 'c' => 3])
       ->build();
@@ -172,13 +172,13 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests creating a builder from an existing definition.
    */
   public function testFromExistingDefinition(): void {
-    $original = EntityDefinitionBuilder::create('node')
+    $original = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->id(42)
       ->field('field_test', 'original')
       ->build();
 
-    $modified = EntityDefinitionBuilder::from($original)
+    $modified = EntityDoubleDefinitionBuilder::from($original)
       ->label('New Label')
       ->field('field_test', 'modified')
       ->build();
@@ -196,28 +196,28 @@ class EntityDefinitionBuilderTest extends TestCase {
   }
 
   /**
-   * Tests that field values are wrapped in FieldDefinition.
+   * Tests that field values are wrapped in FieldDoubleDefinition.
    */
-  public function testFieldValuesWrappedInFieldDefinition(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+  public function testFieldValuesWrappedInFieldDoubleDefinition(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->field('field_test', 'raw value')
       ->build();
 
-    $this->assertInstanceOf(FieldDefinition::class, $definition->fields['field_test']);
+    $this->assertInstanceOf(FieldDoubleDefinition::class, $definition->fields['field_test']);
     $this->assertSame('raw value', $definition->fields['field_test']->getValue());
   }
 
   /**
-   * Tests that FieldDefinition values are preserved.
+   * Tests that FieldDoubleDefinition values are preserved.
    */
-  public function testFieldDefinitionPreserved(): void {
-    $fieldDef = new FieldDefinition('wrapped value');
+  public function testFieldDoubleDefinitionPreserved(): void {
+    $fieldDoubleDefinition = new FieldDoubleDefinition('wrapped value');
 
-    $definition = EntityDefinitionBuilder::create('node')
-      ->field('field_test', $fieldDef)
+    $entityDoubleDefinition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_test', $fieldDoubleDefinition)
       ->build();
 
-    $this->assertSame($fieldDef, $definition->fields['field_test']);
+    $this->assertSame($fieldDoubleDefinition, $entityDoubleDefinition->fields['field_test']);
   }
 
   /**
@@ -226,7 +226,7 @@ class EntityDefinitionBuilderTest extends TestCase {
   public function testCallableFieldValue(): void {
     $callback = fn(array $context) => $context['value'];
 
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->field('field_dynamic', $callback)
       ->build();
 
@@ -240,7 +240,7 @@ class EntityDefinitionBuilderTest extends TestCase {
     $idCallback = fn(array $context) => $context['id'];
     $labelCallback = fn(array $context) => $context['label'];
 
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->id($idCallback)
       ->label($labelCallback)
       ->build();
@@ -253,7 +253,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests fromInterface() auto-detects the interface hierarchy.
    */
   public function testFromInterfaceDetectsHierarchy(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )->build();
@@ -268,7 +268,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests fromInterface() keeps Traversable and IteratorAggregate.
    */
   public function testFromInterfaceKeepsTraversable(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )->build();
@@ -284,7 +284,7 @@ class EntityDefinitionBuilderTest extends TestCase {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("Interface 'NonExistentInterface' does not exist.");
 
-    EntityDefinitionBuilder::fromInterface('node', 'NonExistentInterface');
+    EntityDoubleDefinitionBuilder::fromInterface('node', 'NonExistentInterface');
   }
 
   /**
@@ -294,14 +294,14 @@ class EntityDefinitionBuilderTest extends TestCase {
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage("must extend EntityInterface");
 
-    EntityDefinitionBuilder::fromInterface('node', \Traversable::class);
+    EntityDoubleDefinitionBuilder::fromInterface('node', \Traversable::class);
   }
 
   /**
    * Tests fromInterface() stores the primary interface.
    */
   public function testFromInterfaceStoresPrimaryInterface(): void {
-    $definition = EntityDefinitionBuilder::fromInterface(
+    $definition = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )->build();
@@ -313,7 +313,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests the lenient() method.
    */
   public function testLenientFlag(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->lenient()
       ->build();
 
@@ -324,7 +324,7 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests lenient(false) disables lenient mode.
    */
   public function testLenientFlagFalse(): void {
-    $definition = EntityDefinitionBuilder::create('node')
+    $definition = EntityDoubleDefinitionBuilder::create('node')
       ->lenient()
       ->lenient(FALSE)
       ->build();
@@ -336,14 +336,14 @@ class EntityDefinitionBuilderTest extends TestCase {
    * Tests from() preserves primaryInterface and lenient.
    */
   public function testFromPreservesNewProperties(): void {
-    $original = EntityDefinitionBuilder::fromInterface(
+    $original = EntityDoubleDefinitionBuilder::fromInterface(
       'node',
       ContentEntityInterface::class
     )
       ->lenient()
       ->build();
 
-    $modified = EntityDefinitionBuilder::from($original)
+    $modified = EntityDoubleDefinitionBuilder::from($original)
       ->label('Test')
       ->build();
 

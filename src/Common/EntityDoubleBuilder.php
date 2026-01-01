@@ -12,7 +12,7 @@ namespace Deuteros\Common;
  * traits.
  *
  * Method resolution order:
- * 1. methodOverrides from EntityDefinition.
+ * 1. methodOverrides from EntityDoubleDefinition.
  * 2. Core entity/field resolvers from this builder.
  * 3. Guardrail failure (handled by adapters).
  */
@@ -34,13 +34,13 @@ final class EntityDoubleBuilder {
   /**
    * Constructs an EntityDoubleBuilder.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
+   *   The entity double definition.
    * @param \Deuteros\Common\MutableStateContainer|null $mutableState
    *   The mutable state container, or NULL for immutable doubles.
    */
   public function __construct(
-    private readonly EntityDefinition $definition,
+    private readonly EntityDoubleDefinition $definition,
     private readonly ?MutableStateContainer $mutableState = NULL,
   ) {}
 
@@ -49,7 +49,7 @@ final class EntityDoubleBuilder {
    *
    * @param callable $factory
    *   A callable that accepts
-   *   (string $fieldName, FieldDefinition $fieldDefinition) and returns a field
+   *   (string $fieldName, FieldDoubleDefinition $definition) and returns a
    *   item list double.
    */
   public function setFieldListFactory(callable $factory): void {
@@ -163,14 +163,14 @@ final class EntityDoubleBuilder {
         return $this->fieldListCache[$fieldName];
       }
 
-      $fieldDefinition = $this->getFieldDefinitionForAccess($fieldName);
+      $definition = $this->getFieldDefinitionForAccess($fieldName);
 
       if ($this->fieldListFactory === NULL) {
         throw new \LogicException("Field list factory not set. Cannot create field list double for '$fieldName'.");
       }
 
       // Create and cache the field list double.
-      $fieldList = ($this->fieldListFactory)($fieldName, $fieldDefinition, $context);
+      $fieldList = ($this->fieldListFactory)($fieldName, $definition, $context);
       assert(is_object($fieldList));
       $this->fieldListCache[$fieldName] = $fieldList;
 
@@ -232,24 +232,24 @@ final class EntityDoubleBuilder {
    * @param string $fieldName
    *   The field name.
    *
-   * @return \Deuteros\Common\FieldDefinition
-   *   The field definition.
+   * @return \Deuteros\Common\FieldDoubleDefinition
+   *   The field double definition.
    *
    * @throws \InvalidArgumentException
    *   If the field is not defined.
    */
-  private function getFieldDefinitionForAccess(string $fieldName): FieldDefinition {
+  private function getFieldDefinitionForAccess(string $fieldName): FieldDoubleDefinition {
     // Check mutable state first.
     if ($this->mutableState !== NULL && $this->mutableState->hasFieldValue($fieldName)) {
-      return new FieldDefinition($this->mutableState->getFieldValue($fieldName));
+      return new FieldDoubleDefinition($this->mutableState->getFieldValue($fieldName));
     }
 
-    $fieldDefinition = $this->definition->getField($fieldName);
-    if ($fieldDefinition === NULL) {
+    $definition = $this->definition->getField($fieldName);
+    if ($definition === NULL) {
       throw new \InvalidArgumentException("Field '$fieldName' is not defined on this entity double.");
     }
 
-    return $fieldDefinition;
+    return $definition;
   }
 
   /**
@@ -275,10 +275,10 @@ final class EntityDoubleBuilder {
   /**
    * Gets the entity definition.
    *
-   * @return \Deuteros\Common\EntityDefinition
-   *   The entity definition.
+   * @return \Deuteros\Common\EntityDoubleDefinition
+   *   The entity double definition.
    */
-  public function getDefinition(): EntityDefinition {
+  public function getDefinition(): EntityDoubleDefinition {
     return $this->definition;
   }
 

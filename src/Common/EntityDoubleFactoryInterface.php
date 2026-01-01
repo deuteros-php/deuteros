@@ -19,29 +19,29 @@ interface EntityDoubleFactoryInterface {
    *
    * Field values cannot be changed after creation.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
+   *   The entity double definition.
    * @param array<string, mixed> $context
    *   Additional context data to merge with definition context.
    *
    * @return \Drupal\Core\Entity\EntityInterface
    *   The entity double.
    */
-  public function create(EntityDefinition $definition, array $context = []): EntityInterface;
+  public function create(EntityDoubleDefinition $definition, array $context = []): EntityInterface;
 
   /**
    * Creates a mutable entity double.
    *
    * Field values can be updated via set() methods for assertion purposes.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
-   *   The entity definition.
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
+   *   The entity double definition.
    * @param array<string, mixed> $context
    *   Additional context data to merge with definition context.
    *
    * @return \Drupal\Core\Entity\EntityInterface
    *   The mutable entity double.
    */
-  public function createMutable(EntityDefinition $definition, array $context = []): EntityInterface;
+  public function createMutable(EntityDoubleDefinition $definition, array $context = []): EntityInterface;
 
 }

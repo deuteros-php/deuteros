@@ -10,10 +10,10 @@ namespace Deuteros\Common;
  * Stores field value which can be a scalar, array, or callable.
  * No behavior beyond holding the value.
  */
-final readonly class FieldDefinition {
+final readonly class FieldDoubleDefinition {
 
   /**
-   * Constructs a FieldDefinition.
+   * Constructs a FieldDoubleDefinition.
    *
    * @param mixed $value
    *   The field value (scalar, array, or callable).

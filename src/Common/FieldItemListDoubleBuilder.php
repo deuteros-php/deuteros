@@ -12,10 +12,6 @@ namespace Deuteros\Common;
  * by the adapter traits.
  */
 final class FieldItemListDoubleBuilder {
-  /**
-   * The field definition (mutable for mutable doubles).
-   */
-  private FieldDefinition $fieldDefinition;
 
   /**
    * Cached resolved value (for callable fields).
@@ -51,19 +47,18 @@ final class FieldItemListDoubleBuilder {
   /**
    * Constructs a FieldItemListDoubleBuilder.
    *
-   * @param \Deuteros\Common\FieldDefinition $fieldDefinition
-   *   The field definition.
+   * @param \Deuteros\Common\FieldDoubleDefinition $definition
+   *   The field double definition.
    * @param string $fieldName
    *   The field name.
    * @param bool $mutable
    *   Whether the parent entity is mutable.
    */
   public function __construct(
-    FieldDefinition $fieldDefinition,
+    private FieldDoubleDefinition $definition,
     private readonly string $fieldName,
     private readonly bool $mutable = FALSE,
   ) {
-    $this->fieldDefinition = $fieldDefinition;
   }
 
   /**
@@ -233,7 +228,7 @@ final class FieldItemListDoubleBuilder {
       $this->fieldItemCache = [];
 
       // Update the field definition.
-      $this->fieldDefinition = new FieldDefinition($values);
+      $this->definition = new FieldDoubleDefinition($values);
 
       // Return $this equivalent.
       return new class () {};
@@ -277,10 +272,10 @@ final class FieldItemListDoubleBuilder {
       return $this->normalizeToArray($this->resolvedValue);
     }
 
-    $rawValue = $this->fieldDefinition->getValue();
+    $rawValue = $this->definition->getValue();
 
     // Resolve callable.
-    if ($this->fieldDefinition->isCallable()) {
+    if ($this->definition->isCallable()) {
       assert(is_callable($rawValue));
       $rawValue = $rawValue($context);
     }
@@ -375,11 +370,11 @@ final class FieldItemListDoubleBuilder {
   /**
    * Gets the field definition.
    *
-   * @return \Deuteros\Common\FieldDefinition
-   *   The field definition.
+   * @return \Deuteros\Common\FieldDoubleDefinition
+   *   The field double definition.
    */
-  public function getFieldDefinition(): FieldDefinition {
-    return $this->fieldDefinition;
+  public function getFieldDefinition(): FieldDoubleDefinition {
+    return $this->definition;
   }
 
 }

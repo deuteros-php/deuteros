@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
- * Fluent builder for creating EntityDefinition instances.
+ * Fluent builder for creating EntityDoubleDefinition instances.
  *
  * Provides a type-safe, discoverable API for configuring entity doubles
  * without relying on array keys. Auto-adds FieldableEntityInterface when
@@ -16,7 +16,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *
  * @example Basic usage
  * ```php
- * $definition = EntityDefinitionBuilder::create('node')
+ * $definition = EntityDoubleDefinitionBuilder::create('node')
  *   ->bundle('article')
  *   ->id(42)
  *   ->build();
@@ -24,7 +24,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *
  * @example With fields (auto-adds FieldableEntityInterface)
  * ```php
- * $definition = EntityDefinitionBuilder::create('node')
+ * $definition = EntityDoubleDefinitionBuilder::create('node')
  *   ->bundle('article')
  *   ->field('field_title', 'Test Title')
  *   ->field('field_tags', [['target_id' => 1], ['target_id' => 2]])
@@ -33,12 +33,12 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *
  * @example Initialize from existing definition
  * ```php
- * $modified = EntityDefinitionBuilder::from($existingDefinition)
+ * $modified = EntityDoubleDefinitionBuilder::from($existingDefinition)
  *   ->label('New Label')
  *   ->build();
  * ```
  */
-final class EntityDefinitionBuilder {
+final class EntityDoubleDefinitionBuilder {
 
   /**
    * The entity type ID.
@@ -68,7 +68,7 @@ final class EntityDefinitionBuilder {
   /**
    * Field definitions keyed by field name.
    *
-   * @var array<string, \Deuteros\Common\FieldDefinition>
+   * @var array<string, \Deuteros\Common\FieldDoubleDefinition>
    */
   private array $fields = [];
 
@@ -181,13 +181,13 @@ final class EntityDefinitionBuilder {
    *
    * Allows copying and modifying existing definitions.
    *
-   * @param \Deuteros\Common\EntityDefinition $definition
+   * @param \Deuteros\Common\EntityDoubleDefinition $definition
    *   The existing definition to copy from.
    *
    * @return self
    *   A new builder instance with values from the definition.
    */
-  public static function from(EntityDefinition $definition): self {
+  public static function from(EntityDoubleDefinition $definition): self {
     $builder = new self($definition->entityType);
     $builder->bundle = $definition->bundle;
     $builder->id = $definition->id;
@@ -267,9 +267,9 @@ final class EntityDefinitionBuilder {
    * @return $this
    */
   public function field(string $fieldName, mixed $value): self {
-    $this->fields[$fieldName] = $value instanceof FieldDefinition
+    $this->fields[$fieldName] = $value instanceof FieldDoubleDefinition
       ? $value
-      : new FieldDefinition($value);
+      : new FieldDoubleDefinition($value);
     return $this;
   }
 
@@ -404,15 +404,15 @@ final class EntityDefinitionBuilder {
   }
 
   /**
-   * Builds the EntityDefinition.
+   * Builds the EntityDoubleDefinition.
    *
-   * @return \Deuteros\Common\EntityDefinition
-   *   The built entity definition.
+   * @return \Deuteros\Common\EntityDoubleDefinition
+   *   The built entity double definition.
    *
    * @throws \InvalidArgumentException
    *   If the configuration is invalid.
    */
-  public function build(): EntityDefinition {
+  public function build(): EntityDoubleDefinition {
     $interfaces = $this->interfaces;
 
     // Auto-add FieldableEntityInterface when fields are defined.
@@ -420,7 +420,7 @@ final class EntityDefinitionBuilder {
       $interfaces[] = FieldableEntityInterface::class;
     }
 
-    return new EntityDefinition(
+    return new EntityDoubleDefinition(
       entityType: $this->entityType,
       bundle: $this->bundle,
       id: $this->id,

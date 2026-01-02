@@ -1,12 +1,12 @@
-# DEUTEROS Architecture
+# Deuteros Architecture
 
-This document provides architectural documentation for contributors and maintainers of DEUTEROS.
+This document provides architectural documentation for contributors and maintainers of Deuteros.
 
 ## Overview
 
 ### Design Philosophy
 
-DEUTEROS is built around these core principles:
+Deuteros is built around these core principles:
 
 1. **Value Objects**: Entity doubles are read-only by default, ensuring predictable behavior
 2. **Interfaces Only**: No concrete Drupal classes are used, only interfaces
@@ -337,21 +337,19 @@ These constraints must never be violated:
 
 ## Testing Strategy
 
-### Test Pyramid
-
 ```
-         ┌───────────────────┐
-         │   Performance     │  ◄── Benchmark comparisons
-         └───────────────────┘
-        ┌─────────────────────┐
-        │    Integration      │  ◄── Factory behavior, adapter parity
-        └─────────────────────┘
+         ┌──────────────────┐
+         │   Performance    │     ◄── Benchmark comparisons
+         └──────────────────┘
+         ┌──────────────────┐
+         │   Integration    │     ◄── Factory behavior, adapter parity
+         └──────────────────┘
        ┌───────────────────────┐
        │        Unit           │  ◄── Builders, definitions, support classes
        └───────────────────────┘
 ```
 
-**Distribution**: ~66% unit tests, remainder integration
+**Distribution**: ~66% unit tests, remainder integration.
 
 ### Test Structure
 
@@ -381,54 +379,9 @@ This inheritance pattern guarantees identical behavior across adapters.
 
 ---
 
-## File Organization
-
-```
-src/
-├── Common/
-│   ├── EntityDoubleDefinition.php
-│   ├── EntityDoubleDefinitionBuilder.php
-│   ├── FieldDoubleDefinition.php
-│   ├── EntityDoubleBuilder.php
-│   ├── FieldItemListDoubleBuilder.php
-│   ├── FieldItemDoubleBuilder.php
-│   ├── EntityDoubleFactory.php
-│   ├── EntityDoubleFactoryInterface.php
-│   ├── GuardrailEnforcer.php
-│   ├── MutableStateContainer.php
-│   └── EntityReferenceNormalizer.php
-├── PhpUnit/
-│   └── MockEntityDoubleFactory.php
-└── Prophecy/
-    └── ProphecyEntityDoubleFactory.php
-
-tests/
-├── Unit/
-│   └── Common/
-│       ├── EntityDoubleDefinitionTest.php
-│       ├── EntityDoubleDefinitionBuilderTest.php
-│       ├── FieldDoubleDefinitionTest.php
-│       ├── EntityDoubleBuilderTest.php
-│       ├── FieldItemListDoubleBuilderTest.php
-│       ├── FieldItemDoubleBuilderTest.php
-│       ├── GuardrailEnforcerTest.php
-│       ├── MutableStateContainerTest.php
-│       └── EntityReferenceNormalizerTest.php
-├── Integration/
-│   ├── EntityDoubleFactoryTestBase.php
-│   ├── PhpUnit/
-│   │   └── MockEntityDoubleFactoryTest.php
-│   └── Prophecy/
-│       └── ProphecyEntityDoubleFactoryTest.php
-└── Performance/
-    └── BenchmarkTest.php
-```
-
----
-
 ## Implementation History
 
-DEUTEROS was implemented in phases with subsequent refactoring to improve API ergonomics and architecture. For detailed historical information, see:
+Deuteros was implemented in phases with subsequent refactoring to improve API ergonomics and architecture. For detailed historical information, see:
 
 - [docs/archive/init.md](archive/init.md) - Initial requirements and constraints
 - [docs/archive/plan.md](archive/plan.md) - Original 8-phase implementation plan

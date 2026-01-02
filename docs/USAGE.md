@@ -40,6 +40,8 @@ composer require --dev plach79/Deuteros
 
 ### Basic Usage
 
+An entity double is instantiated by passing an entity double definition to a factory. The easiest way to define an entity double is using the definition builder:
+
 ```php
 use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
@@ -61,6 +63,11 @@ class MyServiceTest extends TestCase {
     );
 
     // Use it in your test
+    $myService = new MyService();
+    $myService->doStuff($entity);
+    
+    // These assertions would all pass
+    $this->assertInstanceOf(EntityInterface::class, $entity);
     $this->assertSame('node', $entity->getEntityTypeId());
     $this->assertSame('article', $entity->bundle());
     $this->assertSame(42, $entity->id());
@@ -75,7 +82,7 @@ class MyServiceTest extends TestCase {
 ```php
 // Just entity type (bundle defaults to entity type)
 $entity = $factory->create(
-  EntityDoubleDefinitionBuilder::create('node')->build()
+  new EntityDoubleDefinition('node')
 );
 
 $this->assertSame('node', $entity->getEntityTypeId());
@@ -86,65 +93,67 @@ $this->assertSame('node', $entity->bundle());
 
 ## Builder API Reference
 
-The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring entity doubles.
+The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring entity double definitions.
 
 ### Factory Methods
 
-| Method | Description |
-|--------|-------------|
-| `create(string $entityType)` | Create a new builder for the given entity type |
-| `fromInterface(string $entityType, string $interface)` | Create from interface with auto-discovered hierarchy |
-| `from(EntityDoubleDefinition $definition)` | Clone and modify an existing definition |
+| Method | Description                                               |
+|--------|-----------------------------------------------------------|
+| `create(string $entityType)` | Creates a new builder for the given entity type           |
+| `fromInterface(string $entityType, string $interface)` | Creates a new builder from the specified entity interface |
+| `from(EntityDoubleDefinition $definition)` | Clones and modifies an existing definition                |
 
 ### Metadata Methods
 
-| Method | Description |
-|--------|-------------|
-| `bundle(string\|callable $bundle)` | Set the entity bundle |
-| `id(int\|string\|null\|callable $id)` | Set the entity ID |
-| `uuid(string\|null\|callable $uuid)` | Set the entity UUID |
-| `label(string\|null\|callable $label)` | Set the entity label |
+| Method | Description            |
+|--------|------------------------|
+| `bundle(string\|callable $bundle)` | Sets the entity bundle |
+| `id(int\|string\|null\|callable $id)` | Sets the entity ID     |
+| `uuid(string\|null\|callable $uuid)` | Sets the entity UUID   |
+| `label(string\|null\|callable $label)` | Sets the entity label  |
 
 ### Field Methods
 
-| Method | Description |
-|--------|-------------|
-| `field(string $name, mixed $value)` | Add a single field with value |
-| `fields(array $fields)` | Add multiple fields at once |
+| Method | Description                    |
+|--------|--------------------------------|
+| `field(string $name, mixed $value)` | Adds a single field with value |
+| `fields(array $fields)` | Adds multiple fields at once   |
 
 ### Interface Methods
 
-| Method | Description |
-|--------|-------------|
-| `interface(string $interface)` | Add an interface the double should implement |
-| `interfaces(array $interfaces)` | Add multiple interfaces at once |
+| Method | Description                                   |
+|--------|-----------------------------------------------|
+| `interface(string $interface)` | Adds an interface the double should implement |
+| `interfaces(array $interfaces)` | Adds multiple interfaces at once              |
 
 ### Method Override Methods
 
-| Method | Description |
-|--------|-------------|
-| `method(string $name, callable $callback)` | Override a method with custom implementation |
-| `methods(array $methods)` | Add multiple method overrides at once |
+| Method | Description                                   |
+|--------|-----------------------------------------------|
+| `method(string $name, callable $callback)` | Overrides a method with custom implementation |
+| `methods(array $methods)` | Adds multiple method overrides at once        |
 
 ### Context Methods
 
-| Method | Description |
-|--------|-------------|
-| `context(string $key, mixed $value)` | Add a single context value |
-| `withContext(array $context)` | Add multiple context values at once |
+| Method | Description                          |
+|--------|--------------------------------------|
+| `context(string $key, mixed $value)` | Adds a single context value          |
+| `withContext(array $context)` | Adds multiple context values at once |
 
-### Option Methods
+### Other Methods
 
-| Method | Description |
-|--------|-------------|
-| `lenient()` | Enable lenient mode (unconfigured methods return null instead of throwing) |
-| `build()` | Build and return the `EntityDoubleDefinition` |
+| Method | Description                                                                 |
+|--------|-----------------------------------------------------------------------------|
+| `lenient()` | Enables lenient mode (unconfigured methods return null instead of throwing) |
+| `build()` | Builds and returns the `EntityDoubleDefinition`                             |
 
 ---
 
 ## Field Access Patterns
 
-### Method Access
+All core field access patterns are supported, which allows to pass the entity double to code manipulating entities.
+
+**Method Access**
 
 ```php
 // Get field list
@@ -166,7 +175,7 @@ $isEmpty = $entity->get('field_name')->isEmpty();
 $values = $entity->get('field_name')->getValue();
 ```
 
-### Magic Property Access
+**Magic Property Access**
 
 ```php
 // Equivalent to $entity->get('field_name')
@@ -176,7 +185,7 @@ $fieldList = $entity->field_name;
 $value = $entity->field_name->value;
 ```
 
-### Multi-Value Fields
+**Multi-Value Fields**
 
 ```php
 $entity = $factory->create(
@@ -203,7 +212,7 @@ foreach ($entity->get('field_tags') as $delta => $item) {
 $entity->get('field_tags')->target_id; // Returns 1
 ```
 
-### Field Item Properties
+**Field Item Properties**
 
 ```php
 // Common properties
@@ -223,6 +232,26 @@ $entity = $factory->create(
 
 $entity->get('field_link')->uri;   // 'https://example.com'
 $entity->get('field_link')->title; // 'Example'
+```
+
+### Checking Field Existence
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_title', 'Test')
+    ->build()
+);
+
+$entity->hasField('field_title');     // true
+$entity->hasField('field_nonexistent'); // false
+```
+
+Accessing undefined fields throws `InvalidArgumentException`:
+
+```php
+$entity->get('undefined_field'); // Throws InvalidArgumentException
 ```
 
 ---
@@ -270,7 +299,7 @@ $entity->get('field_status')->value;  // "published"
 
 ### Entity References
 
-#### Shorthand (Entity Object)
+**Shorthand (Entity Object)**
 
 ```php
 $author = $factory->create(
@@ -291,7 +320,7 @@ $entity->get('field_author')->entity;    // Returns $author
 $entity->get('field_author')->target_id; // Returns 1 (auto-populated)
 ```
 
-#### Explicit Format
+**Explicit Format**
 
 ```php
 $entity = $factory->create(
@@ -302,7 +331,7 @@ $entity = $factory->create(
 );
 ```
 
-#### Target ID Only
+**Target ID Only**
 
 ```php
 $entity = $factory->create(
@@ -316,7 +345,7 @@ $entity->get('field_author')->target_id; // 42
 $entity->get('field_author')->entity;    // null (no entity provided)
 ```
 
-#### Multi-Value Entity References
+**Multi-Value Entity References**
 
 ```php
 $tag1 = $factory->create(EntityDoubleDefinitionBuilder::create('taxonomy_term')->id(1)->build());
@@ -339,7 +368,7 @@ $entities = $entity->get('field_tags')->referencedEntities();
 // Returns [$tag1, $tag2, $tag3]
 ```
 
-### Mutable Doubles
+**Mutable Doubles**
 
 By default, entity doubles are immutable. Use `createMutable()` for doubles that can be modified:
 
@@ -373,7 +402,7 @@ $entity = $factory->create(/* ... */);
 $entity->set('field_status', 'new'); // Throws LogicException
 ```
 
-### Method Overrides
+**Method Overrides**
 
 Override any method with a custom implementation:
 
@@ -381,7 +410,7 @@ Override any method with a custom implementation:
 $entity = $factory->create(
   EntityDoubleDefinitionBuilder::create('node')
     ->bundle('article')
-    ->interface(\Drupal\node\NodeInterface::class)
+    ->interface(NodeInterface::class)
     ->method('getTitle', fn() => 'Custom Title')
     ->method('isPublished', fn() => true)
     ->method('getCreatedTime', fn() => 1704067200)
@@ -409,15 +438,13 @@ $entity->id(); // 999
 
 ### Interface Composition
 
-#### Adding Multiple Interfaces
+**Adding Multiple Interfaces**
 
 ```php
-use Drupal\Core\Entity\EntityChangedInterface;
-
 $entity = $factory->create(
   EntityDoubleDefinitionBuilder::create('node')
     ->bundle('article')
-    ->interface(\Drupal\Core\Entity\FieldableEntityInterface::class)
+    ->interface(FieldableEntityInterface::class)
     ->interface(EntityChangedInterface::class)
     ->method('getChangedTime', fn() => 1704067200)
     ->build()
@@ -427,13 +454,11 @@ $this->assertInstanceOf(EntityChangedInterface::class, $entity);
 $entity->getChangedTime(); // 1704067200
 ```
 
-#### Using fromInterface() with Reflection
+**Defining a double from an interface hierarchy**
 
-`fromInterface()` auto-discovers the interface hierarchy:
+The `::fromInterface` auto-discovers the interface hierarchy:
 
 ```php
-use Drupal\node\NodeInterface;
-
 $entity = $factory->create(
   EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
     ->bundle('article')
@@ -445,7 +470,7 @@ $entity = $factory->create(
 
 // Entity implements NodeInterface and all its parent interfaces
 $this->assertInstanceOf(NodeInterface::class, $entity);
-$this->assertInstanceOf(\Drupal\Core\Entity\ContentEntityInterface::class, $entity);
+$this->assertInstanceOf(ContentEntityInterface::class, $entity);
 ```
 
 ### Lenient Mode
@@ -454,7 +479,7 @@ Lenient mode returns `null` for unconfigured methods instead of throwing:
 
 ```php
 $entity = $factory->create(
-  EntityDoubleDefinitionBuilder::fromInterface('node', \Drupal\Core\Entity\ContentEntityInterface::class)
+  EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
     ->bundle('article')
     ->lenient() // Enable lenient mode
     ->build()
@@ -469,7 +494,7 @@ Without lenient mode:
 
 ```php
 $entity = $factory->create(
-  EntityDoubleDefinitionBuilder::fromInterface('node', \Drupal\Core\Entity\ContentEntityInterface::class)
+  EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
     ->bundle('article')
     ->build()
 );
@@ -483,33 +508,28 @@ $entity->save(); // Throws LogicException
 
 Entity doubles are lightweight value objects. Operations requiring runtime services throw `LogicException` with helpful error messages:
 
-### Storage Operations
+**Storage Operations**
 
 - `save()` - Requires entity storage service
 - `delete()` - Requires entity storage service
 
-### Service-Dependent Operations
+**Service-Dependent Operations**
 
 - `access()` - Requires access control handler
 - `toUrl()` - Requires URL generator service
 - `toLink()` - Requires link generator service
 
-### Field Definition Operations
+**Field Definition Operations**
 
 - `getFieldDefinition()` - Requires entity field manager
 - `getFieldDefinitions()` - Requires entity field manager
 
-### Revision Operations
+**Revision Operations**
 
 - `isDefaultRevision()` - Requires revision tracking
 - `isLatestRevision()` - Requires revision tracking
 
-### Translation Operations
-
-- `getTranslation()` - Requires translation services
-- `hasTranslation()` - Requires translation services
-
-### Lifecycle Hooks
+**Lifecycle Hooks**
 
 - `preSave()`, `postSave()`, `preCreate()`, `postCreate()`, etc.
 
@@ -568,28 +588,6 @@ $factory = ProphecyEntityDoubleFactory::fromTest($this);
 ### Behavioral Parity
 
 Both PHPUnit and Prophecy adapters behave identically. You can switch between them without changing your test logic.
-
----
-
-## Checking Field Existence
-
-```php
-$entity = $factory->create(
-  EntityDoubleDefinitionBuilder::create('node')
-    ->bundle('article')
-    ->field('field_title', 'Test')
-    ->build()
-);
-
-$entity->hasField('field_title');     // true
-$entity->hasField('field_nonexistent'); // false
-```
-
-Accessing undefined fields throws `InvalidArgumentException`:
-
-```php
-$entity->get('undefined_field'); // Throws InvalidArgumentException
-```
 
 ---
 

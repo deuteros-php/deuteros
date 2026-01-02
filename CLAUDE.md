@@ -91,6 +91,7 @@ Configuration files:
 3. **Shared Support**
    - `MutableStateContainer` - Stateful storage for mutable field values
    - `GuardrailEnforcer` - Centralized exception throwing for unsupported methods
+   - `EntityReferenceNormalizer` - Normalizes entity reference field values
 
 4. **Factory Classes**
    - `Deuteros\Common\EntityDoubleFactory` - Abstract base with `fromTest()` factory
@@ -166,8 +167,7 @@ After running `COMPOSER=composer.dev.json composer install`:
 
 ## Documentation
 
-- `docs/init.md` - Implementation requirements and constraints
-- `docs/plan.md` - Detailed implementation plan (single source of truth for scope/architecture)
-- `docs/refactoring.md` - Detailed implementation plan of changes performed
-  after the initial implementation (source of truth updates)
+- `docs/USAGE.md` - User guide and API reference
+- `docs/ARCHITECTURE.md` - Architectural documentation for contributors
 - `docs/todo.md` - To Do list
+- `docs/archive/` - Historical implementation documents (init.md, plan.md, refactoring.md)

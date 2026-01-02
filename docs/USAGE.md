@@ -1,0 +1,646 @@
+# DEUTEROS Usage Guide
+
+## About
+
+**DEUTEROS** (Drupal Entity Unit Test Extensible Replacement Object Scaffolding) is a PHP library that provides value-object entity doubles for Drupal unit testing.
+
+### Problem It Solves
+
+Testing code that depends on Drupal entities typically requires Kernel tests, which are slow because they need:
+- Database access
+- Module enablement
+- Service container initialization
+
+DEUTEROS lets you create lightweight entity doubles that implement Drupal's entity interfaces, enabling fast unit tests without any of this overhead.
+
+### Key Benefits
+
+- **Fast tests**: No database, no service container, no bootstrapping
+- **Pure unit tests**: Test your code in isolation
+- **Familiar API**: Works with both PHPUnit native mocks and Prophecy
+- **Type-safe**: Full interface compliance with IDE support
+
+---
+
+## Installation
+
+```bash
+composer require --dev plach79/deuteros
+```
+
+### Requirements
+
+- PHP 8.3+
+- Drupal 10.x or 11.x
+- PHPUnit 9.0+/10.0+/11.0+ or Prophecy 1.15+
+
+---
+
+## Quick Start
+
+### Basic Usage
+
+```php
+use Deuteros\Common\EntityDoubleFactory;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
+
+class MyServiceTest extends TestCase {
+
+  public function testMyService(): void {
+    // Get a factory (auto-detects PHPUnit or Prophecy)
+    $factory = EntityDoubleFactory::fromTest($this);
+
+    // Create an entity double
+    $entity = $factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(42)
+        ->label('Test Article')
+        ->field('field_body', 'Article content here')
+        ->build()
+    );
+
+    // Use it in your test
+    $this->assertSame('node', $entity->getEntityTypeId());
+    $this->assertSame('article', $entity->bundle());
+    $this->assertSame(42, $entity->id());
+    $this->assertSame('Article content here', $entity->get('field_body')->value);
+  }
+
+}
+```
+
+### Minimal Entity
+
+```php
+// Just entity type (bundle defaults to entity type)
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')->build()
+);
+
+$this->assertSame('node', $entity->getEntityTypeId());
+$this->assertSame('node', $entity->bundle());
+```
+
+---
+
+## Builder API Reference
+
+The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring entity doubles.
+
+### Factory Methods
+
+| Method | Description |
+|--------|-------------|
+| `create(string $entityType)` | Create a new builder for the given entity type |
+| `fromInterface(string $entityType, string $interface)` | Create from interface with auto-discovered hierarchy |
+| `from(EntityDoubleDefinition $definition)` | Clone and modify an existing definition |
+
+### Metadata Methods
+
+| Method | Description |
+|--------|-------------|
+| `bundle(string\|callable $bundle)` | Set the entity bundle |
+| `id(int\|string\|null\|callable $id)` | Set the entity ID |
+| `uuid(string\|null\|callable $uuid)` | Set the entity UUID |
+| `label(string\|null\|callable $label)` | Set the entity label |
+
+### Field Methods
+
+| Method | Description |
+|--------|-------------|
+| `field(string $name, mixed $value)` | Add a single field with value |
+| `fields(array $fields)` | Add multiple fields at once |
+
+### Interface Methods
+
+| Method | Description |
+|--------|-------------|
+| `interface(string $interface)` | Add an interface the double should implement |
+| `interfaces(array $interfaces)` | Add multiple interfaces at once |
+
+### Method Override Methods
+
+| Method | Description |
+|--------|-------------|
+| `method(string $name, callable $callback)` | Override a method with custom implementation |
+| `methods(array $methods)` | Add multiple method overrides at once |
+
+### Context Methods
+
+| Method | Description |
+|--------|-------------|
+| `context(string $key, mixed $value)` | Add a single context value |
+| `withContext(array $context)` | Add multiple context values at once |
+
+### Option Methods
+
+| Method | Description |
+|--------|-------------|
+| `lenient()` | Enable lenient mode (unconfigured methods return null instead of throwing) |
+| `build()` | Build and return the `EntityDoubleDefinition` |
+
+---
+
+## Field Access Patterns
+
+### Method Access
+
+```php
+// Get field list
+$fieldList = $entity->get('field_name');
+
+// Get scalar value (first item's main value)
+$value = $entity->get('field_name')->value;
+
+// Get first item
+$firstItem = $entity->get('field_name')->first();
+
+// Get item by delta
+$item = $entity->get('field_name')->get(0);
+
+// Check if empty
+$isEmpty = $entity->get('field_name')->isEmpty();
+
+// Get all values as array
+$values = $entity->get('field_name')->getValue();
+```
+
+### Magic Property Access
+
+```php
+// Equivalent to $entity->get('field_name')
+$fieldList = $entity->field_name;
+
+// Chain with value access
+$value = $entity->field_name->value;
+```
+
+### Multi-Value Fields
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_tags', [
+      ['target_id' => 1],
+      ['target_id' => 2],
+      ['target_id' => 3],
+    ])
+    ->build()
+);
+
+// Access by delta
+$first = $entity->get('field_tags')->get(0);
+$second = $entity->get('field_tags')->get(1);
+
+// Iterate
+foreach ($entity->get('field_tags') as $delta => $item) {
+  echo $item->target_id;
+}
+
+// Shorthand accesses first item
+$entity->get('field_tags')->target_id; // Returns 1
+```
+
+### Field Item Properties
+
+```php
+// Common properties
+$item->value;      // Main value (text, number, etc.)
+$item->target_id;  // Entity reference target ID
+$item->entity;     // Referenced entity object
+
+// Complex fields store multiple properties
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->field('field_link', [
+      'uri' => 'https://example.com',
+      'title' => 'Example',
+    ])
+    ->build()
+);
+
+$entity->get('field_link')->uri;   // 'https://example.com'
+$entity->get('field_link')->title; // 'Example'
+```
+
+---
+
+## Advanced Use Cases
+
+### Callback-Based Fields
+
+Use callbacks for dynamic values that depend on test context:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_computed', fn(array $context) => $context['value'] * 2)
+    ->build(),
+  ['value' => 21] // Context passed to factory
+);
+
+$entity->get('field_computed')->value; // Returns 42
+```
+
+### Context Propagation
+
+Context flows to all callables (metadata and fields):
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->id(fn(array $context) => $context['id'])
+    ->label(fn(array $context) => "Article #{$context['id']}")
+    ->field('field_status', fn(array $context) => $context['status'])
+    ->build(),
+  [
+    'id' => 42,
+    'status' => 'published',
+  ]
+);
+
+$entity->id();                        // 42
+$entity->label();                     // "Article #42"
+$entity->get('field_status')->value;  // "published"
+```
+
+### Entity References
+
+#### Shorthand (Entity Object)
+
+```php
+$author = $factory->create(
+  EntityDoubleDefinitionBuilder::create('user')
+    ->id(1)
+    ->label('admin')
+    ->build()
+);
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_author', $author) // Pass entity directly
+    ->build()
+);
+
+$entity->get('field_author')->entity;    // Returns $author
+$entity->get('field_author')->target_id; // Returns 1 (auto-populated)
+```
+
+#### Explicit Format
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_author', ['entity' => $author])
+    ->build()
+);
+```
+
+#### Target ID Only
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_author', ['target_id' => 42])
+    ->build()
+);
+
+$entity->get('field_author')->target_id; // 42
+$entity->get('field_author')->entity;    // null (no entity provided)
+```
+
+#### Multi-Value Entity References
+
+```php
+$tag1 = $factory->create(EntityDoubleDefinitionBuilder::create('taxonomy_term')->id(1)->build());
+$tag2 = $factory->create(EntityDoubleDefinitionBuilder::create('taxonomy_term')->id(2)->build());
+$tag3 = $factory->create(EntityDoubleDefinitionBuilder::create('taxonomy_term')->id(3)->build());
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_tags', [$tag1, $tag2, $tag3])
+    ->build()
+);
+
+// Access individual references
+$entity->get('field_tags')->get(0)->entity; // $tag1
+$entity->get('field_tags')->get(1)->entity; // $tag2
+
+// Get all referenced entities
+$entities = $entity->get('field_tags')->referencedEntities();
+// Returns [$tag1, $tag2, $tag3]
+```
+
+### Mutable Doubles
+
+By default, entity doubles are immutable. Use `createMutable()` for doubles that can be modified:
+
+```php
+$entity = $factory->createMutable(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_status', 'draft')
+    ->build()
+);
+
+// Initial value
+$entity->get('field_status')->value; // 'draft'
+
+// Modify via set()
+$entity->set('field_status', 'published');
+$entity->get('field_status')->value; // 'published'
+
+// Modify via magic property
+$entity->field_status = 'archived';
+$entity->get('field_status')->value; // 'archived'
+
+// Chaining works
+$entity->set('field_status', 'draft')->set('field_title', 'New Title');
+```
+
+Immutable doubles throw on modification attempts:
+
+```php
+$entity = $factory->create(/* ... */);
+$entity->set('field_status', 'new'); // Throws LogicException
+```
+
+### Method Overrides
+
+Override any method with a custom implementation:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->interface(\Drupal\node\NodeInterface::class)
+    ->method('getTitle', fn() => 'Custom Title')
+    ->method('isPublished', fn() => true)
+    ->method('getCreatedTime', fn() => 1704067200)
+    ->build()
+);
+
+$entity->getTitle();       // 'Custom Title'
+$entity->isPublished();    // true
+$entity->getCreatedTime(); // 1704067200
+```
+
+Method overrides receive context:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->method('id', fn(array $context) => $context['computed_id'])
+    ->build(),
+  ['computed_id' => 999]
+);
+
+$entity->id(); // 999
+```
+
+### Interface Composition
+
+#### Adding Multiple Interfaces
+
+```php
+use Drupal\Core\Entity\EntityChangedInterface;
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->interface(\Drupal\Core\Entity\FieldableEntityInterface::class)
+    ->interface(EntityChangedInterface::class)
+    ->method('getChangedTime', fn() => 1704067200)
+    ->build()
+);
+
+$this->assertInstanceOf(EntityChangedInterface::class, $entity);
+$entity->getChangedTime(); // 1704067200
+```
+
+#### Using fromInterface() with Reflection
+
+`fromInterface()` auto-discovers the interface hierarchy:
+
+```php
+use Drupal\node\NodeInterface;
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::fromInterface('node', NodeInterface::class)
+    ->bundle('article')
+    ->id(42)
+    ->method('getTitle', fn() => 'My Article')
+    ->method('isPublished', fn() => true)
+    ->build()
+);
+
+// Entity implements NodeInterface and all its parent interfaces
+$this->assertInstanceOf(NodeInterface::class, $entity);
+$this->assertInstanceOf(\Drupal\Core\Entity\ContentEntityInterface::class, $entity);
+```
+
+### Lenient Mode
+
+Lenient mode returns `null` for unconfigured methods instead of throwing:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::fromInterface('node', \Drupal\Core\Entity\ContentEntityInterface::class)
+    ->bundle('article')
+    ->lenient() // Enable lenient mode
+    ->build()
+);
+
+// Unconfigured methods return null
+$entity->save();   // Returns null (normally throws)
+$entity->delete(); // Returns null (normally throws)
+```
+
+Without lenient mode:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::fromInterface('node', \Drupal\Core\Entity\ContentEntityInterface::class)
+    ->bundle('article')
+    ->build()
+);
+
+$entity->save(); // Throws LogicException
+```
+
+---
+
+## Unsupported Operations
+
+Entity doubles are lightweight value objects. Operations requiring runtime services throw `LogicException` with helpful error messages:
+
+### Storage Operations
+
+- `save()` - Requires entity storage service
+- `delete()` - Requires entity storage service
+
+### Service-Dependent Operations
+
+- `access()` - Requires access control handler
+- `toUrl()` - Requires URL generator service
+- `toLink()` - Requires link generator service
+
+### Field Definition Operations
+
+- `getFieldDefinition()` - Requires entity field manager
+- `getFieldDefinitions()` - Requires entity field manager
+
+### Revision Operations
+
+- `isDefaultRevision()` - Requires revision tracking
+- `isLatestRevision()` - Requires revision tracking
+
+### Translation Operations
+
+- `getTranslation()` - Requires translation services
+- `hasTranslation()` - Requires translation services
+
+### Lifecycle Hooks
+
+- `preSave()`, `postSave()`, `preCreate()`, `postCreate()`, etc.
+
+### Handling Unsupported Operations
+
+**Option 1: Method Override**
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->method('save', fn() => 1) // Return entity ID
+    ->build()
+);
+```
+
+**Option 2: Lenient Mode**
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->lenient()
+    ->build()
+);
+
+$entity->save(); // Returns null instead of throwing
+```
+
+---
+
+## Framework-Specific Notes
+
+### Auto-Detection
+
+`EntityDoubleFactory::fromTest($this)` automatically detects your test framework:
+
+```php
+// Works with both PHPUnit and Prophecy
+$factory = EntityDoubleFactory::fromTest($this);
+```
+
+### Explicit Factory Selection
+
+```php
+use Deuteros\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+
+// PHPUnit native mocks
+$factory = MockEntityDoubleFactory::fromTest($this);
+
+// Prophecy doubles
+$factory = ProphecyEntityDoubleFactory::fromTest($this);
+```
+
+### Behavioral Parity
+
+Both PHPUnit and Prophecy adapters behave identically. You can switch between them without changing your test logic.
+
+---
+
+## Checking Field Existence
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_title', 'Test')
+    ->build()
+);
+
+$entity->hasField('field_title');     // true
+$entity->hasField('field_nonexistent'); // false
+```
+
+Accessing undefined fields throws `InvalidArgumentException`:
+
+```php
+$entity->get('undefined_field'); // Throws InvalidArgumentException
+```
+
+---
+
+## Complete Example
+
+```php
+<?php
+
+namespace Drupal\my_module\Tests\Unit;
+
+use Deuteros\Common\EntityDoubleFactory;
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Drupal\my_module\Service\ArticleProcessor;
+use PHPUnit\Framework\TestCase;
+
+class ArticleProcessorTest extends TestCase {
+
+  public function testProcessArticle(): void {
+    $factory = EntityDoubleFactory::fromTest($this);
+
+    // Create author
+    $author = $factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(1)
+        ->label('John Doe')
+        ->build()
+    );
+
+    // Create article with all the fields we need
+    $article = $factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(42)
+        ->uuid('550e8400-e29b-41d4-a716-446655440000')
+        ->label('Test Article')
+        ->field('field_body', 'Article content goes here.')
+        ->field('field_author', $author)
+        ->field('field_tags', [
+          ['target_id' => 1],
+          ['target_id' => 2],
+        ])
+        ->build()
+    );
+
+    // Test your service
+    $processor = new ArticleProcessor();
+    $result = $processor->process($article);
+
+    $this->assertSame('processed', $result['status']);
+    $this->assertSame('John Doe', $result['author_name']);
+  }
+
+}
+```

@@ -15,4 +15,4 @@
 13. ~~Fix all PHPStan errors~~ (done)
 14. ~~Entity Reference Support~~ (done)
 15. ~~Stick closer to test pyramid paradigm~~ (done)
-16. Documentation
+16. ~~Documentation~~ (done)

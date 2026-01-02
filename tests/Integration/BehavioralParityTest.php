@@ -172,8 +172,8 @@ class BehavioralParityTest extends TestCase {
     $definition = EntityDoubleDefinitionBuilder::create('node')
       ->bundle('article')
       ->interface(EntityChangedInterface::class)
-      ->methodOverride('getChangedTime', fn(array $context) => $context['time'])
-      ->methodOverride('setChangedTime', fn() => NULL)
+      ->method('getChangedTime', fn(array $context) => $context['time'])
+      ->method('setChangedTime', fn() => NULL)
       ->build();
     $context = ['time' => $timestamp];
 
@@ -200,8 +200,8 @@ class BehavioralParityTest extends TestCase {
       ->bundle('article')
       ->field('field_text', 'Test Value')
       ->interface(EntityChangedInterface::class)
-      ->methodOverride('getChangedTime', fn() => $timestamp)
-      ->methodOverride('setChangedTime', fn() => NULL)
+      ->method('getChangedTime', fn() => $timestamp)
+      ->method('setChangedTime', fn() => NULL)
       ->build();
 
     $mock = $this->createMockDouble($definition);

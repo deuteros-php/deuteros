@@ -84,7 +84,7 @@ final class EntityDoubleDefinitionBuilder {
    *
    * @var array<string, callable|mixed>
    */
-  private array $methodOverrides = [];
+  private array $methods = [];
 
   /**
    * Context data for callback resolution.
@@ -197,7 +197,7 @@ final class EntityDoubleDefinitionBuilder {
     $builder->label = $definition->label;
     $builder->fields = $definition->fields;
     $builder->interfaces = $definition->interfaces;
-    $builder->methodOverrides = $definition->methodOverrides;
+    $builder->methods = $definition->methods;
     $builder->context = $definition->context;
     $builder->primaryInterface = $definition->primaryInterface;
     $builder->lenient = $definition->lenient;
@@ -337,8 +337,8 @@ final class EntityDoubleDefinitionBuilder {
    *
    * @return $this
    */
-  public function methodOverride(string $method, mixed $resolver): self {
-    $this->methodOverrides[$method] = $resolver;
+  public function method(string $method, mixed $resolver): self {
+    $this->methods[$method] = $resolver;
     return $this;
   }
 
@@ -350,9 +350,9 @@ final class EntityDoubleDefinitionBuilder {
    *
    * @return $this
    */
-  public function methodOverrides(array $overrides): self {
+  public function methods(array $overrides): self {
     foreach ($overrides as $method => $resolver) {
-      $this->methodOverride($method, $resolver);
+      $this->method($method, $resolver);
     }
     return $this;
   }
@@ -430,7 +430,7 @@ final class EntityDoubleDefinitionBuilder {
       label: $this->label,
       fields: $this->fields,
       interfaces: $interfaces,
-      methodOverrides: $this->methodOverrides,
+      methods: $this->methods,
       context: $this->context,
       primaryInterface: $this->primaryInterface,
       lenient: $this->lenient,

@@ -34,7 +34,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertNull($definition->label);
     $this->assertSame([], $definition->fields);
     $this->assertSame([], $definition->interfaces);
-    $this->assertSame([], $definition->methodOverrides);
+    $this->assertSame([], $definition->methods);
     $this->assertSame([], $definition->context);
     $this->assertFalse($definition->mutable);
   }
@@ -52,7 +52,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
       ->label('Test Label')
       ->field('field_test', 'value')
       ->interface(EntityChangedInterface::class)
-      ->methodOverride('getChangedTime', $callback)
+      ->method('getChangedTime', $callback)
       ->context('key', 'value')
       ->build();
 
@@ -64,7 +64,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertArrayHasKey('field_test', $definition->fields);
     $this->assertContains(FieldableEntityInterface::class, $definition->interfaces);
     $this->assertContains(EntityChangedInterface::class, $definition->interfaces);
-    $this->assertSame($callback, $definition->methodOverrides['getChangedTime']);
+    $this->assertSame($callback, $definition->methods['getChangedTime']);
     $this->assertSame(['key' => 'value'], $definition->context);
   }
 
@@ -146,14 +146,14 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $callback2 = fn() => 2;
 
     $definition = EntityDoubleDefinitionBuilder::create('node')
-      ->methodOverrides([
+      ->methods([
         'method1' => $callback1,
         'method2' => $callback2,
       ])
       ->build();
 
-    $this->assertSame($callback1, $definition->methodOverrides['method1']);
-    $this->assertSame($callback2, $definition->methodOverrides['method2']);
+    $this->assertSame($callback1, $definition->methods['method1']);
+    $this->assertSame($callback2, $definition->methods['method2']);
   }
 
   /**

@@ -97,7 +97,7 @@ final class GuardrailEnforcer {
    */
   public static function createMissingResolverException(string $method, string $interface): \LogicException {
     return new \LogicException(sprintf(
-      "Method '%s' on interface '%s' requires a resolver in methodOverrides. "
+      "Method '%s' on interface '%s' requires a resolver in method overrides. "
       . "Add '%s' => callable to your entity double definition.",
       $method,
       $interface,
@@ -116,7 +116,7 @@ final class GuardrailEnforcer {
    */
   public static function createMissingResolverExceptionGeneric(string $method): \LogicException {
     return new \LogicException(sprintf(
-      "Method '%s' requires a resolver in methodOverrides. "
+      "Method '%s' requires a resolver in method overrides. "
       . "Add '%s' => callable to your entity double definition.",
       $method,
       $method

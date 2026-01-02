@@ -46,12 +46,12 @@ abstract class BenchmarkTestBase extends TestCase {
       ->field('body', ['value' => 'Body text content', 'format' => 'plain'])
       ->field('field_tags', [['target_id' => 1], ['target_id' => 2]])
       ->field('field_author', ['target_id' => 100])
-      ->methodOverride('getTitle', fn() => 'Benchmark Node')
-      ->methodOverride('isPublished', fn() => TRUE)
-      ->methodOverride('getCreatedTime', fn() => 1700000000)
-      ->methodOverride('isPromoted', fn() => FALSE)
-      ->methodOverride('isSticky', fn() => FALSE)
-      ->methodOverride('getOwnerId', fn() => 100)
+      ->method('getTitle', fn() => 'Benchmark Node')
+      ->method('isPublished', fn() => TRUE)
+      ->method('getCreatedTime', fn() => 1700000000)
+      ->method('isPromoted', fn() => FALSE)
+      ->method('isSticky', fn() => FALSE)
+      ->method('getOwnerId', fn() => 100)
       ->build();
   }
 

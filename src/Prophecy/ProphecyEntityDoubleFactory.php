@@ -173,8 +173,8 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     }
 
     // Wire method overrides.
-    foreach ($definition->methodOverrides as $method => $override) {
-      $resolver = $builder->getMethodOverrideResolver($method);
+    foreach ($definition->methods as $method => $override) {
+      $resolver = $builder->getMethodResolver($method);
       // @phpstan-ignore-next-line
       $prophecy->$method(Argument::cetera())->will(fn(array $args) => $resolver($context, ...$args));
     }
@@ -190,7 +190,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     foreach ($unsupportedMethods as $method => $reason) {
       // Skip if there's an override.
-      if ($definition->hasMethodOverride($method)) {
+      if ($definition->hasMethod($method)) {
         continue;
       }
 

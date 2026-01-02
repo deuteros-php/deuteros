@@ -237,7 +237,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
       EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(1)
-        ->methodOverride('id', fn() => 999)
+        ->method('id', fn() => 999)
         ->build()
     );
 
@@ -256,7 +256,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $entity = $this->factory->create(
       EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
-        ->methodOverride('id', fn(array $context) => $context['computed_id'])
+        ->method('id', fn(array $context) => $context['computed_id'])
         ->build(),
       ['computed_id' => 999],
     );
@@ -460,8 +460,8 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->bundle('article')
         ->interface(FieldableEntityInterface::class)
         ->interface(EntityChangedInterface::class)
-        ->methodOverride('getChangedTime', fn() => 1704067200)
-        ->methodOverride('setChangedTime', fn() => throw new \LogicException('Read-only'))
+        ->method('getChangedTime', fn() => 1704067200)
+        ->method('setChangedTime', fn() => throw new \LogicException('Read-only'))
         ->build()
     );
     assert($entity instanceof FieldableEntityInterface);
@@ -497,7 +497,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
       EntityDoubleDefinitionBuilder::fromInterface('view', ConfigEntityInterface::class)
         ->id('frontpage')
         ->label('Frontpage View')
-        ->methodOverride('status', fn() => TRUE)
+        ->method('status', fn() => TRUE)
         ->build()
     );
     assert($entity instanceof ConfigEntityInterface);

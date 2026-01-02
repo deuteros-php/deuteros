@@ -69,7 +69,7 @@ class GuardrailEnforcerTest extends TestCase {
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'getOwnerId'", $exception->getMessage());
     $this->assertStringContainsString("interface 'EntityOwnerInterface'", $exception->getMessage());
-    $this->assertStringContainsString('methodOverrides', $exception->getMessage());
+    $this->assertStringContainsString('method overrides', $exception->getMessage());
   }
 
   /**
@@ -81,7 +81,7 @@ class GuardrailEnforcerTest extends TestCase {
     // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(\LogicException::class, $exception);
     $this->assertStringContainsString("Method 'customMethod'", $exception->getMessage());
-    $this->assertStringContainsString('methodOverrides', $exception->getMessage());
+    $this->assertStringContainsString('method overrides', $exception->getMessage());
   }
 
 }

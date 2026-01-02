@@ -35,7 +35,7 @@ class EntityDoubleDefinitionTest extends TestCase {
     $this->assertNull($definition->label);
     $this->assertSame([], $definition->fields);
     $this->assertSame([], $definition->interfaces);
-    $this->assertSame([], $definition->methodOverrides);
+    $this->assertSame([], $definition->methods);
     $this->assertSame([], $definition->context);
     $this->assertFalse($definition->mutable);
   }
@@ -57,7 +57,7 @@ class EntityDoubleDefinitionTest extends TestCase {
       label: 'Test Node',
       fields: $fields,
       interfaces: $interfaces,
-      methodOverrides: $methodOverrides,
+      methods: $methodOverrides,
       context: $context,
       mutable: TRUE,
     );
@@ -69,7 +69,7 @@ class EntityDoubleDefinitionTest extends TestCase {
     $this->assertSame('Test Node', $definition->label);
     $this->assertSame($fields, $definition->fields);
     $this->assertSame($interfaces, $definition->interfaces);
-    $this->assertSame($methodOverrides, $definition->methodOverrides);
+    $this->assertSame($methodOverrides, $definition->methods);
     $this->assertSame($context, $definition->context);
     $this->assertTrue($definition->mutable);
   }
@@ -116,13 +116,13 @@ class EntityDoubleDefinitionTest extends TestCase {
     $callable = fn() => 1;
     $definition = new EntityDoubleDefinition(
       entityType: 'node',
-      methodOverrides: ['getOwnerId' => $callable],
+      methods: ['getOwnerId' => $callable],
     );
 
-    $this->assertTrue($definition->hasMethodOverride('getOwnerId'));
-    $this->assertFalse($definition->hasMethodOverride('nonexistent'));
-    $this->assertSame($callable, $definition->getMethodOverride('getOwnerId'));
-    $this->assertNull($definition->getMethodOverride('nonexistent'));
+    $this->assertTrue($definition->hasMethod('getOwnerId'));
+    $this->assertFalse($definition->hasMethod('nonexistent'));
+    $this->assertSame($callable, $definition->getMethod('getOwnerId'));
+    $this->assertNull($definition->getMethod('nonexistent'));
   }
 
   /**

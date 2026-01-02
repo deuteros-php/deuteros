@@ -42,7 +42,7 @@ final readonly class EntityDoubleDefinition {
    *   Field double definitions keyed by field name.
    * @param list<class-string> $interfaces
    *   List of interfaces to implement.
-   * @param array<string, callable|mixed> $methodOverrides
+   * @param array<string, callable|mixed> $methods
    *   Method overrides keyed by method name.
    * @param array<string, mixed> $context
    *   Context data for callback resolution.
@@ -64,7 +64,7 @@ final readonly class EntityDoubleDefinition {
     public mixed $label = NULL,
     public array $fields = [],
     public array $interfaces = [],
-    public array $methodOverrides = [],
+    public array $methods = [],
     public array $context = [],
     public bool $mutable = FALSE,
     public ?string $primaryInterface = NULL,
@@ -103,8 +103,8 @@ final readonly class EntityDoubleDefinition {
    * @return bool
    *   TRUE if an override exists, FALSE otherwise.
    */
-  public function hasMethodOverride(string $method): bool {
-    return array_key_exists($method, $this->methodOverrides);
+  public function hasMethod(string $method): bool {
+    return array_key_exists($method, $this->methods);
   }
 
   /**
@@ -116,8 +116,8 @@ final readonly class EntityDoubleDefinition {
    * @return callable|mixed|null
    *   The override value, or NULL if not defined.
    */
-  public function getMethodOverride(string $method): mixed {
-    return $this->methodOverrides[$method] ?? NULL;
+  public function getMethod(string $method): mixed {
+    return $this->methods[$method] ?? NULL;
   }
 
   /**
@@ -167,7 +167,7 @@ final readonly class EntityDoubleDefinition {
       label: $this->label,
       fields: $this->fields,
       interfaces: $this->interfaces,
-      methodOverrides: $this->methodOverrides,
+      methods: $this->methods,
       context: array_merge($this->context, $additionalContext),
       mutable: $this->mutable,
       primaryInterface: $this->primaryInterface,
@@ -196,7 +196,7 @@ final readonly class EntityDoubleDefinition {
       label: $this->label,
       fields: $this->fields,
       interfaces: $this->interfaces,
-      methodOverrides: $this->methodOverrides,
+      methods: $this->methods,
       context: $this->context,
       mutable: $mutable,
       primaryInterface: $this->primaryInterface,

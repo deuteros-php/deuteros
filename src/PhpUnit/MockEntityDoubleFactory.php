@@ -63,8 +63,8 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     // Helper to wire a method, checking for overrides first.
     $wireMethod = function (string $method, callable $defaultResolver) use ($mock, $builder, $definition, $context) {
-      if ($definition->hasMethodOverride($method)) {
-        $resolver = $builder->getMethodOverrideResolver($method);
+      if ($definition->hasMethod($method)) {
+        $resolver = $builder->getMethodResolver($method);
         $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
       }
       else {
@@ -84,7 +84,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       $wireMethod('hasField', fn(string $fieldName) => $resolvers['hasField']($context, $fieldName));
       $wireMethod('get', fn(string $fieldName) => $resolvers['get']($context, $fieldName));
 
-      if (!$definition->hasMethodOverride('set')) {
+      if (!$definition->hasMethod('set')) {
         if ($definition->mutable) {
           $self = $mock;
           $mock->method('set')->willReturnCallback(
@@ -106,7 +106,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
         }
       }
       else {
-        $resolver = $builder->getMethodOverrideResolver('set');
+        $resolver = $builder->getMethodResolver('set');
         $mock->method('set')->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
       }
     }
@@ -114,7 +114,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     // Wire magic accessors for property-style field access.
     $wireMethod('__get', fn(string $name) => $resolvers['__get']($context, $name));
 
-    if (!$definition->hasMethodOverride('__set')) {
+    if (!$definition->hasMethod('__set')) {
       if ($definition->mutable) {
         $mock->method('__set')->willReturnCallback(
           function (string $name, mixed $value) use ($resolvers, $context) {
@@ -136,12 +136,12 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire remaining method overrides (those not already wired above).
     $coreMethodsWired = ['id', 'uuid', 'label', 'bundle', 'getEntityTypeId', 'hasField', 'get', 'set', '__get', '__set'];
-    foreach ($definition->methodOverrides as $method => $override) {
+    foreach ($definition->methods as $method => $override) {
       if (in_array($method, $coreMethodsWired, TRUE)) {
         // Already handled above.
         continue;
       }
-      $resolver = $builder->getMethodOverrideResolver($method);
+      $resolver = $builder->getMethodResolver($method);
       $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
     }
   }
@@ -156,7 +156,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     foreach ($unsupportedMethods as $method => $reason) {
       // Skip if there's an override.
-      if ($definition->hasMethodOverride($method)) {
+      if ($definition->hasMethod($method)) {
         continue;
       }
 

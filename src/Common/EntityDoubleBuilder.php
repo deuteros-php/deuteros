@@ -295,8 +295,8 @@ final class EntityDoubleBuilder {
    * @return callable
    *   The resolver for the override.
    */
-  public function getMethodOverrideResolver(string $method): callable {
-    $override = $this->definition->getMethodOverride($method);
+  public function getMethodResolver(string $method): callable {
+    $override = $this->definition->getMethod($method);
 
     if (is_callable($override)) {
       return fn(array $context, mixed ...$args): mixed => $override($context, ...$args);

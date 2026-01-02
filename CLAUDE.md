@@ -74,6 +74,15 @@ COMPOSER=composer.dev.json  composer phpstan    # Run static analysis
 Configuration files:
 - `phpstan.neon` - Main configuration
 
+## Continuous Integration
+
+GitHub Actions runs quality checks on every PR and push to main:
+
+- **Dev Quality Checks**: Installs dev dependencies, runs phpcs, phpstan, and tests
+- **Production Test**: Installs production dependencies (with stubs), runs tests
+
+Workflow file: `.github/workflows/ci.yml`
+
 ## Architecture
 
 ### Layer Structure

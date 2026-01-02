@@ -1,5 +1,7 @@
 # Deuteros
 
+[![CI](https://github.com/plach79/deuteros/actions/workflows/ci.yml/badge.svg)](https://github.com/plach79/deuteros/actions/workflows/ci.yml)
+
 > δεύτερος • (deúteros): second of two
 
 – [Wikitionary](https://en.wiktionary.org/wiki/%CE%B4%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%CF%82)

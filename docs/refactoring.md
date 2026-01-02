@@ -1137,3 +1137,71 @@ $this->assertInstanceOf(EntityReferenceFieldItemListInterface::class, $authorFie
 4. **Flexible Input**: Multiple shorthand formats for convenience
 5. **ID Validation**: Throws on `target_id` mismatch for safety
 6. **NULL ID Support**: Handles new/unsaved entities with `NULL` IDs
+
+## Task 15 - Test Suite Refactoring for Test Pyramid
+
+**Status:** Complete
+
+### Overview
+
+Refactored the test suite to better follow the test pyramid paradigm: more unit
+tests for isolated resolver logic, leaner integration tests focused on factory
+wiring. Added comprehensive unit tests for the Core Resolution Layer (builder
+classes) and eliminated redundant test coverage.
+
+### Problem
+
+The Core Resolution Layer (`EntityDoubleBuilder`, `FieldItemListDoubleBuilder`,
+`FieldItemDoubleBuilder`) had no direct unit tests - only tested through
+integration tests. Additionally, `BehavioralParityTest` was redundant since the
+same tests ran against both adapters via `EntityDoubleFactoryTestBase`.
+
+### Solution
+
+1. Created unit tests for all three builder classes
+2. Deleted `BehavioralParityTest` (parity verified via inheritance pattern)
+3. Removed redundant integration tests covered by new unit tests
+
+### Changes
+
+**Created:**
+- `tests/Unit/Common/EntityDoubleBuilderTest.php` - 18 tests for entity resolver
+  building (id, uuid, label, bundle, getEntityTypeId, hasField, get, set)
+- `tests/Unit/Common/FieldItemListDoubleBuilderTest.php` - 25 tests for field
+  list resolver building (first, isEmpty, getValue, get, __get, setValue, __set,
+  referencedEntities, caching, callable resolution)
+- `tests/Unit/Common/FieldItemDoubleBuilderTest.php` - 19 tests for field item
+  resolver building (__get, __set, getValue, setValue, isEmpty)
+
+**Deleted:**
+- `tests/Integration/BehavioralParityTest.php` - All 12 tests were redundant
+  since `EntityDoubleFactoryTestBase` tests run against both adapters via
+  inheritance by `MockEntityDoubleFactoryTest` and
+  `ProphecyEntityDoubleFactoryTest`
+
+**Modified:**
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Removed 5 tests now
+  covered by unit tests:
+  - `testFieldListCaching` → `EntityDoubleBuilderTest::testGetResolverCachesFieldList`
+  - `testFieldIsEmpty` → `FieldItemListDoubleBuilderTest::testIsEmptyResolver*`
+  - `testNullFieldItem` → `FieldItemListDoubleBuilderTest::testFirstResolverEmpty`
+  - `testOutOfRangeDeltaReturnsNull` → `FieldItemListDoubleBuilderTest::testGetResolverInvalidDelta`
+  - `testFieldGetValue` → `FieldItemListDoubleBuilderTest::testGetValueResolver*`
+
+### Test Pyramid Results
+
+| Level | Before | After | Change |
+|-------|--------|-------|--------|
+| **Unit** | 77 | 139 | +62 |
+| **Integration** | 113 | 71 | -42 |
+| **Total** | 190 | 210 | +20 |
+
+**Unit test ratio improved from 40% to 66%** of total tests.
+
+### Benefits
+
+1. **Faster Tests**: Unit tests run faster than integration tests
+2. **Better Isolation**: Builder logic tested without factory dependencies
+3. **Cleaner Separation**: Unit tests for logic, integration tests for wiring
+4. **No Duplicate Coverage**: Removed redundant parity tests
+5. **Maintained Quality**: All quality checks still pass (phpcs, phpstan)

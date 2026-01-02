@@ -64,7 +64,7 @@ PHPDoc description text formatting:
 
 ## Static Analysis
 
-PHPStan is configured at level 10 (max) with a baseline for existing issues.
+PHPStan is configured at level 10 (max) with zero baseline errors.
 
 ```bash
 # Requires development setup (COMPOSER=composer.dev.json composer install)
@@ -73,7 +73,6 @@ COMPOSER=composer.dev.json  composer phpstan    # Run static analysis
 
 Configuration files:
 - `phpstan.neon` - Main configuration
-- `phpstan-baseline.neon` - Baseline with ignored errors (to be reviewed/fixed)
 
 ## Architecture
 
@@ -143,11 +142,18 @@ These constraints must never be violated:
 
 ## Test Structure
 
-- `tests/Unit/Common/` - Unit tests for definition and support classes
+- `tests/Unit/Common/` - Unit tests for definition, support, and builder classes
+  - Definition layer: `EntityDoubleDefinitionTest`, `FieldDoubleDefinitionTest`,
+    `EntityDoubleDefinitionBuilderTest`
+  - Core resolution layer: `EntityDoubleBuilderTest`, `FieldItemListDoubleBuilderTest`,
+    `FieldItemDoubleBuilderTest`
+  - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
+    `EntityReferenceNormalizerTest`
 - `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
-- `tests/Integration/BehavioralParityTest.php` - Ensures both adapters produce identical behavior
-- `tests/Performance/` - Benchmarking tests used to compare performance of the various approaches
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by
+  both adapter test classes (parity verified via inheritance)
+- `tests/Performance/` - Benchmarking tests comparing performance approaches
 
 ## Directory Layout
 

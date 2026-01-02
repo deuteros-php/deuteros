@@ -214,23 +214,6 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
-   * Tests ::isEmpty() returns correct boolean based on field value.
-   */
-  public function testFieldIsEmpty(): void {
-    $entity = $this->factory->create(
-      EntityDoubleDefinitionBuilder::create('node')
-        ->bundle('article')
-        ->field('field_with_value', 'value')
-        ->field('field_null', NULL)
-        ->build()
-    );
-    assert($entity instanceof FieldableEntityInterface);
-
-    $this->assertFalse($entity->get('field_with_value')->isEmpty());
-    $this->assertTrue($entity->get('field_null')->isEmpty());
-  }
-
-  /**
    * Tests that "method_overrides" take precedence over default resolvers.
    */
   public function testMethodOverridesPrecedence(): void {
@@ -296,25 +279,6 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->expectExceptionMessage('Kernel test');
 
     $entity->save();
-  }
-
-  /**
-   * Tests that repeated get() calls return the same field list instance.
-   */
-  public function testFieldListCaching(): void {
-    $entity = $this->factory->create(
-      EntityDoubleDefinitionBuilder::create('node')
-        ->bundle('article')
-        ->field('field_test', 'value')
-        ->build()
-    );
-    assert($entity instanceof FieldableEntityInterface);
-
-    $firstAccess = $entity->get('field_test');
-    $secondAccess = $entity->get('field_test');
-
-    // Should return the same instance.
-    $this->assertSame($firstAccess, $secondAccess);
   }
 
   /**
@@ -394,62 +358,6 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     assert($first !== NULL);
     // @phpstan-ignore property.notFound
     $this->assertSame(42, $first->target_id);
-  }
-
-  /**
-   * Tests ::getValue() returns array of all field item values.
-   */
-  public function testFieldGetValue(): void {
-    $entity = $this->factory->create(
-      EntityDoubleDefinitionBuilder::create('node')
-        ->bundle('article')
-        ->field('field_tags', [
-          ['target_id' => 1],
-          ['target_id' => 2],
-        ])
-        ->build()
-    );
-    assert($entity instanceof FieldableEntityInterface);
-
-    $values = $entity->get('field_tags')->getValue();
-    assert(is_array($values));
-    $this->assertCount(2, $values);
-    $this->assertSame(['target_id' => 1], $values[0]);
-    $this->assertSame(['target_id' => 2], $values[1]);
-  }
-
-  /**
-   * Tests that empty array fields return NULL from ::first() and ::get().
-   */
-  public function testNullFieldItem(): void {
-    $entity = $this->factory->create(
-      EntityDoubleDefinitionBuilder::create('node')
-        ->bundle('article')
-        ->field('field_empty', [])
-        ->build()
-    );
-    assert($entity instanceof FieldableEntityInterface);
-
-    $this->assertNull($entity->get('field_empty')->first());
-    $this->assertNull($entity->get('field_empty')->get(0));
-    $this->assertTrue($entity->get('field_empty')->isEmpty());
-  }
-
-  /**
-   * Tests that ;;get() with out-of-range delta returns NULL.
-   */
-  public function testOutOfRangeDeltaReturnsNull(): void {
-    $entity = $this->factory->create(
-      EntityDoubleDefinitionBuilder::create('node')
-        ->bundle('article')
-        ->field('field_tags', [
-          ['target_id' => 1],
-        ])
-        ->build()
-    );
-    assert($entity instanceof FieldableEntityInterface);
-
-    $this->assertNull($entity->get('field_tags')->get(99));
   }
 
   /**

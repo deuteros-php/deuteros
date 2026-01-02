@@ -13,4 +13,6 @@
 11. ~~Rename Definition Classes to Include "Double"~~ (done)
 12. ~~PHPDoc Readability Improvements~~ (done)
 13. ~~Fix all PHPStan errors~~ (done)
-14. ~~Add entity reference support~~ (done)
+14. ~~Entity Reference Support~~ (done)
+15. ~~Stick closer to test pyramid paradigm~~ (done)
+16. Documentation

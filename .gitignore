@@ -1,0 +1,8 @@
+/.claude/
+/.ddev
+/.phpunit.cache/
+/local
+/vendor
+/web
+/composer.lock
+/composer.dev.lock

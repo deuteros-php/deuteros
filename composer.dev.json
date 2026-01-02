@@ -1,0 +1,67 @@
+{
+  "name": "plach79/deuteros",
+  "description": "Drupal Entity Unit Test Extensible Replacement Object Scaffolding - Value-object entity doubles for unit testing",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.3"
+  },
+  "require-dev": {
+    "composer/installers": "^2.3",
+    "drupal/coder": "^8.3",
+    "drupal/core": "^10.0 || ^11.0",
+    "drupal/core-dev": "^10.0 || ^11.0",
+    "phpunit/phpunit": "^9.0 || ^10.0 || ^11.0",
+    "phpspec/prophecy": "^1.15",
+    "phpspec/prophecy-phpunit": "^2.0",
+    "phpstan/phpstan": "^2.1",
+    "mglaman/phpstan-drupal": "^2.0",
+    "phpstan/phpstan-phpunit": "^2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Deuteros\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Deuteros\\Tests\\": "tests/",
+      "Drupal\\node\\": "web/core/modules/node/src/",
+      "Drupal\\user\\": "web/core/modules/user/src/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "phpcs": "phpcs --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
+    "phpcbf": "phpcbf --standard=Drupal,DrupalPractice --extensions=php src/ tests/",
+    "phpstan": "phpstan analyse --memory-limit=512M",
+    "phpstan-b": "phpstan analyse -b phpstan-baseline.neon"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "drupal/core-composer-scaffold": true,
+      "php-http/discovery": true,
+      "phpstan/extension-installer": true,
+      "tbachert/spi": true
+    }
+  },
+  "extra": {
+    "drupal-scaffold": {
+      "locations": {
+        "web-root": "web/"
+      },
+      "file-mapping": {
+        "[project-root]/.editorconfig": false,
+        "[project-root]/.gitattributes": false,
+        "[project-root]/recipes/README.txt": false
+      }
+    },
+    "installer-paths": {
+      "web/core": ["type:drupal-core"]
+    }
+  }
+}

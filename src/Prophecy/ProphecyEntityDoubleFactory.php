@@ -13,6 +13,7 @@ use Deuteros\Common\FieldItemListDoubleBuilder;
 use Deuteros\Common\GuardrailEnforcer;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use PHPUnit\Framework\TestCase;
@@ -231,7 +232,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void {
+  protected function createEntityReferenceFieldListDoubleObject(): object {
+    return $this->prophet->prophesize(EntityReferenceFieldItemListInterface::class);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context, bool $hasEntityReferences = FALSE): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>> $prophecy */
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
@@ -294,6 +302,12 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
         }
       );
       $prophecy->addMethodProphecy($setMethodProphecy);
+    }
+
+    // Wire referencedEntities if this is an entity reference field.
+    if ($hasEntityReferences) {
+      // @phpstan-ignore-next-line
+      $prophecy->referencedEntities()->will(fn() => $resolvers['referencedEntities']($context));
     }
   }
 

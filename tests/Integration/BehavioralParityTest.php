@@ -12,6 +12,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -358,6 +359,87 @@ class BehavioralParityTest extends TestCase {
     $this->assertSame('published', $mock->field_status->value);
     // @phpstan-ignore property.nonObject
     $this->assertSame('published', $prophecy->field_status->value);
+  }
+
+  /**
+   * Tests entity reference parity between adapters.
+   */
+  public function testEntityReferenceParity(): void {
+    $user = $this->mockFactory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->build()
+    );
+
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_author', $user)
+      ->build();
+
+    $mock = $this->createMockDouble($definition);
+    assert($mock instanceof FieldableEntityInterface);
+    $prophecy = $this->createProphecyDouble($definition);
+    assert($prophecy instanceof FieldableEntityInterface);
+
+    // Both should return the same entity reference.
+    $this->assertSame($user, $mock->get('field_author')->entity);
+    $this->assertSame($user, $prophecy->get('field_author')->entity);
+
+    // Both should auto-populate target_id.
+    // @phpstan-ignore method.impossibleType
+    $this->assertSame(42, $mock->get('field_author')->target_id);
+    // @phpstan-ignore method.impossibleType
+    $this->assertSame(42, $prophecy->get('field_author')->target_id);
+
+    // Both should implement EntityReferenceFieldItemListInterface.
+    $this->assertInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $mock->get('field_author')
+    );
+    $this->assertInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $prophecy->get('field_author')
+    );
+  }
+
+  /**
+   * Tests referencedEntities parity between adapters.
+   */
+  public function testReferencedEntitiesParity(): void {
+    $tag1 = $this->mockFactory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(1)
+        ->build()
+    );
+    $tag2 = $this->mockFactory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(2)
+        ->build()
+    );
+
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_tags', [$tag1, $tag2])
+      ->build();
+
+    $mock = $this->createMockDouble($definition);
+    assert($mock instanceof FieldableEntityInterface);
+    $prophecy = $this->createProphecyDouble($definition);
+    assert($prophecy instanceof FieldableEntityInterface);
+
+    $mockFieldList = $mock->get('field_tags');
+    assert($mockFieldList instanceof EntityReferenceFieldItemListInterface);
+    $prophecyFieldList = $prophecy->get('field_tags');
+    assert($prophecyFieldList instanceof EntityReferenceFieldItemListInterface);
+
+    $mockEntities = $mockFieldList->referencedEntities();
+    $prophecyEntities = $prophecyFieldList->referencedEntities();
+
+    // Both should return same entities.
+    $this->assertSame($tag1, $mockEntities[0]);
+    $this->assertSame($tag1, $prophecyEntities[0]);
+    $this->assertSame($tag2, $mockEntities[1]);
+    $this->assertSame($tag2, $prophecyEntities[1]);
   }
 
 }

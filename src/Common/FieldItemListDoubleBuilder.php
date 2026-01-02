@@ -45,6 +45,11 @@ final class FieldItemListDoubleBuilder {
   private mixed $mutableStateUpdater = NULL;
 
   /**
+   * Whether this field contains entity references.
+   */
+  private bool $hasEntityReferences = FALSE;
+
+  /**
    * Constructs a FieldItemListDoubleBuilder.
    *
    * @param \Deuteros\Common\FieldDoubleDefinition $definition
@@ -97,6 +102,7 @@ final class FieldItemListDoubleBuilder {
       '__get' => $this->buildMagicGetResolver(),
       'setValue' => $this->buildSetValueResolver(),
       '__set' => $this->buildMagicSetResolver(),
+      'referencedEntities' => $this->buildReferencedEntitiesResolver(),
     ];
   }
 
@@ -277,6 +283,9 @@ final class FieldItemListDoubleBuilder {
   /**
    * Normalizes a value to an indexed array of field item values.
    *
+   * Handles entity reference normalization via "EntityReferenceNormalizer"
+   * for values that contain entity doubles.
+   *
    * @param mixed $value
    *   The raw value.
    *
@@ -284,6 +293,12 @@ final class FieldItemListDoubleBuilder {
    *   The normalized array.
    */
   private function normalizeToArray(mixed $value): array {
+    // Check for entity references and normalize them.
+    if (EntityReferenceNormalizer::containsEntityReferences($value)) {
+      $this->hasEntityReferences = TRUE;
+      return EntityReferenceNormalizer::normalize($value);
+    }
+
     return match (TRUE) {
       $value === NULL => [],
       is_array($value) && $this->isIndexedArray($value) => array_values($value),
@@ -363,6 +378,36 @@ final class FieldItemListDoubleBuilder {
    */
   public function getFieldDefinition(): FieldDoubleDefinition {
     return $this->definition;
+  }
+
+  /**
+   * Checks if this field contains entity references.
+   *
+   * Must be called after values have been resolved (e.g., after ::getResolvers
+   * is called and one of the resolvers is invoked).
+   *
+   * @return bool
+   *   TRUE if entity references are present.
+   */
+  public function hasEntityReferences(): bool {
+    return $this->hasEntityReferences;
+  }
+
+  /**
+   * Builds the ::referencedEntities resolver.
+   *
+   * Returns an array of entity doubles keyed by delta, matching the
+   * behavior of "EntityReferenceFieldItemListInterface::referencedEntities".
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildReferencedEntitiesResolver(): callable {
+    return function (array $context): array {
+      /** @var array<string, mixed> $context */
+      $values = $this->resolveValues($context);
+      return EntityReferenceNormalizer::extractEntities($values);
+    };
   }
 
 }

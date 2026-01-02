@@ -997,3 +997,143 @@ $this->assertNull($entity->isPublished());
 3. **Type Safety**: Improved type information throughout codebase
 4. **Maintainable**: Future errors will be caught immediately
 5. **Documented**: Each suppression includes the specific error identifier
+
+## Task 14 - Entity Reference Support
+
+**Status:** Complete
+
+### Overview
+
+Added support for entity reference traversal on entity doubles, enabling access
+to referenced entities via the `entity` property and `referencedEntities()`
+method. This matches real Drupal entity behavior for entity reference fields.
+
+### Problem
+
+Entity doubles didn't support entity reference traversal:
+- No `$entity->get('field_author')->entity` property access
+- No `$entity->get('field_tags')->referencedEntities()` method
+- No automatic `target_id` population from referenced entity's ID
+
+### Solution
+
+Implemented entity reference normalization with automatic interface detection:
+1. Created `EntityReferenceNormalizer` to detect and normalize entity references
+2. Added `EntityReferenceFieldItemListInterface` stub for when Drupal core is
+   unavailable
+3. Updated field builders to handle `entity` property and `referencedEntities()`
+4. Auto-detect entity references and use appropriate interface
+
+### Changes
+
+**Created:**
+- `stubs/Drupal/Core/Field/EntityReferenceFieldItemListInterface.php` - Interface
+  stub extending `FieldItemListInterface` with `referencedEntities()` method
+- `src/Common/EntityReferenceNormalizer.php` - Core normalization logic:
+  - `containsEntityReferences(mixed $value): bool` - Detects entity references
+  - `normalize(mixed $value): array` - Normalizes to `[['entity' => $entity,
+    'target_id' => $id], ...]`
+  - `extractEntities(array $items): array` - Extracts entities keyed by delta
+- `tests/Unit/Common/EntityReferenceNormalizerTest.php` - Unit tests for normalizer
+
+**Modified:**
+- `src/Common/FieldItemDoubleBuilder.php`:
+  - Updated `buildMagicGetResolver()` to handle `entity` property access
+- `src/Common/FieldItemListDoubleBuilder.php`:
+  - Added `$hasEntityReferences` property
+  - Updated `normalizeToArray()` to detect and normalize entity references
+  - Added `buildReferencedEntitiesResolver()` method
+  - Added `hasEntityReferences()` public method
+  - Updated `getResolvers()` to include `referencedEntities`
+- `src/Common/EntityDoubleFactory.php`:
+  - Added import for `EntityReferenceFieldItemListInterface`
+  - Updated docblock with entity reference traversal support
+  - Added `detectEntityReferences()` private method
+  - Added `createEntityReferenceFieldListDoubleObject()` abstract method
+  - Modified `createFieldItemListDouble()` for dynamic interface selection
+  - Updated `wireFieldListResolvers()` signature with `$hasEntityReferences` flag
+- `src/PhpUnit/MockEntityDoubleFactory.php`:
+  - Added import for `EntityReferenceFieldItemListInterface`
+  - Implemented `createEntityReferenceFieldListDoubleObject()`
+  - Updated `wireFieldListResolvers()` to wire `referencedEntities()`
+- `src/Prophecy/ProphecyEntityDoubleFactory.php`:
+  - Same changes as `MockEntityDoubleFactory` for Prophecy adapter
+- `tests/Integration/EntityDoubleFactoryTestBase.php` - Added shared tests:
+  - `testEntityReferenceShorthand()`
+  - `testEntityReferenceExplicitFormat()`
+  - `testEntityReferenceWithNullId()`
+  - `testReferencedEntities()`
+  - `testEntityReferenceFieldImplementsInterface()`
+  - `testNonEntityReferenceFieldDoesNotImplementInterface()`
+  - `testEntityReferenceTargetIdMismatchThrows()`
+  - `testMultiValueEntityReferenceItemAccess()`
+  - `testEmptyEntityReferenceField()`
+- `tests/Integration/BehavioralParityTest.php`:
+  - Added `testEntityReferenceParity()`
+  - Added `testReferencedEntitiesParity()`
+
+### New API
+
+```php
+// Create a referenced entity double
+$user = EntityDoubleDefinitionBuilder::create('user')
+  ->id(42)
+  ->field('name', 'admin')
+  ->build();
+
+// Single entity reference - shorthand
+$node = EntityDoubleDefinitionBuilder::create('node')
+  ->field('field_author', $user)
+  ->build();
+
+// Single entity reference - explicit
+$node = EntityDoubleDefinitionBuilder::create('node')
+  ->field('field_author', ['entity' => $user])
+  ->build();
+
+// Multi-value entity references
+$node = EntityDoubleDefinitionBuilder::create('node')
+  ->field('field_tags', [$tag1, $tag2, $tag3])
+  ->build();
+
+// Access entity reference
+$author = $entity->get('field_author')->entity;        // Returns $user
+$authorId = $entity->get('field_author')->target_id;   // Returns 42 (auto-populated)
+
+// Access multiple references
+$tags = $entity->get('field_tags')->referencedEntities();  // Returns [$tag1, $tag2, $tag3]
+```
+
+### Normalization Rules
+
+The `EntityReferenceNormalizer` handles multiple input formats:
+
+| Input | Normalized Output |
+|-------|-------------------|
+| `$entity` (EntityInterface) | `[['entity' => $entity, 'target_id' => $entity->id()]]` |
+| `['entity' => $entity]` | `[['entity' => $entity, 'target_id' => $entity->id()]]` |
+| `[$entity1, $entity2]` | `[['entity' => $entity1, ...], ['entity' => $entity2, ...]]` |
+| `['entity' => $entity, 'target_id' => 999]` | Throws `InvalidArgumentException` if mismatch |
+
+### Dynamic Interface Selection
+
+Entity reference fields automatically implement `EntityReferenceFieldItemListInterface`:
+
+```php
+// Regular field - implements FieldItemListInterface
+$titleField = $node->get('field_title');
+$this->assertNotInstanceOf(EntityReferenceFieldItemListInterface::class, $titleField);
+
+// Entity reference field - implements EntityReferenceFieldItemListInterface
+$authorField = $node->get('field_author');
+$this->assertInstanceOf(EntityReferenceFieldItemListInterface::class, $authorField);
+```
+
+### Benefits
+
+1. **Matches Real Drupal Behavior**: Entity references work as expected
+2. **Zero Configuration**: Entity references auto-detected, no manual interface needed
+3. **Full Parity**: Both PHPUnit and Prophecy adapters behave identically
+4. **Flexible Input**: Multiple shorthand formats for convenience
+5. **ID Validation**: Throws on `target_id` mismatch for safety
+6. **NULL ID Support**: Handles new/unsaved entities with `NULL` IDs

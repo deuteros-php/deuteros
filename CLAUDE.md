@@ -39,14 +39,13 @@ The codebase follows Drupal coding standards (Drupal + DrupalPractice sniffs).
 
 ```bash
 # Requires development setup (COMPOSER=composer.dev.json composer install)
-composer phpcs                # Check coding standards
-composer phpcbf               # Auto-fix coding standard violations
+COMPOSER=composer.dev.json composer phpcs       # Check coding standards
+COMPOSER=composer.dev.json composer phpcbf      # Auto-fix coding standard violations
 ```
 
 Key requirements enforced by phpcs:
 - 2-space indentation
 - Opening braces on same line as class/function declarations
-- Line length max 80 characters
 - `@return` descriptions required in docblocks
 - Parentheses required for anonymous class constructors (`new class ()`)
 - No empty doc comments
@@ -56,10 +55,11 @@ Additional formatting rules:
 - Constructors are exempt (they use property promotion and can span multiple lines)
 
 PHPDoc description text formatting:
+- Comment/PHPDocs line length max 80 characters
 - Method names should be prefixed with `::` without parentheses (e.g., `::fromTest`)
 - Non-fully-qualified class/interface/trait names should be double-quoted (e.g., `"EntityInterface"`)
-- String literals should be double-quoted (e.g., `"taxonomy_term"`)
-- Fully-qualified names with backslash prefix don't need quotes (e.g., `\Drupal\Core\Entity\EntityInterface`)
+- String literals should be double-quoted (e.g. `"taxonomy_term"`)
+- Fully-qualified names with backslash prefix don't need quotes (e.g. `\Drupal\Core\Entity\EntityInterface`)
 - These rules apply to description text only, not `@param`/`@return` type hints
 
 ## Static Analysis
@@ -68,7 +68,7 @@ PHPStan is configured at level 10 (max) with a baseline for existing issues.
 
 ```bash
 # Requires development setup (COMPOSER=composer.dev.json composer install)
-composer phpstan             # Run static analysis
+COMPOSER=composer.dev.json  composer phpstan    # Run static analysis
 ```
 
 Configuration files:
@@ -106,7 +106,7 @@ fn(array $context, ...$args): mixed
 ```
 
 **Method Resolution Order:**
-1. `methodOverrides` (highest precedence)
+1. `method` overrides (highest precedence)
 2. Core resolvers from builders
 3. Guardrail failure (throws with differentiated message)
 
@@ -147,11 +147,14 @@ These constraints must never be violated:
 - `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/BehavioralParityTest.php` - Ensures both adapters produce identical behavior
+- `tests/Performance/` - Benchmarking tests used to compare performance of the various approaches
 
 ## Directory Layout
 
 After running `COMPOSER=composer.dev.json composer install`:
+- `src/` contains the library codebase
 - `stubs/` contains interface stubs (used when Drupal core is not available)
+- `tests` contains test code
 - `vendor` contains all Composer dependencies
 - `web/core` contains Drupal core (only in development mode)
 

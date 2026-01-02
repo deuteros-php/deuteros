@@ -58,12 +58,20 @@ final class FieldItemDoubleBuilder {
    * Builds the ::__get resolver.
    *
    * Provides access to common field properties: "value", "target_id", etc.
+   * Also handles the "entity" property for entity reference fields.
    *
    * @return callable
    *   The resolver callable.
    */
   private function buildMagicGetResolver(): callable {
     return function (array $context, string $property): mixed {
+      // Handle 'entity' property - return the stored entity double.
+      // This takes precedence over array key lookup since entity references
+      // store the entity object directly in the 'entity' key.
+      if ($property === 'entity' && is_array($this->value) && isset($this->value['entity'])) {
+        return $this->value['entity'];
+      }
+
       // If value is an array (e.g., ['target_id' => 1]), look up the property.
       if (is_array($this->value)) {
         return $this->value[$property] ?? NULL;

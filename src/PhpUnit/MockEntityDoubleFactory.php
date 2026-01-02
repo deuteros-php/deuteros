@@ -13,6 +13,7 @@ use Deuteros\Common\FieldItemListDoubleBuilder;
 use Deuteros\Common\GuardrailEnforcer;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use PHPUnit\Framework\TestCase;
@@ -197,7 +198,16 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
-  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void {
+  protected function createEntityReferenceFieldListDoubleObject(): object {
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', EntityReferenceFieldItemListInterface::class);
+    assert(is_object($mock));
+    return $mock;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context, bool $hasEntityReferences = FALSE): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
     $resolvers = $builder->getResolvers();
@@ -237,6 +247,13 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
             . "Use createMutableEntityDouble() if you need to test mutations."
           );
         }
+      );
+    }
+
+    // Wire referencedEntities if this is an entity reference field.
+    if ($hasEntityReferences) {
+      $mock->method('referencedEntities')->willReturnCallback(
+        fn() => $resolvers['referencedEntities']($context)
       );
     }
   }

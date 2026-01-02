@@ -27,13 +27,13 @@ use PHPUnit\Framework\TestCase;
  * - Method overrides for custom behavior
  * - Context propagation to callbacks
  * - Mutable doubles for testing entity modifications
+ * - Entity reference traversal via entity property and referencedEntities()
  *
  * Explicitly unsupported behaviors (will throw):
  * - ::save, ::delete - requires entity storage
  * - ::access - requires access control services
  * - ::getTranslation - requires translation services
  * - ::toUrl - requires routing services
- * - Entity reference traversal
  *
  * This is a unit-test value object only. Use Kernel tests for behaviors that
  * require runtime services.
@@ -233,6 +233,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Creates a field item list double.
    *
+   * Automatically detects entity references in the field value and creates an
+   * "EntityReferenceFieldItemListInterface" double when appropriate.
+   *
    * @param string $fieldName
    *   The field name.
    * @param \Deuteros\Common\FieldDoubleDefinition $fieldDoubleDefinition
@@ -265,13 +268,41 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
       );
     }
 
-    // Create the double.
-    $double = $this->createFieldListDoubleObject();
+    // Detect entity references to determine the interface.
+    $hasEntityReferences = $this->detectEntityReferences($fieldDoubleDefinition, $context);
+
+    // Create the double with appropriate interface.
+    $double = $hasEntityReferences
+      ? $this->createEntityReferenceFieldListDoubleObject()
+      : $this->createFieldListDoubleObject();
 
     // Wire up resolvers.
-    $this->wireFieldListResolvers($double, $builder, $entityDoubleDefinition, $context);
+    $this->wireFieldListResolvers($double, $builder, $entityDoubleDefinition, $context, $hasEntityReferences);
 
     return $this->instantiateFieldListDouble($double);
+  }
+
+  /**
+   * Detects if a field contains entity references.
+   *
+   * @param \Deuteros\Common\FieldDoubleDefinition $definition
+   *   The field definition.
+   * @param array<string, mixed> $context
+   *   The context for callback resolution.
+   *
+   * @return bool
+   *   TRUE if entity references detected.
+   */
+  private function detectEntityReferences(FieldDoubleDefinition $definition, array $context): bool {
+    $value = $definition->getValue();
+
+    // Resolve callable first.
+    if ($definition->isCallable()) {
+      assert(is_callable($value));
+      $value = $value($context);
+    }
+
+    return EntityReferenceNormalizer::containsEntityReferences($value);
   }
 
   /**
@@ -414,6 +445,18 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   abstract protected function createFieldListDoubleObject(): object;
 
   /**
+   * Creates an entity reference field item list double object.
+   *
+   * Returns a double implementing "EntityReferenceFieldItemListInterface"
+   * which extends "FieldItemListInterface" with the ::referencedEntities
+   * method.
+   *
+   * @return object
+   *   The mock/prophecy object (not revealed).
+   */
+  abstract protected function createEntityReferenceFieldListDoubleObject(): object;
+
+  /**
    * Wires field item list method resolvers to the double.
    *
    * @param object $double
@@ -424,8 +467,11 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   The entity double definition.
    * @param array<string, mixed> $context
    *   The context.
+   * @param bool $hasEntityReferences
+   *   Whether this field contains entity references. When TRUE, the
+   *   ::referencedEntities resolver should be wired.
    */
-  abstract protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context): void;
+  abstract protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context, bool $hasEntityReferences = FALSE): void;
 
   /**
    * Creates a field item double object.

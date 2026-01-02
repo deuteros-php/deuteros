@@ -13,6 +13,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -621,6 +622,251 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     // Access undefined field via magic property.
     // @phpstan-ignore property.notFound, expr.resultUnused
     $entity->field_undefined;
+  }
+
+  /**
+   * Tests entity reference field with single entity via shorthand syntax.
+   */
+  public function testEntityReferenceShorthand(): void {
+    $user = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->field('name', 'admin')
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', $user)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Access entity via shorthand.
+    $this->assertSame($user, $entity->get('field_author')->entity);
+
+    // Access via first().
+    $first = $entity->get('field_author')->first();
+    assert($first !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame($user, $first->entity);
+
+    // target_id should be auto-populated.
+    // @phpstan-ignore method.impossibleType
+    $this->assertSame(42, $entity->get('field_author')->target_id);
+  }
+
+  /**
+   * Tests entity reference field with explicit array format.
+   */
+  public function testEntityReferenceExplicitFormat(): void {
+    $user = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['entity' => $user])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame($user, $entity->get('field_author')->entity);
+    // @phpstan-ignore method.impossibleType
+    $this->assertSame(42, $entity->get('field_author')->target_id);
+  }
+
+  /**
+   * Tests entity reference with NULL entity ID (new unsaved entity).
+   */
+  public function testEntityReferenceWithNullId(): void {
+    $user = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(NULL)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', $user)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame($user, $entity->get('field_author')->entity);
+    // @phpstan-ignore method.impossibleType
+    $this->assertNull($entity->get('field_author')->target_id);
+  }
+
+  /**
+   * Tests ::referencedEntities() for multi-value entity reference fields.
+   */
+  public function testReferencedEntities(): void {
+    $tag1 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(1)
+        ->label('Tag 1')
+        ->build()
+    );
+    $tag2 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(2)
+        ->label('Tag 2')
+        ->build()
+    );
+    $tag3 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(3)
+        ->label('Tag 3')
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [$tag1, $tag2, $tag3])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldList = $entity->get('field_tags');
+    assert($fieldList instanceof EntityReferenceFieldItemListInterface);
+
+    $entities = $fieldList->referencedEntities();
+    $this->assertCount(3, $entities);
+    $this->assertSame($tag1, $entities[0]);
+    $this->assertSame($tag2, $entities[1]);
+    $this->assertSame($tag3, $entities[2]);
+  }
+
+  /**
+   * Tests entity reference field implements the expected interface.
+   */
+  public function testEntityReferenceFieldImplementsInterface(): void {
+    $user = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', $user)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $entity->get('field_author')
+    );
+  }
+
+  /**
+   * Tests non-entity-reference field does not implement the interface.
+   */
+  public function testNonEntityReferenceFieldDoesNotImplementInterface(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertNotInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $entity->get('field_title')
+    );
+  }
+
+  /**
+   * Tests entity reference target_id mismatch throws exception.
+   */
+  public function testEntityReferenceTargetIdMismatchThrows(): void {
+    $user = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->build()
+    );
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Entity reference target_id mismatch");
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['entity' => $user, 'target_id' => 999])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // The exception is thrown when the field value is normalized.
+    // Accessing a property triggers the normalization via the resolver.
+    $entity->get('field_author')->entity;
+  }
+
+  /**
+   * Tests accessing individual items in multi-value entity reference field.
+   */
+  public function testMultiValueEntityReferenceItemAccess(): void {
+    $tag1 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(1)
+        ->build()
+    );
+    $tag2 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(2)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [$tag1, $tag2])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Access via first().
+    $first = $entity->get('field_tags')->first();
+    assert($first !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame($tag1, $first->entity);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(1, $first->target_id);
+
+    // Access via get(delta).
+    $item1 = $entity->get('field_tags')->get(1);
+    assert($item1 !== NULL);
+    // @phpstan-ignore property.notFound
+    $this->assertSame($tag2, $item1->entity);
+    // @phpstan-ignore property.notFound
+    $this->assertSame(2, $item1->target_id);
+  }
+
+  /**
+   * Tests empty field returns empty array from ::referencedEntities().
+   */
+  public function testEmptyEntityReferenceField(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Empty field should not implement EntityReferenceFieldItemListInterface.
+    // since no entity references were detected.
+    $this->assertTrue($entity->get('field_tags')->isEmpty());
   }
 
 }

@@ -1,9 +1,0 @@
-<?php
-
-namespace Drupal\Core\Entity;
-
-interface EntityPublishedInterface extends EntityInterface {
-
-  public function isPublished();
-
-}

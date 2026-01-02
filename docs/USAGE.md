@@ -1,4 +1,4 @@
-# DEUTEROS Usage Guide
+# Deuteros Usage Guide
 
 ## About
 
@@ -11,7 +11,7 @@ Testing code that depends on Drupal entities typically requires Kernel tests, wh
 - Module enablement
 - Service container initialization
 
-DEUTEROS lets you create lightweight entity doubles that implement Drupal's entity interfaces, enabling fast unit tests without any of this overhead.
+Deuteros lets you create lightweight entity doubles that implement Drupal's entity interfaces, enabling fast unit tests without any of this overhead.
 
 ### Key Benefits
 
@@ -25,7 +25,7 @@ DEUTEROS lets you create lightweight entity doubles that implement Drupal's enti
 ## Installation
 
 ```bash
-composer require --dev plach79/deuteros
+composer require --dev plach79/Deuteros
 ```
 
 ### Requirements

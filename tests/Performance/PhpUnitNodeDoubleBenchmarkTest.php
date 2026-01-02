@@ -12,9 +12,7 @@ use PHPUnit\Framework\Attributes\Group;
  */
 #[Group('deuteros')]
 #[Group('performance')]
-class PhpUnitNodeBenchmarkTest extends BenchmarkTestBase {
-
-  use NodeOperationsBenchmarkTrait;
+class PhpUnitNodeDoubleBenchmarkTest extends DoubleBenchmarkTestBase {
 
   /**
    * {@inheritdoc}

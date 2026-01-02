@@ -13,10 +13,9 @@ use Prophecy\PhpUnit\ProphecyTrait;
  */
 #[Group('deuteros')]
 #[Group('performance')]
-class ProphecyNodeBenchmarkTest extends BenchmarkTestBase {
+class ProphecyNodeDoubleBenchmarkTest extends DoubleBenchmarkTestBase {
 
   use ProphecyTrait;
-  use NodeOperationsBenchmarkTrait;
 
   /**
    * {@inheritdoc}

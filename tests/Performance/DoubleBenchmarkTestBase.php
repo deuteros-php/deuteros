@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Performance benchmark using PHPUnit mock-based entity doubles.
  */
-abstract class BenchmarkTestBase extends TestCase {
+abstract class DoubleBenchmarkTestBase extends TestCase {
 
   use NodeOperationsBenchmarkTrait;
 

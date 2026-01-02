@@ -1,6 +1,8 @@
-# DEUTEROS
+# Deuteros
 
-**Drupal Entity Unit Test Extensible Replacement Object Scaffolding**
+> δεύτερος • (deúteros): second of two
+
+– [Wikitionary](https://en.wiktionary.org/wiki/%CE%B4%CE%B5%CF%8D%CF%84%CE%B5%CF%81%CE%BF%CF%82)
 
 A PHP library providing value-object entity doubles for Drupal unit testing, allowing you to test code that depends on entity/field interfaces without Kernel tests, module enablement, database access, or service container.
 
@@ -25,4 +27,4 @@ See [docs/](docs/) for full documentation:
 
 ## License
 
-MIT
+[GPL-2.0 license](LICENSE)

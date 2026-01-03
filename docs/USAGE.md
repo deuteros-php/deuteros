@@ -334,6 +334,8 @@ $entity = $factory->create(
 
 **Target ID Only**
 
+Use `['target_id' => X]` when you only need the target ID without an actual entity double. The field will implement `EntityReferenceFieldItemListInterface`, but calling `referencedEntities()` will throw a `LogicException`:
+
 ```php
 $entity = $factory->create(
   EntityDoubleDefinitionBuilder::create('node')
@@ -342,8 +344,26 @@ $entity = $factory->create(
     ->build()
 );
 
-$entity->get('field_author')->target_id; // 42
-$entity->get('field_author')->entity;    // null (no entity provided)
+$entity->get('field_author')->target_id;            // 42
+$entity->get('field_author')->entity;               // null (no entity provided)
+$entity->get('field_author')->referencedEntities(); // Throws LogicException
+```
+
+**Empty Entity References**
+
+Use `['entity' => NULL]` to explicitly declare a field as an entity reference that is empty (no referenced entity). This is useful when you need to test code that checks `referencedEntities()` but the field should be empty:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_author', ['entity' => NULL])
+    ->build()
+);
+
+// Field implements EntityReferenceFieldItemListInterface
+$entity->get('field_author')->referencedEntities(); // Returns []
+$entity->get('field_author')->isEmpty();            // Returns true
 ```
 
 **Multi-Value Entity References**

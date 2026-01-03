@@ -431,6 +431,9 @@ final class FieldItemListDoubleBuilder {
    * Returns an array of entity doubles keyed by delta, matching the
    * behavior of "EntityReferenceFieldItemListInterface::referencedEntities".
    *
+   * The returned resolver throws "LogicException" if any items have
+   * "target_id" but no "entity".
+   *
    * @return callable
    *   The resolver callable.
    */
@@ -438,6 +441,17 @@ final class FieldItemListDoubleBuilder {
     return function (array $context): array {
       /** @var array<string, mixed> $context */
       $values = $this->resolveValues($context);
+
+      // Check if any items have target_id but no entity.
+      if (EntityReferenceNormalizer::hasTargetIdOnlyItems($values)) {
+        throw new \LogicException(sprintf(
+          "Cannot call referencedEntities() on field '%s': field contains "
+          . "target_id values without corresponding entity doubles. "
+          . "Provide entity doubles or use ['entity' => NULL] for empty references.",
+          $this->fieldName
+        ));
+      }
+
       return EntityReferenceNormalizer::extractEntities($values);
     };
   }

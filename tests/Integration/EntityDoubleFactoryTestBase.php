@@ -897,4 +897,145 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
   }
 
+  /**
+   * Tests empty entity reference field with `['entity' => NULL]`.
+   */
+  public function testEmptyEntityReferenceWithNullEntity(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['entity' => NULL])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Should implement EntityReferenceFieldItemListInterface.
+    $fieldList = $entity->get('field_author');
+    $this->assertInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $fieldList
+    );
+
+    // Should be empty.
+    $this->assertTrue($fieldList->isEmpty());
+
+    // referencedEntities() should return empty array.
+    $this->assertSame([], $fieldList->referencedEntities());
+  }
+
+  /**
+   * Tests multi-value entity reference with some NULL entities.
+   */
+  public function testMultiValueEntityReferenceWithSomeNullEntities(): void {
+    $tag1 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(1)
+        ->build()
+    );
+    $tag2 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(2)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
+          $tag1,
+          ['entity' => NULL],
+          $tag2,
+        ])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldList = $entity->get('field_tags');
+    assert($fieldList instanceof EntityReferenceFieldItemListInterface);
+
+    // referencedEntities() should return only valid entities.
+    $entities = $fieldList->referencedEntities();
+    $this->assertCount(2, $entities);
+    $this->assertSame($tag1, $entities[0]);
+    $this->assertSame($tag2, $entities[1]);
+  }
+
+  /**
+   * Tests target_id-only entity reference field implements interface.
+   */
+  public function testTargetIdOnlyEntityReferenceImplementsInterface(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['target_id' => 42])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Should implement EntityReferenceFieldItemListInterface.
+    $fieldList = $entity->get('field_author');
+    $this->assertInstanceOf(
+      EntityReferenceFieldItemListInterface::class,
+      $fieldList
+    );
+
+    // target_id should be accessible.
+    // @phpstan-ignore method.impossibleType
+    $this->assertSame(42, $fieldList->target_id);
+  }
+
+  /**
+   * Tests target_id-only entity reference throws on ::referencedEntities.
+   */
+  public function testTargetIdOnlyEntityReferenceThrowsOnReferencedEntities(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_author', ['target_id' => 42])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldList = $entity->get('field_author');
+    assert($fieldList instanceof EntityReferenceFieldItemListInterface);
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage("Cannot call referencedEntities() on field 'field_author'");
+    $this->expectExceptionMessage('target_id values without corresponding entity doubles');
+
+    // @phpstan-ignore method.resultUnused
+    $fieldList->referencedEntities();
+  }
+
+  /**
+   * Tests multi-value entity reference with target_id-only items throws.
+   */
+  public function testMultiValueWithTargetIdOnlyThrowsOnReferencedEntities(): void {
+    $tag1 = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->id(1)
+        ->build()
+    );
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
+          $tag1,
+          ['target_id' => 2],
+        ])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldList = $entity->get('field_tags');
+    assert($fieldList instanceof EntityReferenceFieldItemListInterface);
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage("Cannot call referencedEntities() on field 'field_tags'");
+
+    // @phpstan-ignore method.resultUnused
+    $fieldList->referencedEntities();
+  }
+
 }

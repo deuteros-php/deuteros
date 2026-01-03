@@ -73,8 +73,57 @@ class EntityReferenceNormalizerTest extends TestCase {
    * Tests ::containsEntityReferences() returns FALSE for non-entity arrays.
    */
   public function testContainsEntityReferencesWithNonEntityArray(): void {
-    $this->assertFalse(EntityReferenceNormalizer::containsEntityReferences(['target_id' => 1]));
-    $this->assertFalse(EntityReferenceNormalizer::containsEntityReferences([['target_id' => 1]]));
+    // Arrays without 'entity' or 'target_id' keys.
+    $this->assertFalse(EntityReferenceNormalizer::containsEntityReferences(['value' => 'text']));
+    $this->assertFalse(EntityReferenceNormalizer::containsEntityReferences([['value' => 'text']]));
+  }
+
+  /**
+   * Tests ::containsEntityReferences() with `['entity' => NULL]`.
+   */
+  public function testContainsEntityReferencesWithNullEntity(): void {
+    $this->assertTrue(EntityReferenceNormalizer::containsEntityReferences(['entity' => NULL]));
+  }
+
+  /**
+   * Tests ::containsEntityReferences() with `['target_id' => X]`.
+   */
+  public function testContainsEntityReferencesWithTargetIdOnly(): void {
+    $this->assertTrue(EntityReferenceNormalizer::containsEntityReferences(['target_id' => 42]));
+  }
+
+  /**
+   * Tests ::containsEntityReferences() with array of items including NULL.
+   */
+  public function testContainsEntityReferencesWithMixedNullEntities(): void {
+    $entity = $this->createMock(EntityInterface::class);
+    $value = [
+      ['entity' => $entity],
+      ['entity' => NULL],
+    ];
+    $this->assertTrue(EntityReferenceNormalizer::containsEntityReferences($value));
+  }
+
+  /**
+   * Tests ::containsEntityReferences() with array of only NULL entities.
+   */
+  public function testContainsEntityReferencesWithOnlyNullEntities(): void {
+    $value = [
+      ['entity' => NULL],
+      ['entity' => NULL],
+    ];
+    $this->assertTrue(EntityReferenceNormalizer::containsEntityReferences($value));
+  }
+
+  /**
+   * Tests ::containsEntityReferences() with array of target_id-only items.
+   */
+  public function testContainsEntityReferencesWithTargetIdOnlyItems(): void {
+    $value = [
+      ['target_id' => 1],
+      ['target_id' => 2],
+    ];
+    $this->assertTrue(EntityReferenceNormalizer::containsEntityReferences($value));
   }
 
   /**
@@ -257,6 +306,110 @@ class EntityReferenceNormalizerTest extends TestCase {
     $this->assertSame(1, $result[0]['target_id']);
     $this->assertSame($entity2, $result[1]['entity']);
     $this->assertSame(2, $result[1]['target_id']);
+  }
+
+  /**
+   * Tests ::normalize() with `['entity' => NULL]` returns empty array.
+   */
+  public function testNormalizeWithNullEntity(): void {
+    $result = EntityReferenceNormalizer::normalize(['entity' => NULL]);
+    $this->assertSame([], $result);
+  }
+
+  /**
+   * Tests ::normalize() with `['target_id' => X]` keeps the item.
+   */
+  public function testNormalizeWithTargetIdOnly(): void {
+    $result = EntityReferenceNormalizer::normalize(['target_id' => 42]);
+
+    $this->assertCount(1, $result);
+    $this->assertSame(['target_id' => 42], $result[0]);
+  }
+
+  /**
+   * Tests ::normalize() with mixed NULL and valid entities.
+   */
+  public function testNormalizeWithMixedNullAndValidEntities(): void {
+    $entity = $this->createMock(EntityInterface::class);
+    $entity->method('id')->willReturn(42);
+
+    $value = [
+      ['entity' => $entity],
+      ['entity' => NULL],
+    ];
+
+    $result = EntityReferenceNormalizer::normalize($value);
+
+    $this->assertCount(1, $result);
+    $this->assertSame($entity, $result[0]['entity']);
+    $this->assertSame(42, $result[0]['target_id']);
+  }
+
+  /**
+   * Tests ::normalize() with mixed target_id-only and entity items.
+   */
+  public function testNormalizeWithMixedTargetIdOnlyAndEntities(): void {
+    $entity = $this->createMock(EntityInterface::class);
+    $entity->method('id')->willReturn(1);
+
+    $value = [
+      ['entity' => $entity],
+      ['target_id' => 2],
+    ];
+
+    $result = EntityReferenceNormalizer::normalize($value);
+
+    $this->assertCount(2, $result);
+    $this->assertSame($entity, $result[0]['entity']);
+    $this->assertSame(1, $result[0]['target_id']);
+    $this->assertSame(['target_id' => 2], $result[1]);
+  }
+
+  /**
+   * Tests ::hasTargetIdOnlyItems() returns TRUE for target_id-only items.
+   */
+  public function testHasTargetIdOnlyItemsReturnsTrue(): void {
+    $items = [
+      ['target_id' => 1],
+      ['target_id' => 2],
+    ];
+
+    $this->assertTrue(EntityReferenceNormalizer::hasTargetIdOnlyItems($items));
+  }
+
+  /**
+   * Tests ::hasTargetIdOnlyItems() returns FALSE for items with entities.
+   */
+  public function testHasTargetIdOnlyItemsReturnsFalseWithEntities(): void {
+    $entity = $this->createMock(EntityInterface::class);
+
+    $items = [
+      ['entity' => $entity, 'target_id' => 1],
+      ['entity' => $entity, 'target_id' => 2],
+    ];
+
+    $this->assertFalse(EntityReferenceNormalizer::hasTargetIdOnlyItems($items));
+  }
+
+  /**
+   * Tests ::hasTargetIdOnlyItems() returns TRUE for mixed items.
+   */
+  public function testHasTargetIdOnlyItemsReturnsTrueForMixed(): void {
+    $entity = $this->createMock(EntityInterface::class);
+
+    $items = [
+      ['entity' => $entity, 'target_id' => 1],
+      ['target_id' => 2],
+    ];
+
+    $this->assertTrue(EntityReferenceNormalizer::hasTargetIdOnlyItems($items));
+  }
+
+  /**
+   * Tests ::hasTargetIdOnlyItems() returns FALSE for empty array.
+   */
+  public function testHasTargetIdOnlyItemsReturnsFalseForEmpty(): void {
+    $this->assertFalse(EntityReferenceNormalizer::hasTargetIdOnlyItems([]));
   }
 
 }

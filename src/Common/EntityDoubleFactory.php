@@ -74,6 +74,15 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   private static array $runtimeInterfaceCache = [];
 
   /**
+   * Cache of generated trait stub classes.
+   *
+   * Maps base class + sorted trait list (as cache key) to stub class name.
+   *
+   * @var array<string, class-string>
+   */
+  private static array $traitStubClassCache = [];
+
+  /**
    * Creates the appropriate factory based on the test case's available traits.
    *
    * Detects whether the test uses Prophecy ("ProphecyTrait") or PHPUnit mocks
@@ -168,7 +177,14 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     // Wire guardrails for unsupported methods.
     $this->wireGuardrails($double, $definition, $interfaces);
 
-    return $this->instantiateDouble($double);
+    $entity = $this->instantiateDouble($double);
+
+    // If traits are specified, wrap the entity in a trait stub.
+    if ($definition->traits !== []) {
+      $entity = $this->createTraitStub($entity, $definition->traits);
+    }
+
+    return $entity;
   }
 
   /**
@@ -400,6 +416,111 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
     eval($code);
   }
+
+  /**
+   * Creates a trait stub that extends the entity double and uses the traits.
+   *
+   * Generates a stub class dynamically that extends the double's class and
+   * applies the specified traits, then copies the internal state from the
+   * original double to the stub instance.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $double
+   *   The entity double.
+   * @param list<class-string> $traits
+   *   The traits to apply.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The trait stub instance.
+   */
+  protected function createTraitStub(EntityInterface $double, array $traits): EntityInterface {
+    $baseClassName = get_class($double);
+    $stubClassName = $this->getOrCreateTraitStubClass($baseClassName, $traits);
+    return $this->instantiateTraitStub($double, $stubClassName);
+  }
+
+  /**
+   * Gets or creates a trait stub class.
+   *
+   * @param class-string $baseClassName
+   *   The base class to extend.
+   * @param list<class-string> $traits
+   *   The traits to apply.
+   *
+   * @return class-string
+   *   The trait stub class name.
+   */
+  private function getOrCreateTraitStubClass(string $baseClassName, array $traits): string {
+    // Sort traits for deterministic cache key.
+    $sortedTraits = $traits;
+    sort($sortedTraits);
+    $cacheKey = $baseClassName . '|' . implode('|', $sortedTraits);
+
+    if (isset(self::$traitStubClassCache[$cacheKey])) {
+      return self::$traitStubClassCache[$cacheKey];
+    }
+
+    // Generate unique stub class name.
+    $hash = substr(md5($cacheKey), 0, 12);
+    /** @var class-string $stubClassName */
+    $stubClassName = "Deuteros\\Generated\\TraitStub_{$hash}";
+
+    if (!class_exists($stubClassName, FALSE)) {
+      $this->declareTraitStubClass($stubClassName, $baseClassName, $sortedTraits);
+    }
+
+    self::$traitStubClassCache[$cacheKey] = $stubClassName;
+    return $stubClassName;
+  }
+
+  /**
+   * Declares a trait stub class via eval.
+   *
+   * @param string $stubClassName
+   *   The fully-qualified stub class name to declare.
+   * @param string $baseClassName
+   *   The base class to extend.
+   * @param list<class-string> $traits
+   *   The traits to apply.
+   */
+  private function declareTraitStubClass(string $stubClassName, string $baseClassName, array $traits): void {
+    $parts = explode('\\', $stubClassName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $traitUses = implode(', ', array_map(
+      fn(string $trait) => '\\' . $trait,
+      $traits
+    ));
+
+    $code = sprintf(
+      'namespace %s { final class %s extends \\%s { use %s; } }',
+      $namespace,
+      $shortName,
+      $baseClassName,
+      $traitUses
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
+  }
+
+  /**
+   * Instantiates a trait stub by copying state from the entity double.
+   *
+   * Creates a new instance of the stub class and copies the internal state
+   * from the original double. The implementation is adapter-specific since
+   * PHPUnit mocks and Prophecy revealed objects have different internal
+   * structures.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $double
+   *   The entity double.
+   * @param class-string $stubClassName
+   *   The stub class name.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The trait stub instance.
+   */
+  abstract protected function instantiateTraitStub(EntityInterface $double, string $stubClassName): EntityInterface;
 
   /**
    * Creates a double for the given interfaces.

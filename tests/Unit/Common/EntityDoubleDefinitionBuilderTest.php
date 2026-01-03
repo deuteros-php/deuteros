@@ -6,6 +6,8 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\Common\FieldDoubleDefinition;
+use Deuteros\Tests\Fixtures\SecondTestTrait;
+use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -351,6 +353,73 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
 
     $this->assertSame(ContentEntityInterface::class, $modified->primaryInterface);
     $this->assertTrue($modified->lenient);
+  }
+
+  /**
+   * Tests the trait() method adds a trait to the definition.
+   */
+  public function testTraitMethod(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->trait(TestBundleTrait::class)
+      ->build();
+
+    $this->assertContains(TestBundleTrait::class, $definition->traits);
+  }
+
+  /**
+   * Tests that trait() deduplicates traits.
+   */
+  public function testTraitDeduplication(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->trait(TestBundleTrait::class)
+      ->trait(TestBundleTrait::class)
+      ->build();
+
+    $count = array_count_values($definition->traits);
+    $this->assertSame(1, $count[TestBundleTrait::class]);
+  }
+
+  /**
+   * Tests that trait() throws for non-existent traits.
+   */
+  public function testInvalidTraitThrows(): void {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Trait 'NonExistentTrait' does not exist.");
+
+    EntityDoubleDefinitionBuilder::create('node')
+      // @phpstan-ignore argument.type
+      ->trait('NonExistentTrait')
+      ->build();
+  }
+
+  /**
+   * Tests the traits() bulk method adds multiple traits.
+   */
+  public function testTraitsMethodAddsMultipleTraits(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->traits([TestBundleTrait::class, SecondTestTrait::class])
+      ->build();
+
+    $this->assertContains(TestBundleTrait::class, $definition->traits);
+    $this->assertContains(SecondTestTrait::class, $definition->traits);
+    $this->assertCount(2, $definition->traits);
+  }
+
+  /**
+   * Tests from() preserves traits from an existing definition.
+   */
+  public function testFromPreservesTraits(): void {
+    $original = EntityDoubleDefinitionBuilder::create('node')
+      ->trait(TestBundleTrait::class)
+      ->trait(SecondTestTrait::class)
+      ->build();
+
+    $modified = EntityDoubleDefinitionBuilder::from($original)
+      ->label('New Label')
+      ->build();
+
+    $this->assertContains(TestBundleTrait::class, $modified->traits);
+    $this->assertContains(SecondTestTrait::class, $modified->traits);
   }
 
 }

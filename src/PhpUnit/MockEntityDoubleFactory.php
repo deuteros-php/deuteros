@@ -341,4 +341,38 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     return $double;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function instantiateTraitStub(EntityInterface $double, string $stubClassName): EntityInterface {
+    // Create stub instance without constructor.
+    $stub = (new \ReflectionClass($stubClassName))->newInstanceWithoutConstructor();
+
+    // Copy all properties from double to stub.
+    $this->copyObjectProperties($double, $stub);
+
+    /** @var \Drupal\Core\Entity\EntityInterface $stub */
+    return $stub;
+  }
+
+  /**
+   * Copies all properties from source object to target object.
+   *
+   * Used to transfer the internal state of a PHPUnit mock object to a trait
+   * stub instance that extends the mock's class.
+   *
+   * @param object $source
+   *   The source object.
+   * @param object $target
+   *   The target object.
+   */
+  private function copyObjectProperties(object $source, object $target): void {
+    $reflection = new \ReflectionObject($source);
+
+    foreach ($reflection->getProperties() as $property) {
+      $value = $property->getValue($source);
+      $property->setValue($target, $value);
+    }
+  }
+
 }

@@ -418,4 +418,22 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     return $prophecy->reveal();
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function instantiateTraitStub(EntityInterface $double, string $stubClassName): EntityInterface {
+    // Create stub instance without constructor.
+    $stub = (new \ReflectionClass($stubClassName))->newInstanceWithoutConstructor();
+
+    // Copy the prophecy closure (critical for Prophecy method delegation).
+    // Prophecy revealed objects store their connection to the ObjectProphecy
+    // in the objectProphecyClosure property.
+    $property = new \ReflectionProperty($double, 'objectProphecyClosure');
+    $objectProphecyClosure = $property->getValue($double);
+    $property->setValue($stub, $objectProphecyClosure);
+
+    /** @var \Drupal\Core\Entity\EntityInterface $stub */
+    return $stub;
+  }
+
 }

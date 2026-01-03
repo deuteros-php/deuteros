@@ -6,6 +6,8 @@ namespace Deuteros\Tests\Unit\Common;
 
 use Deuteros\Common\EntityDoubleDefinition;
 use Deuteros\Common\FieldDoubleDefinition;
+use Deuteros\Tests\Fixtures\SecondTestTrait;
+use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -283,6 +285,59 @@ class EntityDoubleDefinitionTest extends TestCase {
 
     $this->assertSame(ContentEntityInterface::class, $new->primaryInterface);
     $this->assertTrue($new->lenient);
+  }
+
+  /**
+   * Tests minimal construction has empty traits array.
+   */
+  public function testMinimalConstructionHasEmptyTraits(): void {
+    $definition = new EntityDoubleDefinition(entityType: 'node');
+
+    $this->assertSame([], $definition->traits);
+  }
+
+  /**
+   * Tests construction with traits stores them correctly.
+   */
+  public function testConstructionWithTraits(): void {
+    $traits = [TestBundleTrait::class, SecondTestTrait::class];
+
+    $definition = new EntityDoubleDefinition(
+      entityType: 'node',
+      traits: $traits,
+    );
+
+    $this->assertSame($traits, $definition->traits);
+  }
+
+  /**
+   * Tests ::withContext() preserves traits in new instance.
+   */
+  public function testWithContextPreservesTraits(): void {
+    $traits = [TestBundleTrait::class];
+    $original = new EntityDoubleDefinition(
+      entityType: 'node',
+      traits: $traits,
+    );
+
+    $new = $original->withContext(['key' => 'value']);
+
+    $this->assertSame($traits, $new->traits);
+  }
+
+  /**
+   * Tests ::withMutable() preserves traits in new instance.
+   */
+  public function testWithMutablePreservesTraits(): void {
+    $traits = [TestBundleTrait::class, SecondTestTrait::class];
+    $original = new EntityDoubleDefinition(
+      entityType: 'node',
+      traits: $traits,
+    );
+
+    $new = $original->withMutable(TRUE);
+
+    $this->assertSame($traits, $new->traits);
   }
 
 }

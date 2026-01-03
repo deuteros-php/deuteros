@@ -106,6 +106,13 @@ final class EntityDoubleDefinitionBuilder {
   private bool $lenient = FALSE;
 
   /**
+   * Traits to apply to the entity double.
+   *
+   * @var list<class-string>
+   */
+  private array $traits = [];
+
+  /**
    * Private constructor - use create(), from(), or fromInterface() methods.
    *
    * @param string $entityType
@@ -201,6 +208,7 @@ final class EntityDoubleDefinitionBuilder {
     $builder->context = $definition->context;
     $builder->primaryInterface = $definition->primaryInterface;
     $builder->lenient = $definition->lenient;
+    $builder->traits = $definition->traits;
     return $builder;
   }
 
@@ -406,6 +414,52 @@ final class EntityDoubleDefinitionBuilder {
   }
 
   /**
+   * Adds a trait to apply to the entity double.
+   *
+   * When traits are specified, the factory generates a stub class that extends
+   * the entity double and uses the traits. This enables unit testing of trait
+   * implementations that depend on entity interface methods.
+   *
+   * @param class-string $traitClassName
+   *   The fully-qualified trait class name.
+   *
+   * @return $this
+   *
+   * @throws \InvalidArgumentException
+   *   If the trait does not exist.
+   */
+  public function trait(string $traitClassName): self {
+    if (!trait_exists($traitClassName)) {
+      throw new \InvalidArgumentException(sprintf(
+        "Trait '%s' does not exist.",
+        $traitClassName
+      ));
+    }
+    if (!in_array($traitClassName, $this->traits, TRUE)) {
+      $this->traits[] = $traitClassName;
+    }
+    return $this;
+  }
+
+  /**
+   * Adds multiple traits to apply to the entity double.
+   *
+   * @param list<class-string> $traitClassNames
+   *   List of fully-qualified trait class names.
+   *
+   * @return $this
+   *
+   * @throws \InvalidArgumentException
+   *   If any trait does not exist.
+   */
+  public function traits(array $traitClassNames): self {
+    foreach ($traitClassNames as $traitClassName) {
+      $this->trait($traitClassName);
+    }
+    return $this;
+  }
+
+  /**
    * Builds the EntityDoubleDefinition.
    *
    * @return \Deuteros\Common\EntityDoubleDefinition
@@ -434,6 +488,7 @@ final class EntityDoubleDefinitionBuilder {
       context: $this->context,
       primaryInterface: $this->primaryInterface,
       lenient: $this->lenient,
+      traits: $this->traits,
     );
   }
 

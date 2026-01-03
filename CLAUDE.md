@@ -126,6 +126,14 @@ fn(array $context, ...$args): mixed
 - Mutable doubles: Track changes in `MutableStateContainer` for assertions
 - Metadata (id, uuid, entityType, bundle) always immutable
 
+**Trait Stub Generation:**
+- When traits are specified via `trait()` or `traits()` builder methods, the factory
+  generates a stub class that extends the entity double and uses the traits
+- Stub classes are generated via `eval()` and cached statically for performance
+- The stub's internal state is copied from the original double (adapter-specific)
+- PHPUnit: All mock properties are copied via reflection
+- Prophecy: The `objectProphecyClosure` property is copied to maintain prophecy binding
+
 ## PHP 8.3 Features Used
 
 The codebase leverages modern PHP features:
@@ -163,6 +171,8 @@ These constraints must never be violated:
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by
   both adapter test classes (parity verified via inheritance)
+- `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,
+  `SecondTestTrait`) for trait support tests
 - `tests/Performance/` - Benchmarking tests comparing performance approaches
 
 ## Directory Layout

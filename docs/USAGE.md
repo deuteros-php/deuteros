@@ -140,6 +140,13 @@ The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring 
 | `context(string $key, mixed $value)` | Adds a single context value          |
 | `withContext(array $context)` | Adds multiple context values at once |
 
+### Trait Methods
+
+| Method | Description                                    |
+|--------|------------------------------------------------|
+| `trait(string $traitClassName)` | Adds a trait to apply to the entity double     |
+| `traits(array $traitClassNames)` | Adds multiple traits to apply at once          |
+
 ### Other Methods
 
 | Method | Description                                                                 |
@@ -521,6 +528,113 @@ $entity = $factory->create(
 );
 
 $entity->save(); // Throws LogicException
+```
+
+### Applying Traits to Entity Doubles
+
+Entity classes often use traits to encapsulate business logic. This includes bundle classes, custom entity classes extending `EntityBase`, and more. Deuteros allows you to apply traits to entity doubles, enabling you to unit test trait implementations that depend on entity interface methods.
+
+When traits are specified, the factory generates a stub class that extends the entity double and uses the traits. The trait methods can then call the mocked entity methods (`get()`, `id()`, `label()`, etc.) and receive the configured values.
+
+**Single Trait**
+
+```php
+trait ArticleTrait {
+  public function getByLine(): string {
+    return $this->get('field_byline')->value;
+  }
+}
+
+$article = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_byline', 'John Doe')
+    ->trait(ArticleTrait::class)
+    ->build()
+);
+
+$article->getByLine(); // 'John Doe'
+```
+
+**Multiple Traits**
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->id(21)
+    ->trait(ArticleTrait::class)
+    ->trait(PublishableTrait::class)
+    ->build()
+);
+
+// Or use the traits() method
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->traits([ArticleTrait::class, PublishableTrait::class])
+    ->build()
+);
+```
+
+**Traits with Mutable Doubles**
+
+Traits work with both immutable and mutable entity doubles:
+
+```php
+$entity = $factory->createMutable(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_status', 'draft')
+    ->trait(StatusTrait::class)
+    ->build()
+);
+
+// Trait methods work with initial values
+$entity->getStatus(); // 'draft'
+
+// Mutations are reflected in trait method calls
+$entity->set('field_status', 'published');
+// Next call to trait method sees updated value
+```
+
+**Testing Bundle Classes**
+
+This is particularly useful for testing Drupal bundle classes that use traits:
+
+```php
+// Drupal bundle class pattern
+interface ArticleInterface extends NodeInterface {
+  public function getByLine(): string;
+}
+
+final class Article extends Node implements ArticleInterface {
+  use ArticleTrait;
+}
+
+trait ArticleTrait {
+  public function getByLine(): string {
+    return $this->get('field_byline')->value;
+  }
+}
+
+// Test the trait in isolation
+class ArticleTraitTest extends TestCase {
+  public function testGetByLine(): void {
+    $factory = EntityDoubleFactory::fromTest($this);
+
+    $article = $factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(ArticleInterface::class)
+        ->trait(ArticleTrait::class)
+        ->field('field_byline', 'Jane Smith')
+        ->build()
+    );
+
+    $this->assertSame('Jane Smith', $article->getByLine());
+  }
+}
 ```
 
 ---

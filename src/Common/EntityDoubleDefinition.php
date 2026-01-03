@@ -52,6 +52,8 @@ final readonly class EntityDoubleDefinition {
    *   The primary interface for improved error messages.
    * @param bool $lenient
    *   Whether to use lenient mode (return null for unconfigured methods).
+   * @param list<class-string> $traits
+   *   Traits to apply to the entity double.
    *
    * @throws \InvalidArgumentException
    *   If fields are defined but FieldableEntityInterface is not in interfaces.
@@ -69,6 +71,7 @@ final readonly class EntityDoubleDefinition {
     public bool $mutable = FALSE,
     public ?string $primaryInterface = NULL,
     public bool $lenient = FALSE,
+    public array $traits = [],
   ) {
     // Validate that fields are only used with "FieldableEntityInterface".
     if ($fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
@@ -172,6 +175,7 @@ final readonly class EntityDoubleDefinition {
       mutable: $this->mutable,
       primaryInterface: $this->primaryInterface,
       lenient: $this->lenient,
+      traits: $this->traits,
     );
   }
 
@@ -201,6 +205,7 @@ final readonly class EntityDoubleDefinition {
       mutable: $mutable,
       primaryInterface: $this->primaryInterface,
       lenient: $this->lenient,
+      traits: $this->traits,
     );
   }
 

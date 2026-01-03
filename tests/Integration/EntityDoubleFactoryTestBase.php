@@ -13,6 +13,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Deuteros\Tests\Fixtures\SecondTestTrait;
+use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -1036,6 +1038,49 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
 
     // @phpstan-ignore method.resultUnused
     $fieldList->referencedEntities();
+  }
+
+  /**
+   * Tests using the traits() method to add multiple traits at once.
+   */
+  public function testTraitsMethodAddsMultipleTraits(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(7)
+        ->traits([TestBundleTrait::class, SecondTestTrait::class])
+        ->build()
+    );
+
+    // @phpstan-ignore method.notFound
+    $this->assertSame(14, $entity->getEntityIdTimesTwo());
+    // @phpstan-ignore method.notFound
+    $this->assertSame('from_second_trait', $entity->getSecondTraitValue());
+  }
+
+  /**
+   * Tests that trait methods work with mutable entity doubles.
+   */
+  public function testTraitWithMutableDouble(): void {
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_test', 'initial')
+        ->trait(TestBundleTrait::class)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Trait method reads initial value.
+    // @phpstan-ignore method.notFound
+    $this->assertSame('initial', $entity->getTestFieldValue());
+
+    // Mutate the field.
+    $entity->set('field_test', 'updated');
+
+    // Trait method sees the updated value.
+    // @phpstan-ignore method.notFound
+    $this->assertSame('updated', $entity->getTestFieldValue());
   }
 
 }

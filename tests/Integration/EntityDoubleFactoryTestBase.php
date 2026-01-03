@@ -1058,4 +1058,29 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->assertSame('from_second_trait', $entity->getSecondTraitValue());
   }
 
+  /**
+   * Tests that trait methods work with mutable entity doubles.
+   */
+  public function testTraitWithMutableDouble(): void {
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_test', 'initial')
+        ->trait(TestBundleTrait::class)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Trait method reads initial value.
+    // @phpstan-ignore method.notFound
+    $this->assertSame('initial', $entity->getTestFieldValue());
+
+    // Mutate the field.
+    $entity->set('field_test', 'updated');
+
+    // Trait method sees the updated value.
+    // @phpstan-ignore method.notFound
+    $this->assertSame('updated', $entity->getTestFieldValue());
+  }
+
 }

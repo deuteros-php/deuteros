@@ -1083,4 +1083,44 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->assertSame('updated', $entity->getTestFieldValue());
   }
 
+  /**
+   * Tests method override callbacks can access definition properties.
+   */
+  public function testMethodOverrideAccessesDefinition(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->id(42)
+        ->method('id', function (array $context) {
+          $def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+          assert($def instanceof EntityDoubleDefinition);
+          assert(is_int($def->id));
+          return $def->id + 100;
+        })
+        ->build()
+    );
+
+    // Override accesses original id (42) and adds 100.
+    $this->assertSame(142, $entity->id());
+  }
+
+  /**
+   * Tests field callbacks can access definition properties.
+   */
+  public function testFieldCallbackAccessesDefinition(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_type', function (array $context) {
+          $def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+          assert($def instanceof EntityDoubleDefinition);
+          return $def->entityType;
+        })
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame('node', $entity->get('field_type')->value);
+  }
+
 }

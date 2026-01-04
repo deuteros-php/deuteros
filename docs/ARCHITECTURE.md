@@ -157,6 +157,28 @@ This pattern enables:
 - Framework-agnostic core logic
 - Consistent behavior across PHPUnit and Prophecy
 
+#### Context Structure
+
+All resolvers receive a context array with this structure:
+
+```php
+[
+  '_definition' => EntityDoubleDefinition, // Always present
+  // ... user-provided context values
+]
+```
+
+The definition is added by `EntityDoubleDefinition::withContext()` before
+user context is merged. This ensures all callbacks can access entity metadata.
+The `_definition` key is reserved and cannot be overwritten by users.
+
+Access the definition via the constant:
+```php
+$def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+$entityType = $def->entityType;
+$bundle = $def->bundle;
+```
+
 ### Method Resolution Order
 
 When a method is called on an entity double:

@@ -305,6 +305,33 @@ $entity->label();                     // "Article #42"
 $entity->get('field_status')->value;  // "published"
 ```
 
+### Accessing Definition in Callbacks
+
+All callbacks (for metadata, fields, and method overrides) can access the
+entity definition via the reserved `_definition` context key. This enables
+callbacks to reference entity properties like `entityType`, `bundle`, `id`,
+`uuid`, and other configured values.
+
+**Access via constant:**
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->id(42)
+    ->label(function (array $context) {
+      $def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+      return sprintf('Article #%d', $def->id);
+    })
+    ->build()
+);
+
+$entity->label(); // "Article #42"
+```
+
+**Note:** The `_definition` key is reserved by Deuteros. Attempting to use this
+key in user-provided context will throw an `InvalidArgumentException`.
+
 ### Entity References
 
 **Shorthand (Entity Object)**

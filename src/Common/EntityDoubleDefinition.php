@@ -21,6 +21,14 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 final readonly class EntityDoubleDefinition {
 
   /**
+   * Context key for accessing the entity definition in callbacks.
+   *
+   * This key is reserved by Deuteros. User callbacks can access the entity
+   * definition via `$context[EntityDoubleDefinition::CONTEXT_KEY]`.
+   */
+  public const string CONTEXT_KEY = '_definition';
+
+  /**
    * The bundle (defaults to entityType if not provided).
    */
   public string $bundle;
@@ -152,16 +160,41 @@ final readonly class EntityDoubleDefinition {
   /**
    * Creates a new definition with additional context.
    *
+   * The definition is automatically added to context under the reserved
+   * `CONTEXT_KEY` ("_definition"), allowing callbacks to access entity
+   * metadata.
+   *
    * @param array<string, mixed> $additionalContext
    *   Additional context to merge.
    *
    * @return self
    *   A new EntityDoubleDefinition with merged context.
+   *
+   * @throws \InvalidArgumentException
+   *   If additionalContext contains the reserved "_definition" key.
    */
   public function withContext(array $additionalContext): self {
-    if ($additionalContext === []) {
+    // Validate reserved key is not used.
+    if (array_key_exists(self::CONTEXT_KEY, $additionalContext)) {
+      throw new \InvalidArgumentException(sprintf(
+        'The context key "%s" is reserved by Deuteros and cannot be used.',
+        self::CONTEXT_KEY
+      ));
+    }
+
+    // Add definition to context only if not already present.
+    $definitionContext = array_key_exists(self::CONTEXT_KEY, $this->context)
+      ? []
+      : [self::CONTEXT_KEY => $this];
+
+    // Merge context: definition first, then existing, then additional.
+    $mergedContext = array_merge($definitionContext, $this->context, $additionalContext);
+
+    // Return same instance if context unchanged.
+    if ($mergedContext === $this->context) {
       return $this;
     }
+
     return new self(
       entityType: $this->entityType,
       bundle: $this->bundle,
@@ -171,7 +204,7 @@ final readonly class EntityDoubleDefinition {
       fields: $this->fields,
       interfaces: $this->interfaces,
       methods: $this->methods,
-      context: array_merge($this->context, $additionalContext),
+      context: $mergedContext,
       mutable: $this->mutable,
       primaryInterface: $this->primaryInterface,
       lenient: $this->lenient,

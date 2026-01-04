@@ -126,6 +126,12 @@ fn(array $context, ...$args): mixed
 - Mutable doubles: Track changes in `MutableStateContainer` for assertions
 - Metadata (id, uuid, entityType, bundle) always immutable
 
+**Definition in Context:** All resolver callbacks receive the
+`EntityDoubleDefinition` in context via `$context[EntityDoubleDefinition::CONTEXT_KEY]`
+(key: `_definition`). This enables callbacks to access entity metadata like
+entityType, bundle, id, uuid, etc. The `_definition` key is reserved and cannot
+be used by user-provided context.
+
 **Trait Stub Generation:**
 - When traits are specified via `trait()` or `traits()` builder methods, the factory
   generates a stub class that extends the entity double and uses the traits

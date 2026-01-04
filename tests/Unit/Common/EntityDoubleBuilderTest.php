@@ -322,4 +322,52 @@ class EntityDoubleBuilderTest extends TestCase {
     $this->assertSame($definition, $builder->getDefinition());
   }
 
+  /**
+   * Tests resolvers receive definition in context.
+   *
+   * When ::withContext is called on the definition, the definition is added
+   * to context and can be accessed by callbacks.
+   */
+  public function testResolversReceiveDefinitionInContext(): void {
+    $definition = new EntityDoubleDefinition(
+      entityType: 'node',
+      bundle: 'article',
+      id: function (array $context) {
+        $def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+        assert($def instanceof EntityDoubleDefinition);
+        return $def->bundle;
+      },
+    );
+
+    // Simulate what factory does - withContext adds definition.
+    $normalized = $definition->withContext([]);
+    $builder = new EntityDoubleBuilder($normalized);
+    $resolvers = $builder->getResolvers();
+
+    // id() resolver should return 'article' (from definition->bundle).
+    $this->assertSame('article', $resolvers['id']($normalized->context));
+  }
+
+  /**
+   * Tests method override callbacks receive definition in context.
+   */
+  public function testMethodOverrideReceivesDefinitionInContext(): void {
+    $definition = new EntityDoubleDefinition(
+      entityType: 'taxonomy_term',
+      methods: [
+        'getVocabularyId' => function (array $context) {
+          $def = $context[EntityDoubleDefinition::CONTEXT_KEY];
+          assert($def instanceof EntityDoubleDefinition);
+          return $def->entityType;
+        },
+      ],
+    );
+
+    $normalized = $definition->withContext([]);
+    $builder = new EntityDoubleBuilder($normalized);
+    $resolver = $builder->getMethodResolver('getVocabularyId');
+
+    $this->assertSame('taxonomy_term', $resolver($normalized->context));
+  }
+
 }

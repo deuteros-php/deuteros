@@ -154,24 +154,76 @@ class EntityDoubleDefinitionTest extends TestCase {
     );
 
     $new = $original->withContext(['b' => 2]);
+    $newContext = array_diff_key($new->context, [EntityDoubleDefinition::CONTEXT_KEY => TRUE]);
 
+    // Original unchanged.
     $this->assertSame(['a' => 1], $original->context);
-    $this->assertSame(['a' => 1, 'b' => 2], $new->context);
+    $this->assertSame(['a' => 1, 'b' => 2], $newContext);
     $this->assertNotSame($original, $new);
+
+    // New instance has definition + original + additional context.
+    $this->assertArrayHasKey(EntityDoubleDefinition::CONTEXT_KEY, $new->context);
+    $this->assertSame(1, $new->context['a']);
+    $this->assertSame(2, $new->context['b']);
   }
 
   /**
-   * Tests ::withContext() returns same instance when context is empty.
+   * Tests ::withContext() returns same instance when context unchanged.
+   *
+   * When ::withContext is called again with empty array on a definition that
+   * already has the definition in context, it returns the same instance.
    */
-  public function testWithContextReturnsSameInstanceWhenEmpty(): void {
+  public function testWithContextReturnsSameInstanceWhenUnchanged(): void {
     $original = new EntityDoubleDefinition(
       entityType: 'node',
       context: ['a' => 1],
     );
 
-    $new = $original->withContext([]);
+    // First call adds definition to context.
+    $withDefinition = $original->withContext([]);
+    $this->assertNotSame($original, $withDefinition);
 
-    $this->assertSame($original, $new);
+    // Second call returns same instance (context unchanged).
+    $sameAgain = $withDefinition->withContext([]);
+    $this->assertSame($withDefinition, $sameAgain);
+  }
+
+  /**
+   * Tests ::withContext() adds definition to context.
+   */
+  public function testWithContextAddsDefinition(): void {
+    $original = new EntityDoubleDefinition(
+      entityType: 'node',
+      bundle: 'article',
+      id: 42,
+    );
+
+    $new = $original->withContext(['custom' => 'value']);
+
+    // Definition should be in context.
+    $this->assertArrayHasKey(EntityDoubleDefinition::CONTEXT_KEY, $new->context);
+    $storedDefinition = $new->context[EntityDoubleDefinition::CONTEXT_KEY];
+    $this->assertInstanceOf(EntityDoubleDefinition::class, $storedDefinition);
+
+    // The definition in context should be the original (pre-context-merge).
+    $this->assertSame('node', $storedDefinition->entityType);
+    $this->assertSame('article', $storedDefinition->bundle);
+    $this->assertSame(42, $storedDefinition->id);
+
+    // User context should also be present.
+    $this->assertSame('value', $new->context['custom']);
+  }
+
+  /**
+   * Tests ::withContext() throws on reserved key usage.
+   */
+  public function testWithContextThrowsOnReservedKey(): void {
+    $original = new EntityDoubleDefinition(entityType: 'node');
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('The context key "_definition" is reserved');
+
+    $original->withContext([EntityDoubleDefinition::CONTEXT_KEY => 'value']);
   }
 
   /**

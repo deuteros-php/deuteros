@@ -26,12 +26,5 @@
     "test": "phpunit"
   },
   "minimum-stability": "dev",
-  "prefer-stable": true,
-  "config": {
-    "allow-plugins": {
-      "composer/installers": true,
-      "dealerdirect/phpcodesniffer-composer-installer": true,
-      "drupal/core-composer-scaffold": true
-    }
-  }
+  "prefer-stable": true
 }

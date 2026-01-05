@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Performance;
 
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
+use Drupal\Tests\BrowserTestBase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 if (!class_exists(EntityKernelTestBase::class)) {
   // Define a placeholder class so PHPUnit doesn't error on missing class.
   // phpcs:ignore Drupal.Classes.ClassDeclaration
-  class KernelNodeBenchmarkTest extends TestCase {
+  class BrowserNodeBenchmarkTest extends TestCase {
 
     /**
      * Skip marker test when Drupal core is not available.
@@ -27,14 +28,14 @@ if (!class_exists(EntityKernelTestBase::class)) {
 }
 
 /**
- * Performance benchmark using Drupal Kernel test infrastructure.
+ * Performance benchmark using Drupal Browser test infrastructure.
  *
- * This test measures the overhead of the Drupal service container,
- * entity type manager, and entity creation without database persistence.
+ * This test measures the overhead of the setting up a test using a minimal
+ * Drupal installation.
  */
 #[Group('deuteros')]
 #[Group('performance')]
-class KernelNodeBenchmarkTest extends EntityKernelTestBase {
+class BrowserNodeBenchmarkTest extends BrowserTestBase {
 
   use DrupalTestTrait {
     setUp as traitSetup;
@@ -48,9 +49,13 @@ class KernelNodeBenchmarkTest extends EntityKernelTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp(): void {
     parent::setUp();
-    $this->installConfig(['node']);
     $this->traitSetup();
   }
 

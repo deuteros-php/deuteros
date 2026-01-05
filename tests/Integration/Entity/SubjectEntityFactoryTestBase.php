@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Integration\Entity;
 
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\Entity\SubjectEntityFactory;
+use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
 use Drupal\node\Entity\Node;
-use PHPUnit\Framework\TestCase;
 
 /**
  * Base test class for SubjectEntityFactory integration tests.
@@ -17,35 +16,13 @@ use PHPUnit\Framework\TestCase;
  * Contains shared tests that work identically across PHPUnit and Prophecy
  * factory implementations.
  */
-abstract class SubjectEntityFactoryTestBase extends TestCase {
-
-  /**
-   * The subject entity factory.
-   */
-  protected SubjectEntityFactory $factory;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function setUp(): void {
-    parent::setUp();
-    $this->factory = SubjectEntityFactory::fromTest($this);
-    $this->factory->installContainer();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function tearDown(): void {
-    $this->factory->uninstallContainer();
-    parent::tearDown();
-  }
+abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
   /**
    * Tests creating a test entity with minimal values.
    */
   public function testCreateMinimalEntity(): void {
-    $entity = $this->factory->create(TestContentEntity::class, [
+    $entity = $this->createEntity(TestContentEntity::class, [
       'id' => 1,
       'type' => 'test_bundle',
     ]);
@@ -58,7 +35,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests creating a Node entity with values.
    */
   public function testCreateNodeEntity(): void {
-    $entity = $this->factory->create(Node::class, [
+    $entity = $this->createEntity(Node::class, [
       'nid' => 42,
       'type' => 'article',
       'title' => 'Test Article',
@@ -73,7 +50,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests that field values are accessible via field doubles.
    */
   public function testFieldValuesAccessible(): void {
-    $entity = $this->factory->create(Node::class, [
+    $entity = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test Title',
@@ -91,14 +68,14 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    */
   public function testEntityReferenceField(): void {
     // Create an author double using the factory.
-    $author = $this->factory->getDoubleFactory()->create(
+    $author = $this->getDoubleFactory()->create(
       EntityDoubleDefinitionBuilder::create('user')
         ->id(99)
         ->label('Test Author')
         ->build()
     );
 
-    $entity = $this->factory->create(Node::class, [
+    $entity = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test',
@@ -115,7 +92,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests multi-value field.
    */
   public function testMultiValueField(): void {
-    $entity = $this->factory->create(Node::class, [
+    $entity = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test',
@@ -147,14 +124,14 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests creating multiple entities of the same type.
    */
   public function testMultipleEntities(): void {
-    $entity1 = $this->factory->create(Node::class, [
+    $entity1 = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'First',
     ]);
     assert($entity1 instanceof Node);
 
-    $entity2 = $this->factory->create(Node::class, [
+    $entity2 = $this->createEntity(Node::class, [
       'nid' => 2,
       'type' => 'page',
       'title' => 'Second',
@@ -171,7 +148,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests property-style field access.
    */
   public function testPropertyStyleFieldAccess(): void {
-    $entity = $this->factory->create(Node::class, [
+    $entity = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Property Access Test',
@@ -186,7 +163,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests creating a config entity with minimal values.
    */
   public function testCreateConfigEntityMinimal(): void {
-    $entity = $this->factory->create(TestConfigEntity::class, [
+    $entity = $this->createEntity(TestConfigEntity::class, [
       'id' => 'test_config_id',
     ]);
     assert($entity instanceof TestConfigEntity);
@@ -199,7 +176,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests creating a config entity with full values.
    */
   public function testCreateConfigEntityWithValues(): void {
-    $entity = $this->factory->create(TestConfigEntity::class, [
+    $entity = $this->createEntity(TestConfigEntity::class, [
       'id' => 'my_config',
       'label' => 'My Configuration',
       'uuid' => 'test-uuid-1234',
@@ -220,7 +197,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests config entity disabled status.
    */
   public function testConfigEntityDisabledStatus(): void {
-    $entity = $this->factory->create(TestConfigEntity::class, [
+    $entity = $this->createEntity(TestConfigEntity::class, [
       'id' => 'disabled_config',
       'label' => 'Disabled Config',
       'status' => FALSE,
@@ -234,13 +211,13 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests creating multiple config entities.
    */
   public function testMultipleConfigEntities(): void {
-    $entity1 = $this->factory->create(TestConfigEntity::class, [
+    $entity1 = $this->createEntity(TestConfigEntity::class, [
       'id' => 'config_1',
       'label' => 'First Config',
     ]);
     assert($entity1 instanceof TestConfigEntity);
 
-    $entity2 = $this->factory->create(TestConfigEntity::class, [
+    $entity2 = $this->createEntity(TestConfigEntity::class, [
       'id' => 'config_2',
       'label' => 'Second Config',
     ]);
@@ -256,14 +233,14 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
    * Tests mixing content and config entities in same test.
    */
   public function testMixedEntityTypes(): void {
-    $contentEntity = $this->factory->create(Node::class, [
+    $contentEntity = $this->createEntity(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test Node',
     ]);
     assert($contentEntity instanceof Node);
 
-    $configEntity = $this->factory->create(TestConfigEntity::class, [
+    $configEntity = $this->createEntity(TestConfigEntity::class, [
       'id' => 'test_config',
       'label' => 'Test Config',
     ]);

@@ -6,6 +6,7 @@ namespace Deuteros\Tests\Integration\Entity;
 
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\Entity\SubjectEntityFactory;
+use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
 use Drupal\node\Entity\Node;
 use PHPUnit\Framework\TestCase;
@@ -78,6 +79,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
       'title' => 'Test Title',
       'status' => 1,
     ]);
+    assert($entity instanceof Node);
 
     // Field values should be accessible through field doubles.
     $this->assertSame('Test Title', $entity->get('title')->value);
@@ -102,6 +104,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
       'title' => 'Test',
       'uid' => $author,
     ]);
+    assert($entity instanceof Node);
 
     // Entity reference should return the double.
     $this->assertSame($author, $entity->get('uid')->entity);
@@ -122,6 +125,7 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
         ['target_id' => 3],
       ],
     ]);
+    assert($entity instanceof Node);
 
     // Test accessing individual items by delta.
     $fieldTags = $entity->get('field_tags');
@@ -148,12 +152,14 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
       'type' => 'article',
       'title' => 'First',
     ]);
+    assert($entity1 instanceof Node);
 
     $entity2 = $this->factory->create(Node::class, [
       'nid' => 2,
       'type' => 'page',
       'title' => 'Second',
     ]);
+    assert($entity2 instanceof Node);
 
     $this->assertSame('First', $entity1->get('title')->value);
     $this->assertSame('Second', $entity2->get('title')->value);
@@ -170,9 +176,103 @@ abstract class SubjectEntityFactoryTestBase extends TestCase {
       'type' => 'article',
       'title' => 'Property Access Test',
     ]);
+    assert($entity instanceof Node);
 
     // Magic __get should work for field access.
     $this->assertSame('Property Access Test', $entity->title->value);
+  }
+
+  /**
+   * Tests creating a config entity with minimal values.
+   */
+  public function testCreateConfigEntityMinimal(): void {
+    $entity = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'test_config_id',
+    ]);
+    assert($entity instanceof TestConfigEntity);
+
+    $this->assertSame('test_config', $entity->getEntityTypeId());
+    $this->assertSame('test_config_id', $entity->id());
+  }
+
+  /**
+   * Tests creating a config entity with full values.
+   */
+  public function testCreateConfigEntityWithValues(): void {
+    $entity = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'my_config',
+      'label' => 'My Configuration',
+      'uuid' => 'test-uuid-1234',
+      'status' => TRUE,
+      'description' => 'A test description',
+      'weight' => 5,
+    ]);
+    assert($entity instanceof TestConfigEntity);
+
+    $this->assertSame('my_config', $entity->id());
+    $this->assertSame('My Configuration', $entity->label());
+    $this->assertTrue($entity->status());
+    $this->assertSame('A test description', $entity->description);
+    $this->assertSame(5, $entity->weight);
+  }
+
+  /**
+   * Tests config entity disabled status.
+   */
+  public function testConfigEntityDisabledStatus(): void {
+    $entity = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'disabled_config',
+      'label' => 'Disabled Config',
+      'status' => FALSE,
+    ]);
+    assert($entity instanceof TestConfigEntity);
+
+    $this->assertFalse($entity->status());
+  }
+
+  /**
+   * Tests creating multiple config entities.
+   */
+  public function testMultipleConfigEntities(): void {
+    $entity1 = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'config_1',
+      'label' => 'First Config',
+    ]);
+    assert($entity1 instanceof TestConfigEntity);
+
+    $entity2 = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'config_2',
+      'label' => 'Second Config',
+    ]);
+    assert($entity2 instanceof TestConfigEntity);
+
+    $this->assertSame('config_1', $entity1->id());
+    $this->assertSame('config_2', $entity2->id());
+    $this->assertSame('First Config', $entity1->label());
+    $this->assertSame('Second Config', $entity2->label());
+  }
+
+  /**
+   * Tests mixing content and config entities in same test.
+   */
+  public function testMixedEntityTypes(): void {
+    $contentEntity = $this->factory->create(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test Node',
+    ]);
+    assert($contentEntity instanceof Node);
+
+    $configEntity = $this->factory->create(TestConfigEntity::class, [
+      'id' => 'test_config',
+      'label' => 'Test Config',
+    ]);
+    assert($configEntity instanceof TestConfigEntity);
+
+    $this->assertSame('node', $contentEntity->getEntityTypeId());
+    $this->assertSame('test_config', $configEntity->getEntityTypeId());
+    $this->assertSame('Test Node', $contentEntity->get('title')->value);
+    $this->assertSame('Test Config', $configEntity->label());
   }
 
 }

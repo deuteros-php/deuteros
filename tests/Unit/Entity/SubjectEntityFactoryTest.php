@@ -6,7 +6,7 @@ namespace Deuteros\Tests\Unit\Entity;
 
 use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Tests\Fixtures\EntityWithoutAttribute;
-use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityBase;
 use Drupal\node\Entity\Node;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -78,27 +78,27 @@ class SubjectEntityFactoryTest extends TestCase {
   }
 
   /**
-   * Tests that ::create throws for non-ContentEntityBase classes.
+   * Tests that ::create throws for non-EntityBase classes.
    */
   public function testCreateThrowsForInvalidClass(): void {
     $this->factory->installContainer();
 
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('must be a subclass of');
-    $this->expectExceptionMessage(ContentEntityBase::class);
+    $this->expectExceptionMessage(EntityBase::class);
 
-    // stdClass is not a ContentEntityBase subclass.
+    // stdClass is not an EntityBase subclass.
     $this->factory->create(\stdClass::class, []);
   }
 
   /**
-   * Tests that ::create throws for missing ContentEntityType attribute.
+   * Tests that ::create throws for missing entity type attribute.
    */
   public function testCreateThrowsForMissingAttribute(): void {
     $this->factory->installContainer();
 
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('does not have a #[ContentEntityType] attribute');
+    $this->expectExceptionMessage('does not have a #[ContentEntityType] or #[ConfigEntityType] attribute');
 
     // Use a class that extends ContentEntityBase but lacks the attribute.
     $this->factory->create(EntityWithoutAttribute::class, []);

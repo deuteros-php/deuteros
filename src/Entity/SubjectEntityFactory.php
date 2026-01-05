@@ -9,8 +9,11 @@ use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
 use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
 use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
+use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
 use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityBase;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Language\LanguageInterface;
 use PHPUnit\Framework\TestCase;
@@ -19,18 +22,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Factory for creating subject entity instances in unit tests.
  *
- * This factory creates real Drupal entity instances (Node, User, etc.) with
- * doubled service dependencies and DEUTEROS field doubles injected directly
- * into the entity's field cache.
+ * This factory creates real Drupal entity instances (Node, User, config
+ * entities, etc.) with doubled service dependencies. For content entities,
+ * DEUTEROS field doubles are injected directly into the entity's field cache.
  *
  * Unlike "EntityDoubleFactory" which creates double implementations of entity
  * interfaces, this factory instantiates actual entity classes with their
- * service dependencies doubled and field values provided as DEUTEROS doubles.
+ * service dependencies doubled.
  *
  * The term "subject" refers to the entity class being tested, as opposed to
  * "doubles" which are test substitutes for dependencies.
  *
- * @example Basic usage
+ * @example Basic usage with content entity
  * ```php
  * class MyNodeTest extends TestCase {
  *     private SubjectEntityFactory $factory;
@@ -178,41 +181,43 @@ final class SubjectEntityFactory {
   }
 
   /**
-   * Creates a subject entity instance with DEUTEROS field doubles.
+   * Creates a subject entity instance.
    *
-   * Instantiates the specified entity class, creates field doubles from the
-   * provided values, and injects them into the entity's field cache.
+   * Instantiates the specified entity class. For content entities (those
+   * implementing "FieldableEntityInterface"), creates field doubles from the
+   * provided values and injects them into the entity's field cache.
    *
    * @param class-string $entityClass
    *   The entity class to instantiate (e.g., Node::class).
    * @param array<string, mixed> $values
-   *   Field values. Entity keys (id, bundle, etc.) are used for the entity
-   *   constructor. Other values are converted to field doubles.
+   *   Field/property values. Entity keys (id, bundle, etc.) are used for the
+   *   entity initialization. For content entities, other values are converted
+   *   to field doubles.
    *
-   * @return \Drupal\Core\Entity\ContentEntityBase
+   * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
    *
    * @throws \InvalidArgumentException
-   *   If the entity class is not a ContentEntityBase subclass.
+   *   If the entity class is not an EntityBase subclass.
    * @throws \LogicException
    *   If ::installContainer has not been called.
    */
-  public function create(string $entityClass, array $values = []): ContentEntityBase {
+  public function create(string $entityClass, array $values = []): EntityBase {
     if (!$this->containerInstalled) {
       throw new \LogicException(
         'Container not installed. Call installContainer() before create().'
       );
     }
 
-    if (!is_subclass_of($entityClass, ContentEntityBase::class)) {
+    if (!is_subclass_of($entityClass, EntityBase::class)) {
       throw new \InvalidArgumentException(sprintf(
         'Entity class %s must be a subclass of %s.',
         $entityClass,
-        ContentEntityBase::class
+        EntityBase::class
       ));
     }
 
-    /** @var class-string<\Drupal\Core\Entity\ContentEntityBase> $entityClass */
+    /** @var class-string<\Drupal\Core\Entity\EntityBase> $entityClass */
 
     // Extract entity type configuration from class attributes.
     $config = $this->getEntityTypeConfig($entityClass);
@@ -230,25 +235,30 @@ final class SubjectEntityFactory {
     }
 
     // Create entity instance without calling the constructor.
-    // This bypasses all the service dependencies in ContentEntityBase.
+    // This bypasses all the service dependencies in entity base classes.
     $reflection = new \ReflectionClass($entityClass);
     $entity = $reflection->newInstanceWithoutConstructor();
 
-    // Set up required internal properties via reflection.
-    $this->initializeEntityProperties($entity, $values, $config);
+    // Initialize entity based on type.
+    if ($entity instanceof ContentEntityBase) {
+      $this->initializeContentEntity($entity, $values, $config);
 
-    // Create and inject field doubles.
-    $fieldDoubles = $this->createFieldDoubles($values, $config);
-    $this->injectFieldDoubles($entity, $fieldDoubles);
+      // Create and inject field doubles for fieldable entities.
+      $fieldDoubles = $this->createFieldDoubles($values, $config);
+      $this->injectFieldDoubles($entity, $fieldDoubles);
+    }
+    elseif ($entity instanceof ConfigEntityBase) {
+      $this->initializeConfigEntity($entity, $values, $config);
+    }
 
     return $entity;
   }
 
   /**
-   * Initializes entity properties via reflection.
+   * Initializes content entity properties via reflection.
    *
-   * Sets the minimal required properties for an entity to function without
-   * calling the full constructor.
+   * Sets the minimal required properties for a content entity to function
+   * without calling the full constructor.
    *
    * @param \Drupal\Core\Entity\ContentEntityBase $entity
    *   The entity instance.
@@ -257,7 +267,7 @@ final class SubjectEntityFactory {
    * @param array{id: string, keys: array<string, string>} $config
    *   The entity type configuration.
    */
-  private function initializeEntityProperties(ContentEntityBase $entity, array $values, array $config): void {
+  private function initializeContentEntity(ContentEntityBase $entity, array $values, array $config): void {
     $baseReflection = new \ReflectionClass(ContentEntityBase::class);
 
     // Set entityTypeId.
@@ -312,6 +322,67 @@ final class SubjectEntityFactory {
   }
 
   /**
+   * Initializes config entity properties via reflection.
+   *
+   * Sets the minimal required properties for a config entity to function
+   * without calling the full constructor.
+   *
+   * @param \Drupal\Core\Config\Entity\ConfigEntityBase $entity
+   *   The entity instance.
+   * @param array<string, mixed> $values
+   *   The property values.
+   * @param array{id: string, keys: array<string, string>} $config
+   *   The entity type configuration.
+   */
+  private function initializeConfigEntity(ConfigEntityBase $entity, array $values, array $config): void {
+    $entityBaseReflection = new \ReflectionClass(EntityBase::class);
+
+    // Set entityTypeId on EntityBase.
+    $entityTypeIdProperty = $entityBaseReflection->getProperty('entityTypeId');
+    $entityTypeIdProperty->setValue($entity, $config['id']);
+
+    // Set enforceIsNew on EntityBase.
+    $enforceIsNewProperty = $entityBaseReflection->getProperty('enforceIsNew');
+    $enforceIsNewProperty->setValue($entity, NULL);
+
+    // Set id if provided.
+    $idKey = $config['keys']['id'] ?? 'id';
+    if (isset($values[$idKey])) {
+      // Config entities store ID directly as a property.
+      $entity->{$idKey} = $values[$idKey];
+    }
+
+    // Set uuid if provided.
+    $uuidKey = $config['keys']['uuid'] ?? 'uuid';
+    if (isset($values[$uuidKey])) {
+      $entity->{$uuidKey} = $values[$uuidKey];
+    }
+
+    // Set label if provided.
+    $labelKey = $config['keys']['label'] ?? 'label';
+    if (isset($values[$labelKey])) {
+      $entity->{$labelKey} = $values[$labelKey];
+    }
+
+    // Set status if provided.
+    $statusKey = $config['keys']['status'] ?? 'status';
+    if (isset($values[$statusKey])) {
+      $entity->{$statusKey} = $values[$statusKey];
+    }
+    else {
+      // Default to enabled.
+      $entity->{$statusKey} = TRUE;
+    }
+
+    // Initialize other properties from values.
+    foreach ($values as $key => $value) {
+      if (!in_array($key, [$idKey, $uuidKey, $labelKey, $statusKey], TRUE)) {
+        $entity->{$key} = $value;
+      }
+    }
+  }
+
+  /**
    * Gets the entity double factory.
    *
    * Useful for creating entity doubles to use as entity references.
@@ -333,7 +404,7 @@ final class SubjectEntityFactory {
    *   The entity type configuration.
    *
    * @throws \InvalidArgumentException
-   *   If the entity class doesn't have a ContentEntityType attribute.
+   *   If the entity class doesn't have an entity type attribute.
    */
   private function getEntityTypeConfig(string $entityClass): array {
     if (isset(self::$entityTypeConfigCache[$entityClass])) {
@@ -342,12 +413,17 @@ final class SubjectEntityFactory {
 
     $reflection = new \ReflectionClass($entityClass);
 
-    // Check for PHP 8 ContentEntityType attribute.
+    // Check for PHP 8 ContentEntityType attribute first.
     $attributes = $reflection->getAttributes(ContentEntityType::class);
+
+    // Fall back to ConfigEntityType attribute.
+    if (empty($attributes)) {
+      $attributes = $reflection->getAttributes(ConfigEntityType::class);
+    }
 
     if (empty($attributes)) {
       throw new \InvalidArgumentException(sprintf(
-        'Entity class %s does not have a #[ContentEntityType] attribute.',
+        'Entity class %s does not have a #[ContentEntityType] or #[ConfigEntityType] attribute.',
         $entityClass
       ));
     }

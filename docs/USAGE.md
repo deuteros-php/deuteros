@@ -877,9 +877,6 @@ preferred as they're lighter weight and framework-agnostic.
 ### Basic Usage
 
 ```php
-use Deuteros\Entity\SubjectEntityFactory;
-use Drupal\node\Entity\Node;
-
 class MyNodeTest extends TestCase {
 
   private SubjectEntityFactory $factory;
@@ -918,8 +915,6 @@ class MyNodeTest extends TestCase {
 You can use DEUTEROS doubles as entity reference targets:
 
 ```php
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
-
 public function testWithEntityReference(): void {
   // Create author double using the factory.
   $author = $this->factory->getDoubleFactory()->create(

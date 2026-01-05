@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\TestCase;
@@ -38,12 +39,17 @@ abstract class SubjectEntityTestBase extends TestCase {
   /**
    * The subject entity factory.
    */
-  protected SubjectEntityFactory $subjectEntityFactory;
+  protected ?SubjectEntityFactory $subjectEntityFactory = NULL;
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // Skip tests when Drupal core is not available (production mode).
+    if (!class_exists(ContainerBuilder::class)) {
+      $this->markTestSkipped('SubjectEntityFactory requires Drupal core.');
+    }
+
     parent::setUp();
     $this->subjectEntityFactory = SubjectEntityFactory::fromTest($this);
     $this->subjectEntityFactory->installContainer();
@@ -53,7 +59,7 @@ abstract class SubjectEntityTestBase extends TestCase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    $this->subjectEntityFactory->uninstallContainer();
+    $this->subjectEntityFactory?->uninstallContainer();
     parent::tearDown();
   }
 
@@ -71,7 +77,7 @@ abstract class SubjectEntityTestBase extends TestCase {
    *   The created entity instance.
    */
   protected function createEntity(string $entityClass, array $values = []): EntityInterface {
-    return $this->subjectEntityFactory->create($entityClass, $values);
+    return $this->subjectEntityFactory()->create($entityClass, $values);
   }
 
   /**
@@ -83,7 +89,18 @@ abstract class SubjectEntityTestBase extends TestCase {
    *   The entity double factory.
    */
   protected function getDoubleFactory(): EntityDoubleFactoryInterface {
-    return $this->subjectEntityFactory->getDoubleFactory();
+    return $this->subjectEntityFactory()->getDoubleFactory();
+  }
+
+  /**
+   * Returns the factory, asserting it is initialized.
+   *
+   * @return \Deuteros\Entity\SubjectEntityFactory
+   *   The factory.
+   */
+  private function subjectEntityFactory(): SubjectEntityFactory {
+    assert($this->subjectEntityFactory !== NULL);
+    return $this->subjectEntityFactory;
   }
 
 }

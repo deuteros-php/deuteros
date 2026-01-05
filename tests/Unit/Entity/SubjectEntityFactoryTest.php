@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Unit\Entity;
 
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Tests\Fixtures\EntityWithoutAttribute;
 use Drupal\Core\Entity\EntityBase;
@@ -22,12 +23,17 @@ class SubjectEntityFactoryTest extends TestCase {
   /**
    * The subject entity factory.
    */
-  private SubjectEntityFactory $factory;
+  private ?SubjectEntityFactory $factory = NULL;
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // Skip tests when Drupal core is not available (production mode).
+    if (!class_exists(ContainerBuilder::class)) {
+      $this->markTestSkipped('SubjectEntityFactory requires Drupal core.');
+    }
+
     parent::setUp();
     $this->factory = SubjectEntityFactory::fromTest($this);
   }
@@ -36,8 +42,19 @@ class SubjectEntityFactoryTest extends TestCase {
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    $this->factory->uninstallContainer();
+    $this->factory?->uninstallContainer();
     parent::tearDown();
+  }
+
+  /**
+   * Returns the factory, asserting it is initialized.
+   *
+   * @return \Deuteros\Entity\SubjectEntityFactory
+   *   The factory.
+   */
+  private function factory(): SubjectEntityFactory {
+    assert($this->factory !== NULL);
+    return $this->factory;
   }
 
   /**
@@ -59,47 +76,47 @@ class SubjectEntityFactoryTest extends TestCase {
    * Tests that ::installContainer throws when called twice.
    */
   public function testInstallContainerThrowsTwice(): void {
-    $this->factory->installContainer();
+    $this->factory()->installContainer();
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('Container already installed');
     $this->expectExceptionMessage('uninstallContainer()');
 
-    $this->factory->installContainer();
+    $this->factory()->installContainer();
   }
 
   /**
    * Tests that ::create throws for non-EntityBase classes.
    */
   public function testCreateThrowsForInvalidClass(): void {
-    $this->factory->installContainer();
+    $this->factory()->installContainer();
 
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('must be a subclass of');
     $this->expectExceptionMessage(EntityBase::class);
 
     // stdClass is not an EntityBase subclass.
-    $this->factory->create(\stdClass::class, []);
+    $this->factory()->create(\stdClass::class, []);
   }
 
   /**
    * Tests that ::create throws for missing entity type attribute.
    */
   public function testCreateThrowsForMissingAttribute(): void {
-    $this->factory->installContainer();
+    $this->factory()->installContainer();
 
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('does not have a #[ContentEntityType] or #[ConfigEntityType] attribute');
 
     // Use a class that extends ContentEntityBase but lacks the attribute.
-    $this->factory->create(EntityWithoutAttribute::class, []);
+    $this->factory()->create(EntityWithoutAttribute::class, []);
   }
 
   /**
    * Tests that ::getDoubleFactory returns the factory.
    */
   public function testGetDoubleFactoryReturnsFactory(): void {
-    $factory = $this->factory->getDoubleFactory();
+    $factory = $this->factory()->getDoubleFactory();
     // Verify factory is returned at runtime.
     // @phpstan-ignore method.alreadyNarrowedType
     $this->assertNotNull($factory);
@@ -112,11 +129,11 @@ class SubjectEntityFactoryTest extends TestCase {
     // No assertions - test passes if no exception is thrown.
     $this->expectNotToPerformAssertions();
 
-    $this->factory->installContainer();
-    $this->factory->uninstallContainer();
+    $this->factory()->installContainer();
+    $this->factory()->uninstallContainer();
 
     // Should not throw when called again.
-    $this->factory->uninstallContainer();
+    $this->factory()->uninstallContainer();
   }
 
 }

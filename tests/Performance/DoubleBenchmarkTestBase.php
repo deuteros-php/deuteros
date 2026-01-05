@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Performance;
 
-use Deuteros\Common\EntityDoubleDefinition;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\Common\EntityDoubleFactoryInterface;
+use Deuteros\Double\EntityDoubleDefinition;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\node\NodeInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -34,7 +34,7 @@ abstract class DoubleBenchmarkTestBase extends TestCase {
   /**
    * Builds the node entity definition for benchmarking.
    *
-   * @return \Deuteros\Common\EntityDoubleDefinition
+   * @return \Deuteros\Double\EntityDoubleDefinition
    *   The entity double definition.
    */
   private function buildNodeDefinition(): EntityDoubleDefinition {

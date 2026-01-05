@@ -43,8 +43,8 @@ composer require --dev plach79/Deuteros
 An entity double is instantiated by passing an entity double definition to a factory. The easiest way to define an entity double is using the definition builder:
 
 ```php
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
 
 class MyServiceTest extends TestCase {
 
@@ -782,8 +782,8 @@ $factory = EntityDoubleFactory::fromTest($this);
 ### Explicit Factory Selection
 
 ```php
-use Deuteros\PhpUnit\MockEntityDoubleFactory;
-use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+use Deuteros\Double\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 
 // PHPUnit native mocks
 $factory = MockEntityDoubleFactory::fromTest($this);
@@ -805,8 +805,8 @@ Both PHPUnit and Prophecy adapters behave identically. You can switch between th
 
 namespace Drupal\my_module\Tests\Unit;
 
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Drupal\my_module\Service\ArticleProcessor;
 use PHPUnit\Framework\TestCase;
 
@@ -849,3 +849,236 @@ class ArticleProcessorTest extends TestCase {
 
 }
 ```
+
+---
+
+## Testing Entity Objects
+
+While entity doubles are the primary focus of Deuteros, sometimes you need to
+test code that specifically requires a real entity class instance (e.g.,
+`Node`, `User`, or custom entity classes). The `SubjectEntityFactory` provides
+this capability by instantiating actual Drupal entity classes with doubled
+service dependencies and DEUTEROS field doubles.
+
+The term "subject" refers to the entity class being tested, as opposed to
+"doubles" which are test substitutes for dependencies.
+
+### When to Use SubjectEntityFactory
+
+Use `SubjectEntityFactory` when you need to:
+- Test code that checks `instanceof` against concrete entity classes
+- Test entity class methods that are not defined on interfaces
+- Test bundle classes or entity-specific traits
+- Verify behavior that depends on entity class inheritance
+
+For most testing scenarios, entity doubles (via `EntityDoubleFactory`) are
+preferred as they're lighter weight and framework-agnostic.
+
+### Basic Usage
+
+```php
+class MyNodeTest extends TestCase {
+
+  private SubjectEntityFactory $factory;
+
+  protected function setUp(): void {
+    $this->factory = SubjectEntityFactory::fromTest($this);
+    $this->factory->installContainer();
+  }
+
+  protected function tearDown(): void {
+    $this->factory->uninstallContainer();
+  }
+
+  public function testNodeCreation(): void {
+    $node = $this->factory->create(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test Article',
+      'body' => ['value' => 'Body text', 'format' => 'basic_html'],
+      'status' => 1,
+    ]);
+
+    // Real Node instance with DEUTEROS field doubles.
+    $this->assertInstanceOf(Node::class, $node);
+    $this->assertSame('node', $node->getEntityTypeId());
+    $this->assertSame('article', $node->bundle());
+    $this->assertSame('Test Article', $node->get('title')->value);
+    $this->assertSame('Body text', $node->get('body')->value);
+  }
+
+}
+```
+
+### Entity Reference Fields
+
+You can use DEUTEROS doubles as entity reference targets:
+
+```php
+public function testWithEntityReference(): void {
+  // Create author double using the factory.
+  $author = $this->factory->getDoubleFactory()->create(
+    EntityDoubleDefinitionBuilder::create('user')
+      ->id(42)
+      ->label('Jane Doe')
+      ->build()
+  );
+
+  $node = $this->factory->create(Node::class, [
+    'nid' => 1,
+    'type' => 'article',
+    'title' => 'Test',
+    'uid' => $author,  // Entity double as reference.
+  ]);
+
+  $this->assertSame($author, $node->get('uid')->entity);
+  $this->assertEquals(42, $node->get('uid')->target_id);
+}
+```
+
+### Multi-Value Fields
+
+```php
+public function testMultiValueField(): void {
+  $node = $this->factory->create(Node::class, [
+    'nid' => 1,
+    'type' => 'article',
+    'title' => 'Test',
+    'field_tags' => [
+      ['target_id' => 1],
+      ['target_id' => 2],
+      ['target_id' => 3],
+    ],
+  ]);
+
+  $this->assertSame(1, $node->get('field_tags')->get(0)->target_id);
+  $this->assertSame(2, $node->get('field_tags')->get(1)->target_id);
+  $this->assertSame(3, $node->get('field_tags')->get(2)->target_id);
+}
+```
+
+### Auto-Detection
+
+Like `EntityDoubleFactory`, `SubjectEntityFactory::fromTest()` auto-detects
+whether your test uses PHPUnit or Prophecy:
+
+```php
+// Works with both PHPUnit and Prophecy
+$factory = SubjectEntityFactory::fromTest($this);
+```
+
+### Container Lifecycle
+
+The factory installs a Symfony container with doubled services:
+
+```php
+protected function setUp(): void {
+  $this->factory = SubjectEntityFactory::fromTest($this);
+  $this->factory->installContainer(); // Required before create()
+}
+
+protected function tearDown(): void {
+  $this->factory->uninstallContainer(); // Cleanup
+}
+```
+
+Calling `installContainer()` twice throws `LogicException`. Calling
+`uninstallContainer()` multiple times is safe (idempotent).
+
+### Using SubjectEntityTestBase
+
+For simpler test setup, extend `SubjectEntityTestBase` which handles factory
+setup and teardown automatically:
+
+```php
+use Deuteros\Entity\SubjectEntityTestBase;
+use Drupal\node\Entity\Node;
+
+class MyNodeTest extends SubjectEntityTestBase {
+
+  public function testNodeCreation(): void {
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test Article',
+    ]);
+
+    $this->assertInstanceOf(Node::class, $node);
+    $this->assertSame('Test Article', $node->get('title')->value);
+  }
+
+  public function testWithEntityReference(): void {
+    $author = $this->getDoubleFactory()->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->label('Jane Doe')
+        ->build()
+    );
+
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+      'uid' => $author,
+    ]);
+
+    $this->assertSame($author, $node->get('uid')->entity);
+  }
+
+}
+```
+
+**Available Properties and Methods:**
+
+| Member | Description |
+|--------|-------------|
+| `$this->subjectEntityFactory` | The underlying `SubjectEntityFactory` instance |
+| `$this->createEntity($class, $values)` | Convenience method for creating entities |
+| `$this->getDoubleFactory()` | Get the entity double factory for references |
+
+### Config Entities
+
+`SubjectEntityFactory` also supports config entities. Config entities do not
+have field doubles since they don't implement `FieldableEntityInterface`:
+
+```php
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
+use Drupal\Core\Config\Entity\ConfigEntityBase;
+
+#[ConfigEntityType(
+  id: 'my_config',
+  label: new TranslatableMarkup('My Config'),
+  entity_keys: ['id' => 'id', 'label' => 'label'],
+)]
+class MyConfigEntity extends ConfigEntityBase {
+  protected ?string $id = NULL;
+  protected ?string $label = NULL;
+  public ?string $description = NULL;
+}
+
+// In your test:
+$config = $this->createEntity(MyConfigEntity::class, [
+  'id' => 'my_config_id',
+  'label' => 'My Configuration',
+  'description' => 'A description',
+]);
+
+$this->assertSame('my_config_id', $config->id());
+$this->assertSame('My Configuration', $config->label());
+$this->assertSame('A description', $config->description);
+```
+
+### Limitations
+
+Entity objects created by `SubjectEntityFactory` have these limitations:
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
+| `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles (content entities only) |
+| `save()`, `delete()` | Throws | No storage backend |
+| Entity queries | Not supported | No database |
+| `access()` | Throws | No access control handler |
+| Full translation workflows | Limited | Basic language support only |
+
+For operations requiring full Drupal services, use Kernel tests instead.

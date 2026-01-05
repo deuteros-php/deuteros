@@ -92,9 +92,9 @@ Deuteros is built around these core principles:
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleDefinition` | `src/Common/EntityDoubleDefinition.php` | Immutable value object storing entity metadata, fields, interfaces, method overrides |
-| `FieldDoubleDefinition` | `src/Common/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) |
-| `EntityDoubleDefinitionBuilder` | `src/Common/EntityDoubleDefinitionBuilder.php` | Fluent builder for creating definitions |
+| `EntityDoubleDefinition` | `src/Double/EntityDoubleDefinition.php` | Immutable value object storing entity metadata, fields, interfaces, method overrides |
+| `FieldDoubleDefinition` | `src/Double/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) |
+| `EntityDoubleDefinitionBuilder` | `src/Double/EntityDoubleDefinitionBuilder.php` | Fluent builder for creating definitions |
 
 **Key characteristics**:
 - All classes are `final readonly` (PHP 8.2+)
@@ -107,9 +107,9 @@ Deuteros is built around these core principles:
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleBuilder` | `src/Common/EntityDoubleBuilder.php` | Produces resolvers for entity methods |
-| `FieldItemListDoubleBuilder` | `src/Common/FieldItemListDoubleBuilder.php` | Produces resolvers for field list methods |
-| `FieldItemDoubleBuilder` | `src/Common/FieldItemDoubleBuilder.php` | Produces resolvers for field item methods |
+| `EntityDoubleBuilder` | `src/Double/EntityDoubleBuilder.php` | Produces resolvers for entity methods |
+| `FieldItemListDoubleBuilder` | `src/Double/FieldItemListDoubleBuilder.php` | Produces resolvers for field list methods |
+| `FieldItemDoubleBuilder` | `src/Double/FieldItemDoubleBuilder.php` | Produces resolvers for field item methods |
 
 **Resolver signature**: All builders produce callables with this signature:
 ```php
@@ -122,9 +122,9 @@ fn(array $context, ...$args): mixed
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `GuardrailEnforcer` | `src/Common/GuardrailEnforcer.php` | Centralized exception generation with differentiated messages |
-| `MutableStateContainer` | `src/Common/MutableStateContainer.php` | Tracks field mutations for mutable doubles |
-| `EntityReferenceNormalizer` | `src/Common/EntityReferenceNormalizer.php` | Normalizes entity reference field values |
+| `GuardrailEnforcer` | `src/Double/GuardrailEnforcer.php` | Centralized exception generation with differentiated messages |
+| `MutableStateContainer` | `src/Double/MutableStateContainer.php` | Tracks field mutations for mutable doubles |
+| `EntityReferenceNormalizer` | `src/Double/EntityReferenceNormalizer.php` | Normalizes entity reference field values |
 
 ### Factory Layer
 
@@ -132,9 +132,9 @@ fn(array $context, ...$args): mixed
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleFactory` | `src/Common/EntityDoubleFactory.php` | Abstract base with template method pattern |
-| `MockEntityDoubleFactory` | `src/PhpUnit/MockEntityDoubleFactory.php` | PHPUnit native mock implementation |
-| `ProphecyEntityDoubleFactory` | `src/Prophecy/ProphecyEntityDoubleFactory.php` | Prophecy double implementation |
+| `EntityDoubleFactory` | `src/Double/EntityDoubleFactory.php` | Abstract base with template method pattern |
+| `MockEntityDoubleFactory` | `src/Double/PhpUnit/MockEntityDoubleFactory.php` | PHPUnit native mock implementation |
+| `ProphecyEntityDoubleFactory` | `src/Double/Prophecy/ProphecyEntityDoubleFactory.php` | Prophecy double implementation |
 
 ---
 
@@ -408,3 +408,116 @@ Deuteros was implemented in phases with subsequent refactoring to improve API er
 - [docs/archive/init.md](archive/init.md) - Initial requirements and constraints
 - [docs/archive/plan.md](archive/plan.md) - Original 8-phase implementation plan
 - [docs/archive/refactoring.md](archive/refactoring.md) - Post-implementation improvements (15 tasks)
+
+---
+
+## Entity Testing Layer
+
+In addition to entity doubles, Deuteros provides a `SubjectEntityFactory` for
+testing actual Drupal entity class instances with doubled dependencies.
+
+### Architecture Overview
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    User Code (Tests)                       │
+└────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────┐
+│            SubjectEntityFactory (Single Entry Point)       │
+│  - fromTest() → auto-detects PHPUnit/Prophecy              │
+│  - installContainer() → sets up container with doubles     │
+│  - create() → real entity with field doubles               │
+│  - uninstallContainer() → cleanup                          │
+└────────────────────────────────────────────────────────────┘
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐
+│ PhpUnitService  │  │ ProphecyService │  │ EntityDouble     │
+│ Doubler         │  │ Doubler         │  │ Factory          │
+└─────────────────┘  └─────────────────┘  └──────────────────┘
+```
+
+### Key Design Decisions
+
+**Constructor Bypass via Reflection**
+
+The helper uses `ReflectionClass::newInstanceWithoutConstructor()` to create
+entity instances without invoking the constructor. This avoids the need to
+double the many services that `ContentEntityBase`'s constructor requires. After
+instantiation, required internal properties are set via reflection:
+
+- `entityTypeId` - From the `#[ContentEntityType]` attribute
+- `entityKeys` - Entity keys (id, bundle, uuid) from provided values
+- `fields` - DEUTEROS field doubles are injected directly
+- Internal state (`translations`, `defaultLangcode`, etc.)
+
+**Service Container Doubling**
+
+The helper installs a container with doubled services via `\Drupal::setContainer()`:
+
+| Service | Purpose |
+|---------|---------|
+| `entity_type.manager` | Returns entity type definitions |
+| `entity_type.bundle.info` | Bundle information |
+| `language_manager` | Default language handling |
+| `uuid` | UUID generation (stubbed) |
+| `module_handler` | No-op hook invocations |
+| `entity_field.manager` | Returns empty field definitions |
+
+**Entity Type Configuration from Attributes**
+
+Entity keys are read from PHP 8 attributes (`#[ContentEntityType]` or
+`#[ConfigEntityType]`) on the entity class. This eliminates explicit config:
+
+```php
+#[ContentEntityType(
+  id: 'node',
+  entity_keys: [
+    'id' => 'nid',
+    'bundle' => 'type',
+    // ...
+  ],
+)]
+class Node extends ContentEntityBase { }
+
+#[ConfigEntityType(
+  id: 'my_config',
+  entity_keys: ['id' => 'id', 'label' => 'label'],
+)]
+class MyConfig extends ConfigEntityBase { }
+```
+
+**Content vs Config Entity Handling**
+
+The factory handles content entities and config entities differently:
+
+| Entity Type | Base Class | Field Doubles | Initialization |
+|-------------|------------|---------------|----------------|
+| Content | `ContentEntityBase` | Yes (injected via reflection) | `initializeContentEntity()` |
+| Config | `ConfigEntityBase` | No (not fieldable) | `initializeConfigEntity()` |
+
+Content entities implement `FieldableEntityInterface` and receive DEUTEROS field
+doubles. Config entities have their properties set directly via reflection.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `src/Entity/SubjectEntityFactory.php` | Main entry point |
+| `src/Entity/SubjectEntityTestBase.php` | Abstract test base class for simplified DX |
+| `src/Entity/ServiceDoublerInterface.php` | Service doubler contract |
+| `src/Entity/PhpUnit/PhpUnitServiceDoubler.php` | PHPUnit service doubler |
+| `src/Entity/Prophecy/ProphecyServiceDoubler.php` | Prophecy service doubler |
+
+### Test Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `tests/Unit/Entity/` | Unit tests for SubjectEntityFactory |
+| `tests/Integration/Entity/` | Integration tests |
+| `tests/Integration/Entity/SubjectEntityFactoryTestBase.php` | Shared tests for adapter parity |
+| `tests/Integration/Entity/PhpUnit/` | PHPUnit adapter tests |
+| `tests/Integration/Entity/Prophecy/` | Prophecy adapter tests |

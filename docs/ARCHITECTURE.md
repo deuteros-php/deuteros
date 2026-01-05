@@ -469,8 +469,8 @@ The helper installs a container with doubled services via `\Drupal::setContainer
 
 **Entity Type Configuration from Attributes**
 
-Entity keys are read from the `#[ContentEntityType]` PHP 8 attribute on the
-entity class. This eliminates the need for explicit configuration:
+Entity keys are read from PHP 8 attributes (`#[ContentEntityType]` or
+`#[ConfigEntityType]`) on the entity class. This eliminates explicit config:
 
 ```php
 #[ContentEntityType(
@@ -482,13 +482,32 @@ entity class. This eliminates the need for explicit configuration:
   ],
 )]
 class Node extends ContentEntityBase { }
+
+#[ConfigEntityType(
+  id: 'my_config',
+  entity_keys: ['id' => 'id', 'label' => 'label'],
+)]
+class MyConfig extends ConfigEntityBase { }
 ```
+
+**Content vs Config Entity Handling**
+
+The factory handles content entities and config entities differently:
+
+| Entity Type | Base Class | Field Doubles | Initialization |
+|-------------|------------|---------------|----------------|
+| Content | `ContentEntityBase` | Yes (injected via reflection) | `initializeContentEntity()` |
+| Config | `ConfigEntityBase` | No (not fieldable) | `initializeConfigEntity()` |
+
+Content entities implement `FieldableEntityInterface` and receive DEUTEROS field
+doubles. Config entities have their properties set directly via reflection.
 
 ### Files
 
 | File | Purpose |
 |------|---------|
 | `src/Entity/SubjectEntityFactory.php` | Main entry point |
+| `src/Entity/SubjectEntityTestBase.php` | Abstract test base class for simplified DX |
 | `src/Entity/ServiceDoublerInterface.php` | Service doubler contract |
 | `src/Entity/PhpUnit/PhpUnitServiceDoubler.php` | PHPUnit service doubler |
 | `src/Entity/Prophecy/ProphecyServiceDoubler.php` | Prophecy service doubler |

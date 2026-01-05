@@ -41,15 +41,6 @@ class SubjectEntityFactoryTest extends TestCase {
   }
 
   /**
-   * Tests that ::fromTest creates a factory instance.
-   */
-  public function testFromTestCreatesFactory(): void {
-    // Verify fromTest() returns the expected type at runtime.
-    // @phpstan-ignore method.alreadyNarrowedType
-    $this->assertInstanceOf(SubjectEntityFactory::class, $this->factory);
-  }
-
-  /**
    * Tests that ::create throws when container not installed.
    */
   public function testCreateThrowsWithoutContainer(): void {

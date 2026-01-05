@@ -5,30 +5,30 @@ declare(strict_types=1);
 namespace Deuteros\Entity;
 
 use Deuteros\Common\EntityDoubleFactoryInterface;
-use Drupal\Core\Entity\EntityBase;
+use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Base test class for unit testing Drupal entity objects.
  *
  * Provides automatic setup and teardown of "SubjectEntityFactory", simplifying
- * test class boilerplate. Extend this class and use "$this->factory" to create
+ * test class boilerplate. Extend this class and use ::createEntity to create
  * subject entities with field doubles.
  *
  * @example
  * ```php
  * class MyNodeTest extends SubjectEntityTestBase {
  *
- *     public function testNodeCreation(): void {
- *         $node = $this->createEntity(Node::class, [
- *             'nid' => 1,
- *             'type' => 'article',
- *             'title' => 'Test Article',
- *         ]);
+ *   public function testNodeCreation(): void {
+ *     $node = $this->createEntity(Node::class, [
+ *       'nid' => 1,
+ *       'type' => 'article',
+ *       'title' => 'Test Article',
+ *     ]);
  *
- *         $this->assertInstanceOf(Node::class, $node);
- *         $this->assertEquals('Test Article', $node->get('title')->value);
- *     }
+ *     $this->assertInstanceOf(Node::class, $node);
+ *     $this->assertEquals('Test Article', $node->get('title')->value);
+ *   }
  *
  * }
  * ```
@@ -38,22 +38,22 @@ abstract class SubjectEntityTestBase extends TestCase {
   /**
    * The subject entity factory.
    */
-  protected SubjectEntityFactory $factory;
+  protected SubjectEntityFactory $subjectEntityFactory;
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->factory = SubjectEntityFactory::fromTest($this);
-    $this->factory->installContainer();
+    $this->subjectEntityFactory = SubjectEntityFactory::fromTest($this);
+    $this->subjectEntityFactory->installContainer();
   }
 
   /**
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    $this->factory->uninstallContainer();
+    $this->subjectEntityFactory->uninstallContainer();
     parent::tearDown();
   }
 
@@ -70,8 +70,8 @@ abstract class SubjectEntityTestBase extends TestCase {
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
    */
-  protected function createEntity(string $entityClass, array $values = []): EntityBase {
-    return $this->factory->create($entityClass, $values);
+  protected function createEntity(string $entityClass, array $values = []): EntityInterface {
+    return $this->subjectEntityFactory->create($entityClass, $values);
   }
 
   /**
@@ -83,7 +83,7 @@ abstract class SubjectEntityTestBase extends TestCase {
    *   The entity double factory.
    */
   protected function getDoubleFactory(): EntityDoubleFactoryInterface {
-    return $this->factory->getDoubleFactory();
+    return $this->subjectEntityFactory->getDoubleFactory();
   }
 
 }

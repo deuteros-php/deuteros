@@ -110,6 +110,7 @@ Workflow file: `.github/workflows/ci.yml`
 
 5. **Entity Testing Layer** (`Deuteros\Entity`)
    - `SubjectEntityFactory` - Creates real entity instances with doubled dependencies
+   - `SubjectEntityTestBase` - Abstract test base class for simplified DX
    - `ServiceDoublerInterface` - Contract for service doubler implementations
    - `PhpUnit\PhpUnitServiceDoubler` - PHPUnit service doubler
    - `Prophecy\ProphecyServiceDoubler` - Prophecy service doubler
@@ -191,7 +192,7 @@ These constraints must never be violated:
   - `Prophecy/` - Prophecy adapter tests
 - `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,
   `SecondTestTrait`) for trait support tests, and test entity classes
-  (`TestContentEntity`, `EntityWithoutAttribute`)
+  (`TestContentEntity`, `TestConfigEntity`, `EntityWithoutAttribute`)
 - `tests/Performance/` - Benchmarking tests comparing performance approaches
 
 ## Directory Layout

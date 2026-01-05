@@ -985,6 +985,89 @@ protected function tearDown(): void {
 Calling `installContainer()` twice throws `LogicException`. Calling
 `uninstallContainer()` multiple times is safe (idempotent).
 
+### Using SubjectEntityTestBase
+
+For simpler test setup, extend `SubjectEntityTestBase` which handles factory
+setup and teardown automatically:
+
+```php
+use Deuteros\Entity\SubjectEntityTestBase;
+use Drupal\node\Entity\Node;
+
+class MyNodeTest extends SubjectEntityTestBase {
+
+  public function testNodeCreation(): void {
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test Article',
+    ]);
+
+    $this->assertInstanceOf(Node::class, $node);
+    $this->assertSame('Test Article', $node->get('title')->value);
+  }
+
+  public function testWithEntityReference(): void {
+    $author = $this->getDoubleFactory()->create(
+      EntityDoubleDefinitionBuilder::create('user')
+        ->id(42)
+        ->label('Jane Doe')
+        ->build()
+    );
+
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+      'uid' => $author,
+    ]);
+
+    $this->assertSame($author, $node->get('uid')->entity);
+  }
+
+}
+```
+
+**Available Properties and Methods:**
+
+| Member | Description |
+|--------|-------------|
+| `$this->subjectEntityFactory` | The underlying `SubjectEntityFactory` instance |
+| `$this->createEntity($class, $values)` | Convenience method for creating entities |
+| `$this->getDoubleFactory()` | Get the entity double factory for references |
+
+### Config Entities
+
+`SubjectEntityFactory` also supports config entities. Config entities do not
+have field doubles since they don't implement `FieldableEntityInterface`:
+
+```php
+use Drupal\Core\Entity\Attribute\ConfigEntityType;
+use Drupal\Core\Config\Entity\ConfigEntityBase;
+
+#[ConfigEntityType(
+  id: 'my_config',
+  label: new TranslatableMarkup('My Config'),
+  entity_keys: ['id' => 'id', 'label' => 'label'],
+)]
+class MyConfigEntity extends ConfigEntityBase {
+  protected ?string $id = NULL;
+  protected ?string $label = NULL;
+  public ?string $description = NULL;
+}
+
+// In your test:
+$config = $this->createEntity(MyConfigEntity::class, [
+  'id' => 'my_config_id',
+  'label' => 'My Configuration',
+  'description' => 'A description',
+]);
+
+$this->assertSame('my_config_id', $config->id());
+$this->assertSame('My Configuration', $config->label());
+$this->assertSame('A description', $config->description);
+```
+
 ### Limitations
 
 Entity objects created by `SubjectEntityFactory` have these limitations:
@@ -992,7 +1075,7 @@ Entity objects created by `SubjectEntityFactory` have these limitations:
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
-| `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles |
+| `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles (content entities only) |
 | `save()`, `delete()` | Throws | No storage backend |
 | Entity queries | Not supported | No database |
 | `access()` | Throws | No access control handler |

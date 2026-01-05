@@ -109,10 +109,10 @@ Workflow file: `.github/workflows/ci.yml`
    - `Deuteros\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
 
 5. **Entity Testing Layer** (`Deuteros\Entity`)
-   - `EntityTestHelper` - Creates real entity instances with mocked dependencies
-   - `ServiceMockerInterface` - Contract for service mocker implementations
-   - `PhpUnit\PhpUnitServiceMocker` - PHPUnit mock container builder
-   - `Prophecy\ProphecyServiceMocker` - Prophecy mock container builder
+   - `EntityTestHelper` - Creates real entity instances with doubled dependencies
+   - `ServiceDoublerInterface` - Contract for service doubler implementations
+   - `PhpUnit\PhpUnitServiceDoubler` - PHPUnit service doubler
+   - `Prophecy\ProphecyServiceDoubler` - Prophecy service doubler
 
 ### Key Patterns
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity\PhpUnit;
 
-use Deuteros\Entity\ServiceMockerInterface;
+use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -19,9 +19,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Creates mock services using PHPUnit mocks.
+ * Creates service doubles using PHPUnit mocks.
  */
-final class PhpUnitServiceMocker implements ServiceMockerInterface {
+final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
 
   /**
    * The test case.
@@ -29,7 +29,7 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   private readonly TestCase $testCase;
 
   /**
-   * Constructs a PhpUnitServiceMocker.
+   * Constructs a PhpUnitServiceDoubler.
    *
    * @param \PHPUnit\Framework\TestCase $testCase
    *   The test case for creating mocks.
@@ -44,53 +44,53 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
     $container = new ContainerBuilder();
 
-    // Create and register mock services.
+    // Create and register service doubles.
     $container->set(
       'entity_type.manager',
-      $this->createEntityTypeManagerMock($entityTypeConfigs)
+      $this->createEntityTypeManagerDouble($entityTypeConfigs)
     );
 
     $container->set(
       'entity_type.bundle.info',
-      $this->createBundleInfoMock($entityTypeConfigs)
+      $this->createBundleInfoDouble($entityTypeConfigs)
     );
 
     $container->set(
       'language_manager',
-      $this->createLanguageManagerMock()
+      $this->createLanguageManagerDouble()
     );
 
     $container->set(
       'uuid',
-      $this->createUuidMock()
+      $this->createUuidDouble()
     );
 
     $container->set(
       'module_handler',
-      $this->createModuleHandlerMock()
+      $this->createModuleHandlerDouble()
     );
 
     $container->set(
       'entity_field.manager',
-      $this->createEntityFieldManagerMock()
+      $this->createEntityFieldManagerDouble()
     );
 
     return $container;
   }
 
   /**
-   * Creates a mock EntityTypeManager.
+   * Creates an EntityTypeManager double.
    *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations.
    *
    * @return \Drupal\Core\Entity\EntityTypeManagerInterface
-   *   The mock EntityTypeManager.
+   *   The EntityTypeManager double.
    */
-  private function createEntityTypeManagerMock(array $entityTypeConfigs): EntityTypeManagerInterface {
+  private function createEntityTypeManagerDouble(array $entityTypeConfigs): EntityTypeManagerInterface {
     $entityTypes = [];
     foreach ($entityTypeConfigs as $entityTypeId => $config) {
-      $entityTypes[$entityTypeId] = $this->createEntityTypeMock($entityTypeId, $config);
+      $entityTypes[$entityTypeId] = $this->createEntityTypeDouble($entityTypeId, $config);
     }
 
     $mock = $this->createMock(EntityTypeManagerInterface::class);
@@ -114,7 +114,7 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock entity type definition.
+   * Creates an entity type definition double.
    *
    * @param string $entityTypeId
    *   The entity type ID.
@@ -122,9 +122,9 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
    *   The entity type configuration.
    *
    * @return \Drupal\Core\Entity\ContentEntityTypeInterface
-   *   The mock entity type.
+   *   The entity type double.
    */
-  private function createEntityTypeMock(string $entityTypeId, array $config): ContentEntityTypeInterface {
+  private function createEntityTypeDouble(string $entityTypeId, array $config): ContentEntityTypeInterface {
     $mock = $this->createMock(ContentEntityTypeInterface::class);
 
     $mock->method('id')->willReturn($entityTypeId);
@@ -148,15 +148,15 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock EntityTypeBundleInfo service.
+   * Creates an EntityTypeBundleInfo service double.
    *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations.
    *
    * @return \Drupal\Core\Entity\EntityTypeBundleInfoInterface
-   *   The mock bundle info service.
+   *   The bundle info service double.
    */
-  private function createBundleInfoMock(array $entityTypeConfigs): EntityTypeBundleInfoInterface {
+  private function createBundleInfoDouble(array $entityTypeConfigs): EntityTypeBundleInfoInterface {
     $mock = $this->createMock(EntityTypeBundleInfoInterface::class);
 
     $mock->method('getBundleInfo')
@@ -188,12 +188,12 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock LanguageManager.
+   * Creates a LanguageManager double.
    *
    * @return \Drupal\Core\Language\LanguageManagerInterface
-   *   The mock LanguageManager.
+   *   The LanguageManager double.
    */
-  private function createLanguageManagerMock(): LanguageManagerInterface {
+  private function createLanguageManagerDouble(): LanguageManagerInterface {
     $defaultLanguage = new Language([
       'id' => LanguageInterface::LANGCODE_DEFAULT,
       'name' => 'Default',
@@ -220,12 +220,12 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock UUID generator.
+   * Creates a UUID generator double.
    *
    * @return \Drupal\Component\Uuid\UuidInterface
-   *   The mock UUID generator.
+   *   The UUID generator double.
    */
-  private function createUuidMock(): UuidInterface {
+  private function createUuidDouble(): UuidInterface {
     $mock = $this->createMock(UuidInterface::class);
 
     $counter = 0;
@@ -247,12 +247,12 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock ModuleHandler.
+   * Creates a ModuleHandler double.
    *
    * @return \Drupal\Core\Extension\ModuleHandlerInterface
-   *   The mock ModuleHandler.
+   *   The ModuleHandler double.
    */
-  private function createModuleHandlerMock(): ModuleHandlerInterface {
+  private function createModuleHandlerDouble(): ModuleHandlerInterface {
     $mock = $this->createMock(ModuleHandlerInterface::class);
 
     // Module handler is a no-op - hooks don't fire.
@@ -266,15 +266,15 @@ final class PhpUnitServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock EntityFieldManager.
+   * Creates an EntityFieldManager double.
    *
    * Returns empty field definitions so entities can be instantiated without
    * real field configuration.
    *
    * @return \Drupal\Core\Entity\EntityFieldManagerInterface
-   *   The mock EntityFieldManager.
+   *   The EntityFieldManager double.
    */
-  private function createEntityFieldManagerMock(): EntityFieldManagerInterface {
+  private function createEntityFieldManagerDouble(): EntityFieldManagerInterface {
     $mock = $this->createMock(EntityFieldManagerInterface::class);
 
     // Return empty field definitions - fields are injected separately.

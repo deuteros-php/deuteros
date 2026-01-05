@@ -857,7 +857,7 @@ class ArticleProcessorTest extends TestCase {
 While entity doubles are the primary focus of Deuteros, sometimes you need to
 test code that specifically requires a real entity class instance (e.g.,
 `Node`, `User`, or custom entity classes). The `EntityTestHelper` provides this
-capability by instantiating actual Drupal entity classes with mocked service
+capability by instantiating actual Drupal entity classes with doubled service
 dependencies and DEUTEROS field doubles.
 
 ### When to Use EntityTestHelper
@@ -971,7 +971,7 @@ $helper = EntityTestHelper::fromTest($this);
 
 ### Container Lifecycle
 
-The helper installs a mock Symfony container with minimal services:
+The helper installs a Symfony container with doubled services:
 
 ```php
 protected function setUp(): void {

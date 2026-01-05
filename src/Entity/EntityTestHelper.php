@@ -7,8 +7,8 @@ namespace Deuteros\Entity;
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
 use Deuteros\Common\EntityDoubleFactory;
 use Deuteros\Common\EntityDoubleFactoryInterface;
-use Deuteros\Entity\PhpUnit\PhpUnitServiceMocker;
-use Deuteros\Entity\Prophecy\ProphecyServiceMocker;
+use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
+use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
 use Drupal\Core\Entity\Attribute\ContentEntityType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -20,12 +20,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Helper for unit testing Drupal entity objects.
  *
  * This helper allows creating real Drupal entity instances (Node, User, etc.)
- * with mocked service dependencies and DEUTEROS field doubles injected
+ * with doubled service dependencies and DEUTEROS field doubles injected
  * directly into the entity's field cache.
  *
- * Unlike "EntityDoubleFactory" which creates mock implementations of entity
+ * Unlike "EntityDoubleFactory" which creates double implementations of entity
  * interfaces, this helper instantiates actual entity classes with their
- * service dependencies mocked and field values provided as DEUTEROS doubles.
+ * service dependencies doubled and field values provided as DEUTEROS doubles.
  *
  * @example Basic usage
  * ```php
@@ -85,7 +85,7 @@ final class EntityTestHelper {
    *
    * Auto-detects whether the test uses Prophecy (via "ProphecyTrait") or
    * PHPUnit mocks and returns a helper configured with the appropriate service
-   * mocker.
+   * doubler.
    *
    * @param \PHPUnit\Framework\TestCase $test
    *   The test case instance.
@@ -96,34 +96,34 @@ final class EntityTestHelper {
   public static function fromTest(TestCase $test): self {
     $usesProphecy = method_exists($test, 'getProphet');
 
-    $serviceMocker = $usesProphecy
-      ? new ProphecyServiceMocker($test)
-      : new PhpUnitServiceMocker($test);
+    $serviceDoubler = $usesProphecy
+      ? new ProphecyServiceDoubler($test)
+      : new PhpUnitServiceDoubler($test);
 
     $doubleFactory = EntityDoubleFactory::fromTest($test);
 
-    return new self($serviceMocker, $doubleFactory);
+    return new self($serviceDoubler, $doubleFactory);
   }
 
   /**
    * Constructs an EntityTestHelper.
    *
-   * @param \Deuteros\Entity\ServiceMockerInterface $serviceMocker
-   *   The service mocker.
+   * @param \Deuteros\Entity\ServiceDoublerInterface $serviceDoubler
+   *   The service doubler.
    * @param \Deuteros\Common\EntityDoubleFactoryInterface $doubleFactory
    *   The entity double factory for creating field doubles.
    */
   private function __construct(
-    private readonly ServiceMockerInterface $serviceMocker,
+    private readonly ServiceDoublerInterface $serviceDoubler,
     private readonly EntityDoubleFactoryInterface $doubleFactory,
   ) {
   }
 
   /**
-   * Installs the mock container for entity testing.
+   * Installs the doubled container for entity testing.
    *
-   * Sets up a mock Symfony container with the minimal services required for
-   * entity instantiation and sets it on "\Drupal::setContainer()".
+   * Sets up a Symfony container with doubled services required for entity
+   * instantiation and sets it on "\Drupal::setContainer()".
    *
    * Call this method in your test's "setUp()" method.
    */
@@ -141,8 +141,8 @@ final class EntityTestHelper {
       $this->originalContainer = \Drupal::getContainer();
     }
 
-    // Build and install the mock container.
-    $container = $this->serviceMocker->buildContainer($this->entityTypeConfigs);
+    // Build and install the container with doubled services.
+    $container = $this->serviceDoubler->buildContainer($this->entityTypeConfigs);
     // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
     \Drupal::setContainer($container);
 
@@ -150,7 +150,7 @@ final class EntityTestHelper {
   }
 
   /**
-   * Uninstalls the mock container.
+   * Uninstalls the doubled container.
    *
    * Restores the original container (if any) or unsets the container.
    * Call this method in your test's "tearDown()" method.
@@ -221,7 +221,7 @@ final class EntityTestHelper {
         'keys' => $config['keys'],
       ];
       // Rebuild container with new entity type.
-      $container = $this->serviceMocker->buildContainer($this->entityTypeConfigs);
+      $container = $this->serviceDoubler->buildContainer($this->entityTypeConfigs);
       // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
       \Drupal::setContainer($container);
     }

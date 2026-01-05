@@ -414,7 +414,7 @@ Deuteros was implemented in phases with subsequent refactoring to improve API er
 ## Entity Testing Layer
 
 In addition to entity doubles, Deuteros provides an `EntityTestHelper` for
-testing actual Drupal entity class instances with mocked dependencies.
+testing actual Drupal entity class instances with doubled dependencies.
 
 ### Architecture Overview
 
@@ -436,7 +436,7 @@ testing actual Drupal entity class instances with mocked dependencies.
          ▼                    ▼                    ▼
 ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐
 │ PhpUnitService  │  │ ProphecyService │  │ EntityDouble     │
-│ Mocker          │  │ Mocker          │  │ Factory          │
+│ Doubler         │  │ Doubler         │  │ Factory          │
 └─────────────────┘  └─────────────────┘  └──────────────────┘
 ```
 
@@ -445,8 +445,8 @@ testing actual Drupal entity class instances with mocked dependencies.
 **Constructor Bypass via Reflection**
 
 The helper uses `ReflectionClass::newInstanceWithoutConstructor()` to create
-entity instances without invoking the constructor. This avoids the need to mock
-the many services that `ContentEntityBase`'s constructor requires. After
+entity instances without invoking the constructor. This avoids the need to
+double the many services that `ContentEntityBase`'s constructor requires. After
 instantiation, required internal properties are set via reflection:
 
 - `entityTypeId` - From the `#[ContentEntityType]` attribute
@@ -454,9 +454,9 @@ instantiation, required internal properties are set via reflection:
 - `fields` - DEUTEROS field doubles are injected directly
 - Internal state (`translations`, `defaultLangcode`, etc.)
 
-**Service Container Mocking**
+**Service Container Doubling**
 
-The helper installs a minimal mock container via `\Drupal::setContainer()` with:
+The helper installs a container with doubled services via `\Drupal::setContainer()`:
 
 | Service | Purpose |
 |---------|---------|
@@ -489,9 +489,9 @@ class Node extends ContentEntityBase { }
 | File | Purpose |
 |------|---------|
 | `src/Entity/EntityTestHelper.php` | Main entry point |
-| `src/Entity/ServiceMockerInterface.php` | Service mocker contract |
-| `src/Entity/PhpUnit/PhpUnitServiceMocker.php` | PHPUnit mock implementation |
-| `src/Entity/Prophecy/ProphecyServiceMocker.php` | Prophecy mock implementation |
+| `src/Entity/ServiceDoublerInterface.php` | Service doubler contract |
+| `src/Entity/PhpUnit/PhpUnitServiceDoubler.php` | PHPUnit service doubler |
+| `src/Entity/Prophecy/ProphecyServiceDoubler.php` | Prophecy service doubler |
 
 ### Test Structure
 

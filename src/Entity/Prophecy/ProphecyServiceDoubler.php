@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity\Prophecy;
 
-use Deuteros\Entity\ServiceMockerInterface;
+use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
@@ -21,9 +21,9 @@ use Prophecy\Prophet;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Creates mock services using Prophecy.
+ * Creates service doubles using Prophecy.
  */
-final class ProphecyServiceMocker implements ServiceMockerInterface {
+final class ProphecyServiceDoubler implements ServiceDoublerInterface {
 
   /**
    * The prophet for creating prophecies.
@@ -31,7 +31,7 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   private readonly Prophet $prophet;
 
   /**
-   * Constructs a ProphecyServiceMocker.
+   * Constructs a ProphecyServiceDoubler.
    *
    * @param \PHPUnit\Framework\TestCase $testCase
    *   The test case (must use ProphecyTrait).
@@ -39,7 +39,7 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   public function __construct(TestCase $testCase) {
     if (!method_exists($testCase, 'getProphet')) {
       throw new \InvalidArgumentException(
-        'Test case must use ProphecyTrait to use ProphecyServiceMocker.'
+        'Test case must use ProphecyTrait to use ProphecyServiceDoubler.'
       );
     }
     // Use reflection to call getProphet() since it may be private/protected.
@@ -55,53 +55,53 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
     $container = new ContainerBuilder();
 
-    // Create and register mock services.
+    // Create and register service doubles.
     $container->set(
       'entity_type.manager',
-      $this->createEntityTypeManagerMock($entityTypeConfigs)
+      $this->createEntityTypeManagerDouble($entityTypeConfigs)
     );
 
     $container->set(
       'entity_type.bundle.info',
-      $this->createBundleInfoMock($entityTypeConfigs)
+      $this->createBundleInfoDouble($entityTypeConfigs)
     );
 
     $container->set(
       'language_manager',
-      $this->createLanguageManagerMock()
+      $this->createLanguageManagerDouble()
     );
 
     $container->set(
       'uuid',
-      $this->createUuidMock()
+      $this->createUuidDouble()
     );
 
     $container->set(
       'module_handler',
-      $this->createModuleHandlerMock()
+      $this->createModuleHandlerDouble()
     );
 
     $container->set(
       'entity_field.manager',
-      $this->createEntityFieldManagerMock()
+      $this->createEntityFieldManagerDouble()
     );
 
     return $container;
   }
 
   /**
-   * Creates a mock EntityTypeManager.
+   * Creates an EntityTypeManager double.
    *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations.
    *
    * @return \Drupal\Core\Entity\EntityTypeManagerInterface
-   *   The mock EntityTypeManager.
+   *   The EntityTypeManager double.
    */
-  private function createEntityTypeManagerMock(array $entityTypeConfigs): EntityTypeManagerInterface {
+  private function createEntityTypeManagerDouble(array $entityTypeConfigs): EntityTypeManagerInterface {
     $entityTypes = [];
     foreach ($entityTypeConfigs as $entityTypeId => $config) {
-      $entityTypes[$entityTypeId] = $this->createEntityTypeMock($entityTypeId, $config);
+      $entityTypes[$entityTypeId] = $this->createEntityTypeDouble($entityTypeId, $config);
     }
 
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeManagerInterface> $prophecy */
@@ -134,7 +134,7 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock entity type definition.
+   * Creates an entity type definition double.
    *
    * @param string $entityTypeId
    *   The entity type ID.
@@ -142,9 +142,9 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
    *   The entity type configuration.
    *
    * @return \Drupal\Core\Entity\ContentEntityTypeInterface
-   *   The mock entity type.
+   *   The entity type double.
    */
-  private function createEntityTypeMock(string $entityTypeId, array $config): ContentEntityTypeInterface {
+  private function createEntityTypeDouble(string $entityTypeId, array $config): ContentEntityTypeInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\ContentEntityTypeInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(ContentEntityTypeInterface::class);
 
@@ -186,15 +186,15 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock EntityTypeBundleInfo service.
+   * Creates an EntityTypeBundleInfo service double.
    *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations.
    *
    * @return \Drupal\Core\Entity\EntityTypeBundleInfoInterface
-   *   The mock bundle info service.
+   *   The bundle info service double.
    */
-  private function createBundleInfoMock(array $entityTypeConfigs): EntityTypeBundleInfoInterface {
+  private function createBundleInfoDouble(array $entityTypeConfigs): EntityTypeBundleInfoInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeBundleInfoInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(EntityTypeBundleInfoInterface::class);
 
@@ -228,12 +228,12 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock LanguageManager.
+   * Creates a LanguageManager double.
    *
    * @return \Drupal\Core\Language\LanguageManagerInterface
-   *   The mock LanguageManager.
+   *   The LanguageManager double.
    */
-  private function createLanguageManagerMock(): LanguageManagerInterface {
+  private function createLanguageManagerDouble(): LanguageManagerInterface {
     $defaultLanguage = new Language([
       'id' => LanguageInterface::LANGCODE_DEFAULT,
       'name' => 'Default',
@@ -268,12 +268,12 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock UUID generator.
+   * Creates a UUID generator double.
    *
    * @return \Drupal\Component\Uuid\UuidInterface
-   *   The mock UUID generator.
+   *   The UUID generator double.
    */
-  private function createUuidMock(): UuidInterface {
+  private function createUuidDouble(): UuidInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(UuidInterface::class);
 
@@ -297,12 +297,12 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock ModuleHandler.
+   * Creates a ModuleHandler double.
    *
    * @return \Drupal\Core\Extension\ModuleHandlerInterface
-   *   The mock ModuleHandler.
+   *   The ModuleHandler double.
    */
-  private function createModuleHandlerMock(): ModuleHandlerInterface {
+  private function createModuleHandlerDouble(): ModuleHandlerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Extension\ModuleHandlerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(ModuleHandlerInterface::class);
 
@@ -320,15 +320,15 @@ final class ProphecyServiceMocker implements ServiceMockerInterface {
   }
 
   /**
-   * Creates a mock EntityFieldManager.
+   * Creates an EntityFieldManager double.
    *
    * Returns empty field definitions so entities can be instantiated without
    * real field configuration.
    *
    * @return \Drupal\Core\Entity\EntityFieldManagerInterface
-   *   The mock EntityFieldManager.
+   *   The EntityFieldManager double.
    */
-  private function createEntityFieldManagerMock(): EntityFieldManagerInterface {
+  private function createEntityFieldManagerDouble(): EntityFieldManagerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityFieldManagerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(EntityFieldManagerInterface::class);
 

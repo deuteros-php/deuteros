@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Performance;
 
-use Deuteros\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Double\PhpUnit\MockEntityDoubleFactory;
 use PHPUnit\Framework\Attributes\Group;
 
 /**

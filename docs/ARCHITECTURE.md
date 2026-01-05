@@ -92,9 +92,9 @@ Deuteros is built around these core principles:
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleDefinition` | `src/Common/EntityDoubleDefinition.php` | Immutable value object storing entity metadata, fields, interfaces, method overrides |
-| `FieldDoubleDefinition` | `src/Common/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) |
-| `EntityDoubleDefinitionBuilder` | `src/Common/EntityDoubleDefinitionBuilder.php` | Fluent builder for creating definitions |
+| `EntityDoubleDefinition` | `src/Double/EntityDoubleDefinition.php` | Immutable value object storing entity metadata, fields, interfaces, method overrides |
+| `FieldDoubleDefinition` | `src/Double/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) |
+| `EntityDoubleDefinitionBuilder` | `src/Double/EntityDoubleDefinitionBuilder.php` | Fluent builder for creating definitions |
 
 **Key characteristics**:
 - All classes are `final readonly` (PHP 8.2+)
@@ -107,9 +107,9 @@ Deuteros is built around these core principles:
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleBuilder` | `src/Common/EntityDoubleBuilder.php` | Produces resolvers for entity methods |
-| `FieldItemListDoubleBuilder` | `src/Common/FieldItemListDoubleBuilder.php` | Produces resolvers for field list methods |
-| `FieldItemDoubleBuilder` | `src/Common/FieldItemDoubleBuilder.php` | Produces resolvers for field item methods |
+| `EntityDoubleBuilder` | `src/Double/EntityDoubleBuilder.php` | Produces resolvers for entity methods |
+| `FieldItemListDoubleBuilder` | `src/Double/FieldItemListDoubleBuilder.php` | Produces resolvers for field list methods |
+| `FieldItemDoubleBuilder` | `src/Double/FieldItemDoubleBuilder.php` | Produces resolvers for field item methods |
 
 **Resolver signature**: All builders produce callables with this signature:
 ```php
@@ -122,9 +122,9 @@ fn(array $context, ...$args): mixed
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `GuardrailEnforcer` | `src/Common/GuardrailEnforcer.php` | Centralized exception generation with differentiated messages |
-| `MutableStateContainer` | `src/Common/MutableStateContainer.php` | Tracks field mutations for mutable doubles |
-| `EntityReferenceNormalizer` | `src/Common/EntityReferenceNormalizer.php` | Normalizes entity reference field values |
+| `GuardrailEnforcer` | `src/Double/GuardrailEnforcer.php` | Centralized exception generation with differentiated messages |
+| `MutableStateContainer` | `src/Double/MutableStateContainer.php` | Tracks field mutations for mutable doubles |
+| `EntityReferenceNormalizer` | `src/Double/EntityReferenceNormalizer.php` | Normalizes entity reference field values |
 
 ### Factory Layer
 
@@ -132,9 +132,9 @@ fn(array $context, ...$args): mixed
 
 | Class | File | Responsibility |
 |-------|------|----------------|
-| `EntityDoubleFactory` | `src/Common/EntityDoubleFactory.php` | Abstract base with template method pattern |
-| `MockEntityDoubleFactory` | `src/PhpUnit/MockEntityDoubleFactory.php` | PHPUnit native mock implementation |
-| `ProphecyEntityDoubleFactory` | `src/Prophecy/ProphecyEntityDoubleFactory.php` | Prophecy double implementation |
+| `EntityDoubleFactory` | `src/Double/EntityDoubleFactory.php` | Abstract base with template method pattern |
+| `MockEntityDoubleFactory` | `src/Double/PhpUnit/MockEntityDoubleFactory.php` | PHPUnit native mock implementation |
+| `ProphecyEntityDoubleFactory` | `src/Double/Prophecy/ProphecyEntityDoubleFactory.php` | Prophecy double implementation |
 
 ---
 

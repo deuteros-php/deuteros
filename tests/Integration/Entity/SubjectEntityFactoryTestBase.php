@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration\Entity;
 
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;

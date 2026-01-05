@@ -43,8 +43,8 @@ composer require --dev plach79/Deuteros
 An entity double is instantiated by passing an entity double definition to a factory. The easiest way to define an entity double is using the definition builder:
 
 ```php
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
 
 class MyServiceTest extends TestCase {
 
@@ -782,8 +782,8 @@ $factory = EntityDoubleFactory::fromTest($this);
 ### Explicit Factory Selection
 
 ```php
-use Deuteros\PhpUnit\MockEntityDoubleFactory;
-use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+use Deuteros\Double\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 
 // PHPUnit native mocks
 $factory = MockEntityDoubleFactory::fromTest($this);
@@ -805,8 +805,8 @@ Both PHPUnit and Prophecy adapters behave identically. You can switch between th
 
 namespace Drupal\my_module\Tests\Unit;
 
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Drupal\my_module\Service\ArticleProcessor;
 use PHPUnit\Framework\TestCase;
 

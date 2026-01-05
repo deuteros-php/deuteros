@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Performance;
 
-use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 use PHPUnit\Framework\Attributes\Group;
 use Prophecy\PhpUnit\ProphecyTrait;
 

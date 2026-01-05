@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity;
 
-use Deuteros\Common\EntityDoubleFactoryInterface;
+use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -79,7 +79,7 @@ abstract class SubjectEntityTestBase extends TestCase {
    *
    * Useful for creating entity doubles to use as entity references.
    *
-   * @return \Deuteros\Common\EntityDoubleFactoryInterface
+   * @return \Deuteros\Double\EntityDoubleFactoryInterface
    *   The entity double factory.
    */
   protected function getDoubleFactory(): EntityDoubleFactoryInterface {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\PhpUnit\MockEntityDoubleFactory;
-use Deuteros\Prophecy\ProphecyEntityDoubleFactory;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\PhpUnit\MockEntityDoubleFactory;
+use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;

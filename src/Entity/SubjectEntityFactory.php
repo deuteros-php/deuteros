@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity;
 
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleFactoryInterface;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleFactoryInterface;
 use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
 use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
@@ -116,7 +116,7 @@ final class SubjectEntityFactory {
    *
    * @param \Deuteros\Entity\ServiceDoublerInterface $serviceDoubler
    *   The service doubler.
-   * @param \Deuteros\Common\EntityDoubleFactoryInterface $doubleFactory
+   * @param \Deuteros\Double\EntityDoubleFactoryInterface $doubleFactory
    *   The entity double factory for creating field doubles.
    */
   private function __construct(
@@ -387,7 +387,7 @@ final class SubjectEntityFactory {
    *
    * Useful for creating entity doubles to use as entity references.
    *
-   * @return \Deuteros\Common\EntityDoubleFactoryInterface
+   * @return \Deuteros\Double\EntityDoubleFactoryInterface
    *   The entity double factory.
    */
   public function getDoubleFactory(): EntityDoubleFactoryInterface {

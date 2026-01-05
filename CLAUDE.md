@@ -87,11 +87,11 @@ Workflow file: `.github/workflows/ci.yml`
 
 ### Layer Structure
 
-1. **Definition Layer** (`Deuteros\Common\EntityDoubleDefinition`, `FieldDoubleDefinition`)
+1. **Definition Layer** (`Deuteros\Double\EntityDoubleDefinition`, `FieldDoubleDefinition`)
    - Immutable value objects storing entity double metadata and field values
    - Pure PHP, no Drupal dependencies
 
-2. **Core Resolution Layer** (`Deuteros\Common\*DoubleBuilder`)
+2. **Core Resolution Layer** (`Deuteros\Double\*DoubleBuilder`)
    - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, etc.)
    - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue)
    - `FieldItemDoubleBuilder` - Resolvers for field items
@@ -104,9 +104,9 @@ Workflow file: `.github/workflows/ci.yml`
    - `EntityReferenceNormalizer` - Normalizes entity reference field values
 
 4. **Factory Classes**
-   - `Deuteros\Common\EntityDoubleFactory` - Abstract base with `fromTest()` factory
-   - `Deuteros\PhpUnit\MockEntityDoubleFactory` - PHPUnit native mocks
-   - `Deuteros\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
+   - `Deuteros\Double\EntityDoubleFactory` - Abstract base with `fromTest()` factory
+   - `Deuteros\Double\PhpUnit\MockEntityDoubleFactory` - PHPUnit native mocks
+   - `Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
 
 5. **Entity Testing Layer** (`Deuteros\Entity`)
    - `SubjectEntityFactory` - Creates real entity instances with doubled dependencies
@@ -174,7 +174,7 @@ These constraints must never be violated:
 
 ## Test Structure
 
-- `tests/Unit/Common/` - Unit tests for definition, support, and builder classes
+- `tests/Unit/Double/` - Unit tests for definition, support, and builder classes
   - Definition layer: `EntityDoubleDefinitionTest`, `FieldDoubleDefinitionTest`,
     `EntityDoubleDefinitionBuilderTest`
   - Core resolution layer: `EntityDoubleBuilderTest`, `FieldItemListDoubleBuilderTest`,
@@ -182,8 +182,8 @@ These constraints must never be violated:
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
     `EntityReferenceNormalizerTest`
 - `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory
-- `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
-- `tests/Integration/Prophecy/` - Prophecy factory integration tests
+- `tests/Integration/Double/PhpUnit/` - PHPUnit factory integration tests
+- `tests/Integration/Double/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by
   both adapter test classes (parity verified via inheritance)
 - `tests/Integration/Entity/` - SubjectEntityFactory integration tests

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Integration;
 
-use Deuteros\Common\EntityDoubleDefinition;
-use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\Common\EntityDoubleFactory;
-use Deuteros\Common\EntityDoubleFactoryInterface;
+use Deuteros\Double\EntityDoubleDefinition;
+use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\EntityDoubleFactory;
+use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;

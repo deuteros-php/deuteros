@@ -382,21 +382,25 @@ final class SubjectEntityFactory {
    *   Field doubles keyed by field name.
    */
   private function createFieldDoubles(array $values, array $config): array {
+    if (empty($values)) {
+      return [];
+    }
+
+    // Create a single entity double with all fields defined.
+    $builder = EntityDoubleDefinitionBuilder::create($config['id']);
+    foreach ($values as $fieldName => $value) {
+      $builder->field($fieldName, $value);
+    }
+    $definition = $builder->build();
+
+    // Create the temporary entity double.
+    $tempEntity = $this->doubleFactory->create($definition);
+    assert($tempEntity instanceof FieldableEntityInterface);
+
+    // Extract all field doubles from the temporary entity.
     /** @var array<string, \Drupal\Core\Field\FieldItemListInterface<\Drupal\Core\Field\FieldItemInterface>> $fields */
     $fields = [];
-
-    foreach ($values as $fieldName => $value) {
-      // Create a minimal entity definition for field double creation.
-      // FieldableEntityInterface is auto-added when fields are defined.
-      $builder = EntityDoubleDefinitionBuilder::create($config['id']);
-      $builder->field($fieldName, $value);
-      $definition = $builder->build();
-
-      // Create the entity double - we'll extract just the field from it.
-      $tempEntity = $this->doubleFactory->create($definition);
-
-      // Get the field double (FieldableEntityInterface was auto-added).
-      assert($tempEntity instanceof FieldableEntityInterface);
+    foreach (array_keys($values) as $fieldName) {
       $fields[$fieldName] = $tempEntity->get($fieldName);
     }
 

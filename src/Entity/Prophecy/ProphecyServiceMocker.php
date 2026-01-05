@@ -1,0 +1,346 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Deuteros\Entity\Prophecy;
+
+use Deuteros\Entity\ServiceMockerInterface;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Entity\ContentEntityTypeInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Language\Language;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Component\Uuid\UuidInterface;
+use PHPUnit\Framework\TestCase;
+use Prophecy\Argument;
+use Prophecy\Prophet;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
+/**
+ * Creates mock services using Prophecy.
+ */
+final class ProphecyServiceMocker implements ServiceMockerInterface {
+
+  /**
+   * The prophet for creating prophecies.
+   */
+  private readonly Prophet $prophet;
+
+  /**
+   * Constructs a ProphecyServiceMocker.
+   *
+   * @param \PHPUnit\Framework\TestCase $testCase
+   *   The test case (must use ProphecyTrait).
+   */
+  public function __construct(TestCase $testCase) {
+    if (!method_exists($testCase, 'getProphet')) {
+      throw new \InvalidArgumentException(
+        'Test case must use ProphecyTrait to use ProphecyServiceMocker.'
+      );
+    }
+    // Use reflection to call getProphet() since it may be private/protected.
+    $reflection = new \ReflectionMethod($testCase, 'getProphet');
+    /** @var \Prophecy\Prophet $prophet */
+    $prophet = $reflection->invoke($testCase);
+    $this->prophet = $prophet;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildContainer(array $entityTypeConfigs): ContainerInterface {
+    $container = new ContainerBuilder();
+
+    // Create and register mock services.
+    $container->set(
+      'entity_type.manager',
+      $this->createEntityTypeManagerMock($entityTypeConfigs)
+    );
+
+    $container->set(
+      'entity_type.bundle.info',
+      $this->createBundleInfoMock($entityTypeConfigs)
+    );
+
+    $container->set(
+      'language_manager',
+      $this->createLanguageManagerMock()
+    );
+
+    $container->set(
+      'uuid',
+      $this->createUuidMock()
+    );
+
+    $container->set(
+      'module_handler',
+      $this->createModuleHandlerMock()
+    );
+
+    $container->set(
+      'entity_field.manager',
+      $this->createEntityFieldManagerMock()
+    );
+
+    return $container;
+  }
+
+  /**
+   * Creates a mock EntityTypeManager.
+   *
+   * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
+   *   Entity type configurations.
+   *
+   * @return \Drupal\Core\Entity\EntityTypeManagerInterface
+   *   The mock EntityTypeManager.
+   */
+  private function createEntityTypeManagerMock(array $entityTypeConfigs): EntityTypeManagerInterface {
+    $entityTypes = [];
+    foreach ($entityTypeConfigs as $entityTypeId => $config) {
+      $entityTypes[$entityTypeId] = $this->createEntityTypeMock($entityTypeId, $config);
+    }
+
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeManagerInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(EntityTypeManagerInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getDefinition(Argument::type('string'))
+      ->will(function (array $args) use ($entityTypes) {
+        $entityTypeId = $args[0];
+        assert(is_string($entityTypeId));
+        if (!isset($entityTypes[$entityTypeId])) {
+          throw new \InvalidArgumentException("Entity type '$entityTypeId' not registered.");
+        }
+        return $entityTypes[$entityTypeId];
+      });
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getDefinitions()->willReturn($entityTypes);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->hasDefinition(Argument::type('string'))
+      ->will(function (array $args) use ($entityTypes) {
+        $entityTypeId = $args[0];
+        assert(is_string($entityTypeId));
+        return isset($entityTypes[$entityTypeId]);
+      });
+
+    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock entity type definition.
+   *
+   * @param string $entityTypeId
+   *   The entity type ID.
+   * @param array{class: class-string, keys: array<string, string>} $config
+   *   The entity type configuration.
+   *
+   * @return \Drupal\Core\Entity\ContentEntityTypeInterface
+   *   The mock entity type.
+   */
+  private function createEntityTypeMock(string $entityTypeId, array $config): ContentEntityTypeInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\ContentEntityTypeInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(ContentEntityTypeInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->id()->willReturn($entityTypeId);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getClass()->willReturn($config['class']);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getKey(Argument::type('string'))
+      ->will(function (array $args) use ($config) {
+        $key = $args[0];
+        assert(is_string($key));
+        return $config['keys'][$key] ?? NULL;
+      });
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getKeys()->willReturn($config['keys']);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->hasKey(Argument::type('string'))
+      ->will(function (array $args) use ($config) {
+        $key = $args[0];
+        assert(is_string($key));
+        return isset($config['keys'][$key]);
+      });
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->isRevisionable()->willReturn(isset($config['keys']['revision']));
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->isTranslatable()->willReturn(isset($config['keys']['langcode']));
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getBundleEntityType()->willReturn(NULL);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getLabel()->willReturn($entityTypeId);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getLinkTemplates()->willReturn([]);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getUriCallback()->willReturn(NULL);
+
+    /** @var \Drupal\Core\Entity\ContentEntityTypeInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock EntityTypeBundleInfo service.
+   *
+   * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
+   *   Entity type configurations.
+   *
+   * @return \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   *   The mock bundle info service.
+   */
+  private function createBundleInfoMock(array $entityTypeConfigs): EntityTypeBundleInfoInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeBundleInfoInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(EntityTypeBundleInfoInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getBundleInfo(Argument::type('string'))
+      ->will(function (array $args) use ($entityTypeConfigs) {
+        $entityTypeId = $args[0];
+        assert(is_string($entityTypeId));
+        if (!isset($entityTypeConfigs[$entityTypeId])) {
+          return [];
+        }
+        return [
+          $entityTypeId => ['label' => $entityTypeId],
+        ];
+      });
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getAllBundleInfo()
+      ->will(function () use ($entityTypeConfigs) {
+        $result = [];
+        foreach (array_keys($entityTypeConfigs) as $entityTypeId) {
+          $result[$entityTypeId] = [
+            $entityTypeId => ['label' => $entityTypeId],
+          ];
+        }
+        return $result;
+      });
+
+    /** @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock LanguageManager.
+   *
+   * @return \Drupal\Core\Language\LanguageManagerInterface
+   *   The mock LanguageManager.
+   */
+  private function createLanguageManagerMock(): LanguageManagerInterface {
+    $defaultLanguage = new Language([
+      'id' => LanguageInterface::LANGCODE_DEFAULT,
+      'name' => 'Default',
+    ]);
+
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Language\LanguageManagerInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(LanguageManagerInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getDefaultLanguage()->willReturn($defaultLanguage);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getCurrentLanguage(Argument::any())->willReturn($defaultLanguage);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getLanguage(Argument::any())
+      ->will(function (array $args) use ($defaultLanguage) {
+        $langcode = $args[0];
+        if ($langcode === NULL || $langcode === LanguageInterface::LANGCODE_DEFAULT) {
+          return $defaultLanguage;
+        }
+        assert(is_string($langcode));
+        return new Language(['id' => $langcode, 'name' => $langcode]);
+      });
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getLanguages(Argument::any())->willReturn([
+      LanguageInterface::LANGCODE_DEFAULT => $defaultLanguage,
+    ]);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->isMultilingual()->willReturn(FALSE);
+
+    /** @var \Drupal\Core\Language\LanguageManagerInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock UUID generator.
+   *
+   * @return \Drupal\Component\Uuid\UuidInterface
+   *   The mock UUID generator.
+   */
+  private function createUuidMock(): UuidInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(UuidInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->generate()->will(function (): string {
+      /** @var int $counter */
+      static $counter = 0;
+      $counter++;
+      return sprintf(
+        '%08x-%04x-%04x-%04x-%012x',
+        $counter,
+        0,
+        0,
+        0,
+        0
+      );
+    });
+
+    /** @var \Drupal\Component\Uuid\UuidInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock ModuleHandler.
+   *
+   * @return \Drupal\Core\Extension\ModuleHandlerInterface
+   *   The mock ModuleHandler.
+   */
+  private function createModuleHandlerMock(): ModuleHandlerInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Extension\ModuleHandlerInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(ModuleHandlerInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->invokeAll(Argument::any(), Argument::any())->willReturn([]);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->invoke(Argument::any(), Argument::any(), Argument::any())->willReturn(NULL);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->moduleExists(Argument::any())->willReturn(FALSE);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->alter(Argument::cetera());
+
+    /** @var \Drupal\Core\Extension\ModuleHandlerInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * Creates a mock EntityFieldManager.
+   *
+   * Returns empty field definitions so entities can be instantiated without
+   * real field configuration.
+   *
+   * @return \Drupal\Core\Entity\EntityFieldManagerInterface
+   *   The mock EntityFieldManager.
+   */
+  private function createEntityFieldManagerMock(): EntityFieldManagerInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityFieldManagerInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(EntityFieldManagerInterface::class);
+
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getFieldDefinitions(Argument::any(), Argument::any())->willReturn([]);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getBaseFieldDefinitions(Argument::any())->willReturn([]);
+    // @phpstan-ignore-next-line method.notFound
+    $prophecy->getFieldStorageDefinitions(Argument::any())->willReturn([]);
+
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface */
+    return $prophecy->reveal();
+  }
+
+}

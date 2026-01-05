@@ -408,3 +408,97 @@ Deuteros was implemented in phases with subsequent refactoring to improve API er
 - [docs/archive/init.md](archive/init.md) - Initial requirements and constraints
 - [docs/archive/plan.md](archive/plan.md) - Original 8-phase implementation plan
 - [docs/archive/refactoring.md](archive/refactoring.md) - Post-implementation improvements (15 tasks)
+
+---
+
+## Entity Testing Layer
+
+In addition to entity doubles, Deuteros provides an `EntityTestHelper` for
+testing actual Drupal entity class instances with mocked dependencies.
+
+### Architecture Overview
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                    User Code (Tests)                       │
+└────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────┐
+│              EntityTestHelper (Single Entry Point)         │
+│  - fromTest() → auto-detects PHPUnit/Prophecy              │
+│  - installContainer() → sets up mock service container     │
+│  - createEntity() → real entity with field doubles         │
+│  - uninstallContainer() → cleanup                          │
+└────────────────────────────────────────────────────────────┘
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐
+│ PhpUnitService  │  │ ProphecyService │  │ EntityDouble     │
+│ Mocker          │  │ Mocker          │  │ Factory          │
+└─────────────────┘  └─────────────────┘  └──────────────────┘
+```
+
+### Key Design Decisions
+
+**Constructor Bypass via Reflection**
+
+The helper uses `ReflectionClass::newInstanceWithoutConstructor()` to create
+entity instances without invoking the constructor. This avoids the need to mock
+the many services that `ContentEntityBase`'s constructor requires. After
+instantiation, required internal properties are set via reflection:
+
+- `entityTypeId` - From the `#[ContentEntityType]` attribute
+- `entityKeys` - Entity keys (id, bundle, uuid) from provided values
+- `fields` - DEUTEROS field doubles are injected directly
+- Internal state (`translations`, `defaultLangcode`, etc.)
+
+**Service Container Mocking**
+
+The helper installs a minimal mock container via `\Drupal::setContainer()` with:
+
+| Service | Purpose |
+|---------|---------|
+| `entity_type.manager` | Returns entity type definitions |
+| `entity_type.bundle.info` | Bundle information |
+| `language_manager` | Default language handling |
+| `uuid` | UUID generation (stubbed) |
+| `module_handler` | No-op hook invocations |
+| `entity_field.manager` | Returns empty field definitions |
+
+**Entity Type Configuration from Attributes**
+
+Entity keys are read from the `#[ContentEntityType]` PHP 8 attribute on the
+entity class. This eliminates the need for explicit configuration:
+
+```php
+#[ContentEntityType(
+  id: 'node',
+  entity_keys: [
+    'id' => 'nid',
+    'bundle' => 'type',
+    // ...
+  ],
+)]
+class Node extends ContentEntityBase { }
+```
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `src/Entity/EntityTestHelper.php` | Main entry point |
+| `src/Entity/ServiceMockerInterface.php` | Service mocker contract |
+| `src/Entity/PhpUnit/PhpUnitServiceMocker.php` | PHPUnit mock implementation |
+| `src/Entity/Prophecy/ProphecyServiceMocker.php` | Prophecy mock implementation |
+
+### Test Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `tests/Unit/Entity/` | Unit tests for EntityTestHelper |
+| `tests/Integration/Entity/` | Integration tests |
+| `tests/Integration/Entity/EntityTestHelperTestBase.php` | Shared tests for adapter parity |
+| `tests/Integration/Entity/PhpUnit/` | PHPUnit adapter tests |
+| `tests/Integration/Entity/Prophecy/` | Prophecy adapter tests |

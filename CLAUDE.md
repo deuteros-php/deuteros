@@ -108,6 +108,12 @@ Workflow file: `.github/workflows/ci.yml`
    - `Deuteros\PhpUnit\MockEntityDoubleFactory` - PHPUnit native mocks
    - `Deuteros\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
 
+5. **Entity Testing Layer** (`Deuteros\Entity`)
+   - `EntityTestHelper` - Creates real entity instances with mocked dependencies
+   - `ServiceMockerInterface` - Contract for service mocker implementations
+   - `PhpUnit\PhpUnitServiceMocker` - PHPUnit mock container builder
+   - `Prophecy\ProphecyServiceMocker` - Prophecy mock container builder
+
 ### Key Patterns
 
 **Resolver Pattern:** All builders produce `callable` resolvers with signature:
@@ -174,12 +180,18 @@ These constraints must never be violated:
     `FieldItemDoubleBuilderTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
     `EntityReferenceNormalizerTest`
+- `tests/Unit/Entity/` - Unit tests for EntityTestHelper
 - `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by
   both adapter test classes (parity verified via inheritance)
+- `tests/Integration/Entity/` - EntityTestHelper integration tests
+  - `EntityTestHelperTestBase.php` - Shared tests for adapter parity
+  - `PhpUnit/` - PHPUnit adapter tests
+  - `Prophecy/` - Prophecy adapter tests
 - `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,
-  `SecondTestTrait`) for trait support tests
+  `SecondTestTrait`) for trait support tests, and test entity classes
+  (`TestContentEntity`, `EntityWithoutAttribute`)
 - `tests/Performance/` - Benchmarking tests comparing performance approaches
 
 ## Directory Layout

@@ -849,3 +849,155 @@ class ArticleProcessorTest extends TestCase {
 
 }
 ```
+
+---
+
+## Testing Entity Objects
+
+While entity doubles are the primary focus of Deuteros, sometimes you need to
+test code that specifically requires a real entity class instance (e.g.,
+`Node`, `User`, or custom entity classes). The `EntityTestHelper` provides this
+capability by instantiating actual Drupal entity classes with mocked service
+dependencies and DEUTEROS field doubles.
+
+### When to Use EntityTestHelper
+
+Use `EntityTestHelper` when you need to:
+- Test code that checks `instanceof` against concrete entity classes
+- Test entity class methods that are not defined on interfaces
+- Test bundle classes or entity-specific traits
+- Verify behavior that depends on entity class inheritance
+
+For most testing scenarios, entity doubles (via `EntityDoubleFactory`) are
+preferred as they're lighter weight and framework-agnostic.
+
+### Basic Usage
+
+```php
+use Deuteros\Entity\EntityTestHelper;
+use Drupal\node\Entity\Node;
+
+class MyNodeTest extends TestCase {
+
+  private EntityTestHelper $helper;
+
+  protected function setUp(): void {
+    $this->helper = EntityTestHelper::fromTest($this);
+    $this->helper->installContainer();
+  }
+
+  protected function tearDown(): void {
+    $this->helper->uninstallContainer();
+  }
+
+  public function testNodeCreation(): void {
+    $node = $this->helper->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test Article',
+      'body' => ['value' => 'Body text', 'format' => 'basic_html'],
+      'status' => 1,
+    ]);
+
+    // Real Node instance with DEUTEROS field doubles.
+    $this->assertInstanceOf(Node::class, $node);
+    $this->assertSame('node', $node->getEntityTypeId());
+    $this->assertSame('article', $node->bundle());
+    $this->assertSame('Test Article', $node->get('title')->value);
+    $this->assertSame('Body text', $node->get('body')->value);
+  }
+
+}
+```
+
+### Entity Reference Fields
+
+You can use DEUTEROS doubles as entity reference targets:
+
+```php
+use Deuteros\Common\EntityDoubleDefinitionBuilder;
+
+public function testWithEntityReference(): void {
+  // Create author double using the helper's factory.
+  $author = $this->helper->getDoubleFactory()->create(
+    EntityDoubleDefinitionBuilder::create('user')
+      ->id(42)
+      ->label('Jane Doe')
+      ->build()
+  );
+
+  $node = $this->helper->createEntity(Node::class, [
+    'nid' => 1,
+    'type' => 'article',
+    'title' => 'Test',
+    'uid' => $author,  // Entity double as reference.
+  ]);
+
+  $this->assertSame($author, $node->get('uid')->entity);
+  $this->assertEquals(42, $node->get('uid')->target_id);
+}
+```
+
+### Multi-Value Fields
+
+```php
+public function testMultiValueField(): void {
+  $node = $this->helper->createEntity(Node::class, [
+    'nid' => 1,
+    'type' => 'article',
+    'title' => 'Test',
+    'field_tags' => [
+      ['target_id' => 1],
+      ['target_id' => 2],
+      ['target_id' => 3],
+    ],
+  ]);
+
+  $this->assertSame(1, $node->get('field_tags')->get(0)->target_id);
+  $this->assertSame(2, $node->get('field_tags')->get(1)->target_id);
+  $this->assertSame(3, $node->get('field_tags')->get(2)->target_id);
+}
+```
+
+### Auto-Detection
+
+Like `EntityDoubleFactory`, `EntityTestHelper::fromTest()` auto-detects
+whether your test uses PHPUnit or Prophecy:
+
+```php
+// Works with both PHPUnit and Prophecy
+$helper = EntityTestHelper::fromTest($this);
+```
+
+### Container Lifecycle
+
+The helper installs a mock Symfony container with minimal services:
+
+```php
+protected function setUp(): void {
+  $this->helper = EntityTestHelper::fromTest($this);
+  $this->helper->installContainer(); // Required before createEntity()
+}
+
+protected function tearDown(): void {
+  $this->helper->uninstallContainer(); // Cleanup
+}
+```
+
+Calling `installContainer()` twice throws `LogicException`. Calling
+`uninstallContainer()` multiple times is safe (idempotent).
+
+### Limitations
+
+Entity objects created by `EntityTestHelper` have these limitations:
+
+| Operation | Status | Notes |
+|-----------|--------|-------|
+| `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
+| `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles |
+| `save()`, `delete()` | Throws | No storage backend |
+| Entity queries | Not supported | No database |
+| `access()` | Throws | No access control handler |
+| Full translation workflows | Limited | Basic language support only |
+
+For operations requiring full Drupal services, use Kernel tests instead.

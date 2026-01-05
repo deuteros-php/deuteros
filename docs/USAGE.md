@@ -1068,6 +1068,31 @@ $this->assertSame('My Configuration', $config->label());
 $this->assertSame('A description', $config->description);
 ```
 
+### Class Hierarchy Support
+
+`SubjectEntityFactory` automatically traverses the class hierarchy when looking
+for `#[ContentEntityType]` or `#[ConfigEntityType]` attributes. This means you
+can create subclasses of entity classes that have the attribute without needing
+to redeclare it:
+
+```php
+// Parent class has the attribute
+#[ContentEntityType(id: 'node', ...)]
+class Node extends ContentEntityBase { }
+
+// Child class inherits the attribute - no need to redeclare it
+class CustomNode extends Node {
+  // Custom methods or bundle-specific behavior
+}
+
+// Both work with SubjectEntityFactory
+$node = $factory->create(Node::class, ['nid' => 1, 'type' => 'article']);
+$customNode = $factory->create(CustomNode::class, ['nid' => 2, 'type' => 'article']);
+```
+
+This is particularly useful for testing custom bundle classes that extend core
+entity classes like `Node` or `User`.
+
 ### Limitations
 
 Entity objects created by `SubjectEntityFactory` have these limitations:

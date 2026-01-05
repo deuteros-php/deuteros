@@ -470,7 +470,9 @@ The helper installs a container with doubled services via `\Drupal::setContainer
 **Entity Type Configuration from Attributes**
 
 Entity keys are read from PHP 8 attributes (`#[ContentEntityType]` or
-`#[ConfigEntityType]`) on the entity class. This eliminates explicit config:
+`#[ConfigEntityType]`) on the entity class. The factory traverses the class
+hierarchy when looking for these attributes, so entity subclasses inherit their
+parent's entity type configuration. This eliminates explicit config:
 
 ```php
 #[ContentEntityType(

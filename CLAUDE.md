@@ -193,7 +193,8 @@ These constraints must never be violated:
   - `Prophecy/` - Prophecy adapter tests
 - `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,
   `SecondTestTrait`) for trait support tests, and test entity classes
-  (`TestContentEntity`, `TestConfigEntity`, `EntityWithoutAttribute`)
+  (`TestContentEntity`, `TestConfigEntity`, `EntityWithoutAttribute`,
+  `TestContentEntityChild`, `TestConfigEntityChild`, `TestContentEntityGrandchild`)
 - `tests/Performance/` - Benchmarking tests comparing performance approaches
 
 ## Directory Layout

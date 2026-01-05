@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Deuteros\Tests\Unit\Entity;
 
-use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Tests\Fixtures\EntityWithoutAttribute;
+use Deuteros\Tests\Fixtures\TestConfigEntityChild;
+use Deuteros\Tests\Fixtures\TestContentEntityChild;
+use Deuteros\Tests\Fixtures\TestContentEntityGrandchild;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityBase;
 use Drupal\node\Entity\Node;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -106,10 +109,55 @@ class SubjectEntityFactoryTest extends TestCase {
     $this->factory()->installContainer();
 
     $this->expectException(\InvalidArgumentException::class);
-    $this->expectExceptionMessage('does not have a #[ContentEntityType] or #[ConfigEntityType] attribute');
+    $this->expectExceptionMessage('and its parent classes');
+    $this->expectExceptionMessage('#[ContentEntityType] or #[ConfigEntityType]');
 
     // Use a class that extends ContentEntityBase but lacks the attribute.
     $this->factory()->create(EntityWithoutAttribute::class, []);
+  }
+
+  /**
+   * Tests that ::create works with a subclass inheriting the attribute.
+   */
+  public function testCreateWithInheritedAttribute(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntityChild::class, [
+      'id' => 1,
+      'type' => 'test_bundle',
+    ]);
+
+    $this->assertInstanceOf(TestContentEntityChild::class, $entity);
+    $this->assertSame('test_entity', $entity->getEntityTypeId());
+  }
+
+  /**
+   * Tests that ::create works with deep class hierarchy.
+   */
+  public function testCreateWithDeepInheritedAttribute(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntityGrandchild::class, [
+      'id' => 1,
+      'type' => 'test_bundle',
+    ]);
+
+    $this->assertInstanceOf(TestContentEntityGrandchild::class, $entity);
+    $this->assertSame('test_entity', $entity->getEntityTypeId());
+  }
+
+  /**
+   * Tests that ::create works with a config class hierarchy.
+   */
+  public function testConfigWithInheritedAttribute(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestConfigEntityChild::class, [
+      'id' => 1,
+    ]);
+
+    $this->assertInstanceOf(TestConfigEntityChild::class, $entity);
+    $this->assertSame('test_config', $entity->getEntityTypeId());
   }
 
   /**

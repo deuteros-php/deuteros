@@ -412,18 +412,30 @@ final class SubjectEntityFactory {
     }
 
     $reflection = new \ReflectionClass($entityClass);
+    $attributes = [];
 
-    // Check for PHP 8 ContentEntityType attribute first.
-    $attributes = $reflection->getAttributes(ContentEntityType::class);
+    // Walk up the class hierarchy to find the entity type attribute.
+    while ($reflection !== FALSE) {
+      // Check for PHP 8 ContentEntityType attribute first.
+      $attributes = $reflection->getAttributes(ContentEntityType::class);
 
-    // Fall back to ConfigEntityType attribute.
-    if ($attributes === []) {
-      $attributes = $reflection->getAttributes(ConfigEntityType::class);
+      // Fall back to ConfigEntityType attribute.
+      if ($attributes === []) {
+        $attributes = $reflection->getAttributes(ConfigEntityType::class);
+      }
+
+      // Found an attribute, stop searching.
+      if ($attributes !== []) {
+        break;
+      }
+
+      // Move up to parent class.
+      $reflection = $reflection->getParentClass();
     }
 
     if ($attributes === []) {
       throw new \InvalidArgumentException(sprintf(
-        'Entity class %s does not have a #[ContentEntityType] or #[ConfigEntityType] attribute.',
+        'Entity class %s (and its parent classes) does not have a #[ContentEntityType] or #[ConfigEntityType] attribute.',
         $entityClass
       ));
     }

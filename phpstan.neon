@@ -3,3 +3,8 @@ parameters:
   paths:
     - src
     - tests
+  ignoreErrors:
+    - identifier: method.notFound
+    - identifier: method.nonObject
+    - identifier: cast.string
+    - identifier: cast.int

@@ -107,7 +107,6 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeManagerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(EntityTypeManagerInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getDefinition(Argument::type('string'))
       ->will(function (array $args) use ($entityTypes) {
         $entityTypeId = $args[0];
@@ -118,10 +117,8 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
         return $entityTypes[$entityTypeId];
       });
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getDefinitions()->willReturn($entityTypes);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->hasDefinition(Argument::type('string'))
       ->will(function (array $args) use ($entityTypes) {
         $entityTypeId = $args[0];
@@ -148,37 +145,26 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\ContentEntityTypeInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(ContentEntityTypeInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->id()->willReturn($entityTypeId);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getClass()->willReturn($config['class']);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getKey(Argument::type('string'))
       ->will(function (array $args) use ($config) {
         $key = $args[0];
         assert(is_string($key));
         return $config['keys'][$key] ?? NULL;
       });
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getKeys()->willReturn($config['keys']);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->hasKey(Argument::type('string'))
       ->will(function (array $args) use ($config) {
         $key = $args[0];
         assert(is_string($key));
         return isset($config['keys'][$key]);
       });
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->isRevisionable()->willReturn(isset($config['keys']['revision']));
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->isTranslatable()->willReturn(isset($config['keys']['langcode']));
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getBundleEntityType()->willReturn(NULL);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getLabel()->willReturn($entityTypeId);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getLinkTemplates()->willReturn([]);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getUriCallback()->willReturn(NULL);
 
     /** @var \Drupal\Core\Entity\ContentEntityTypeInterface */
@@ -198,7 +184,6 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityTypeBundleInfoInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(EntityTypeBundleInfoInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getBundleInfo(Argument::type('string'))
       ->will(function (array $args) use ($entityTypeConfigs) {
         $entityTypeId = $args[0];
@@ -211,7 +196,6 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
         ];
       });
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getAllBundleInfo()
       ->will(function () use ($entityTypeConfigs) {
         $result = [];
@@ -242,11 +226,8 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Language\LanguageManagerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(LanguageManagerInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getDefaultLanguage()->willReturn($defaultLanguage);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getCurrentLanguage(Argument::any())->willReturn($defaultLanguage);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getLanguage(Argument::any())
       ->will(function (array $args) use ($defaultLanguage) {
         $langcode = $args[0];
@@ -256,11 +237,9 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
         assert(is_string($langcode));
         return new Language(['id' => $langcode, 'name' => $langcode]);
       });
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getLanguages(Argument::any())->willReturn([
       LanguageInterface::LANGCODE_DEFAULT => $defaultLanguage,
     ]);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->isMultilingual()->willReturn(FALSE);
 
     /** @var \Drupal\Core\Language\LanguageManagerInterface */
@@ -277,7 +256,6 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(UuidInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->generate()->will(function (): string {
       /** @var int $counter */
       static $counter = 0;
@@ -306,13 +284,9 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Extension\ModuleHandlerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(ModuleHandlerInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->invokeAll(Argument::any(), Argument::any())->willReturn([]);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->invoke(Argument::any(), Argument::any(), Argument::any())->willReturn(NULL);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->moduleExists(Argument::any())->willReturn(FALSE);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->alter(Argument::cetera());
 
     /** @var \Drupal\Core\Extension\ModuleHandlerInterface */
@@ -332,11 +306,8 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Entity\EntityFieldManagerInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(EntityFieldManagerInterface::class);
 
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getFieldDefinitions(Argument::any(), Argument::any())->willReturn([]);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getBaseFieldDefinitions(Argument::any())->willReturn([]);
-    // @phpstan-ignore-next-line method.notFound
     $prophecy->getFieldStorageDefinitions(Argument::any())->willReturn([]);
 
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface */

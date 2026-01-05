@@ -90,41 +90,30 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $context = $definition->context;
 
     // Wire core entity methods.
-    // @phpstan-ignore-next-line
     $prophecy->id()->will(fn() => $resolvers['id']($context));
-    // @phpstan-ignore-next-line
     $prophecy->uuid()->will(fn() => $resolvers['uuid']($context));
-    // @phpstan-ignore-next-line
     $prophecy->label()->will(fn() => $resolvers['label']($context));
-    // @phpstan-ignore-next-line
     $prophecy->bundle()->will(fn() => $resolvers['bundle']($context));
-    // @phpstan-ignore-next-line
     $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($context));
 
     // Wire fieldable entity methods if applicable.
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
-      // @phpstan-ignore-next-line
       $prophecy->hasField(Argument::type('string'))->will(
         function (array $args) use ($resolvers, $context) {
-          // @phpstan-ignore-next-line
-          return $resolvers['hasField']($context, (string) $args[0]);
+                return $resolvers['hasField']($context, (string) $args[0]);
         }
       );
-      // @phpstan-ignore-next-line
       $prophecy->get(Argument::type('string'))->will(
         function (array $args) use ($resolvers, $context) {
-          // @phpstan-ignore-next-line
-          return $resolvers['get']($context, (string) $args[0]);
+                return $resolvers['get']($context, (string) $args[0]);
         }
       );
 
       if ($definition->mutable) {
         $revealed = NULL;
-        // @phpstan-ignore-next-line
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
           function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
-            // @phpstan-ignore-next-line
-            $resolvers['set']($context, (string) $args[0], $args[1], $args[2] ?? TRUE);
+                    $resolvers['set']($context, (string) $args[0], $args[1], $args[2] ?? TRUE);
             if ($revealed === NULL) {
               $revealed = $prophecy->reveal();
             }
@@ -133,12 +122,10 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
         );
       }
       else {
-        // @phpstan-ignore-next-line
         $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
           function (array $args): never {
             throw new \LogicException(
-              // @phpstan-ignore-next-line
-              "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
+                        "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
               . "Use createMutableEntityDouble() if you need to test mutations."
             );
           }
@@ -148,7 +135,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire magic accessors using MethodProphecy.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    // @phpstan-ignore-next-line
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
@@ -156,8 +142,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
       $setMethodProphecy->will(
         function (array $args) use ($resolvers, $context): void {
-          // @phpstan-ignore-next-line
-          $resolvers['set']($context, (string) $args[0], $args[1], TRUE);
+                $resolvers['set']($context, (string) $args[0], $args[1], TRUE);
         }
       );
       $prophecy->addMethodProphecy($setMethodProphecy);
@@ -167,8 +152,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $setMethodProphecy->will(
         function (array $args): never {
           throw new \LogicException(
-            // @phpstan-ignore-next-line
-            "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
+                    "Cannot modify field '" . (string) $args[0] . "' on immutable entity double. "
             . "Use createMutableEntityDouble() if you need to test mutations."
           );
         }
@@ -178,13 +162,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire toUrl - either with resolver if configured, or with exception.
     if ($definition->url !== NULL) {
-      // @phpstan-ignore-next-line
       $prophecy->toUrl(Argument::cetera())->will(
         fn(array $args) => $resolvers['toUrl']($context, $args[0] ?? NULL, $args[1] ?? [])
       );
     }
     elseif (!$definition->hasMethod('toUrl')) {
-      // @phpstan-ignore-next-line
       $prophecy->toUrl(Argument::cetera())->will(
         fn() => throw new \LogicException(
           "Method 'toUrl' requires url() to be configured in the entity double definition. "
@@ -196,7 +178,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     // Wire method overrides.
     foreach ($definition->methods as $method => $override) {
       $resolver = $builder->getMethodResolver($method);
-      // @phpstan-ignore-next-line
       $prophecy->$method(Argument::cetera())->will(fn(array $args) => $resolver($context, ...$args));
     }
   }
@@ -227,13 +208,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       if ($methodExists) {
         if ($definition->lenient) {
           // In lenient mode, return null instead of throwing.
-          // @phpstan-ignore-next-line
           $prophecy->$method(Argument::cetera())->will(
             fn() => GuardrailEnforcer::getLenientDefault()
           );
         }
         else {
-          // @phpstan-ignore-next-line
           $prophecy->$method(Argument::cetera())->will(
             fn() => throw GuardrailEnforcer::createUnsupportedMethodException($method)
           );
@@ -265,25 +244,19 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $resolvers = $builder->getResolvers();
     $fieldName = $builder->getFieldName();
 
-    // @phpstan-ignore-next-line
     $prophecy->first()->will(fn() => $resolvers['first']($context));
-    // @phpstan-ignore-next-line
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
-    // @phpstan-ignore-next-line
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
-    // @phpstan-ignore-next-line
     $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, (int) $args[0]));
 
     // Manually add MethodProphecy for ::__get since Prophecy's "ObjectProphecy"
     // intercepts ::__get calls instead of treating them as method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    // @phpstan-ignore-next-line
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
     if ($definition->mutable) {
       $revealed = NULL;
-      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
         function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
           $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
@@ -296,12 +269,10 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
       // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      // @phpstan-ignore-next-line
       $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, (string) $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
-      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
         function () use ($fieldName): never {
           throw new \LogicException(
@@ -326,7 +297,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire referencedEntities if this is an entity reference field.
     if ($hasEntityReferences) {
-      // @phpstan-ignore-next-line
       $prophecy->referencedEntities()->will(fn() => $resolvers['referencedEntities']($context));
     }
   }
@@ -350,18 +320,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     // "ObjectProphecy" intercepts ::__get calls instead of treating them as
     // method stubs.
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    // @phpstan-ignore-next-line
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
-    // @phpstan-ignore-next-line
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
-    // @phpstan-ignore-next-line
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
 
     if ($mutable) {
       $revealed = NULL;
-      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
         function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
           $resolvers['setValue']($context, $args[0], $args[1] ?? TRUE);
@@ -374,12 +340,10 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
       // Manually add "MethodProphecy" for ::__set.
       $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      // @phpstan-ignore-next-line
       $setMethodProphecy->will(fn(array $args) => $resolvers['__set']($context, (string) $args[0], $args[1]));
       $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
-      // @phpstan-ignore-next-line
       $prophecy->setValue(Argument::any(), Argument::any())->will(
         function () use ($delta): never {
           throw new \LogicException(
@@ -478,7 +442,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
 
-    // @phpstan-ignore-next-line
     $prophecy->toString(Argument::any())->will(
       fn(array $args) => $resolvers['toString']($context, $args[0] ?? FALSE)
     );
@@ -490,7 +453,6 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   protected function wireGeneratedUrlResolvers(object $double, string $url): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\GeneratedUrl> $prophecy */
     $prophecy = $double;
-    // @phpstan-ignore-next-line
     $prophecy->getGeneratedUrl()->willReturn($url);
   }
 

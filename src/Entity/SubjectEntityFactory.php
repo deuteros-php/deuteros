@@ -417,11 +417,11 @@ final class SubjectEntityFactory {
     $attributes = $reflection->getAttributes(ContentEntityType::class);
 
     // Fall back to ConfigEntityType attribute.
-    if (empty($attributes)) {
+    if ($attributes === []) {
       $attributes = $reflection->getAttributes(ConfigEntityType::class);
     }
 
-    if (empty($attributes)) {
+    if ($attributes === []) {
       throw new \InvalidArgumentException(sprintf(
         'Entity class %s does not have a #[ContentEntityType] or #[ConfigEntityType] attribute.',
         $entityClass
@@ -458,7 +458,7 @@ final class SubjectEntityFactory {
    *   Field doubles keyed by field name.
    */
   private function createFieldDoubles(array $values, array $config): array {
-    if (empty($values)) {
+    if ($values === []) {
       return [];
     }
 

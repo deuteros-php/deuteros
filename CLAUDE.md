@@ -169,6 +169,7 @@ These constraints must never be violated:
 - **Unsupported operations fail loudly** with differentiated error messages
 - **PHPUnit and Prophecy adapters must behave identically**
 - **Use term "Double"** everywhere except when referring to PHPUnit mock objects
+- **No `empty()` calls** - Use explicit checks like `$array === []` or `$string === ''`
 - **All code must pass `composer phpcs`** - Run before completing any code change
 - **All code must pass `composer phpstan`** - Run before completing any code change
 

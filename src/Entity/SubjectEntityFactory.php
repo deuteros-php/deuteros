@@ -17,32 +17,35 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Helper for unit testing Drupal entity objects.
+ * Factory for creating subject entity instances in unit tests.
  *
- * This helper allows creating real Drupal entity instances (Node, User, etc.)
- * with doubled service dependencies and DEUTEROS field doubles injected
- * directly into the entity's field cache.
+ * This factory creates real Drupal entity instances (Node, User, etc.) with
+ * doubled service dependencies and DEUTEROS field doubles injected directly
+ * into the entity's field cache.
  *
  * Unlike "EntityDoubleFactory" which creates double implementations of entity
- * interfaces, this helper instantiates actual entity classes with their
+ * interfaces, this factory instantiates actual entity classes with their
  * service dependencies doubled and field values provided as DEUTEROS doubles.
+ *
+ * The term "subject" refers to the entity class being tested, as opposed to
+ * "doubles" which are test substitutes for dependencies.
  *
  * @example Basic usage
  * ```php
  * class MyNodeTest extends TestCase {
- *     private EntityTestHelper $helper;
+ *     private SubjectEntityFactory $factory;
  *
  *     protected function setUp(): void {
- *         $this->helper = EntityTestHelper::fromTest($this);
- *         $this->helper->installContainer();
+ *         $this->factory = SubjectEntityFactory::fromTest($this);
+ *         $this->factory->installContainer();
  *     }
  *
  *     protected function tearDown(): void {
- *         $this->helper->uninstallContainer();
+ *         $this->factory->uninstallContainer();
  *     }
  *
  *     public function testNodeCreation(): void {
- *         $node = $this->helper->createEntity(Node::class, [
+ *         $node = $this->factory->create(Node::class, [
  *             'nid' => 1,
  *             'type' => 'article',
  *             'title' => 'Test Article',
@@ -54,7 +57,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * }
  * ```
  */
-final class EntityTestHelper {
+final class SubjectEntityFactory {
 
   /**
    * Cache of extracted entity type configurations keyed by class name.
@@ -81,17 +84,17 @@ final class EntityTestHelper {
   private array $entityTypeConfigs = [];
 
   /**
-   * Creates an EntityTestHelper from a test case.
+   * Creates a SubjectEntityFactory from a test case.
    *
    * Auto-detects whether the test uses Prophecy (via "ProphecyTrait") or
-   * PHPUnit mocks and returns a helper configured with the appropriate service
-   * doubler.
+   * PHPUnit mocks and returns a factory configured with the appropriate
+   * service doubler.
    *
    * @param \PHPUnit\Framework\TestCase $test
    *   The test case instance.
    *
    * @return self
-   *   A new helper instance.
+   *   A new factory instance.
    */
   public static function fromTest(TestCase $test): self {
     $usesProphecy = method_exists($test, 'getProphet');
@@ -106,7 +109,7 @@ final class EntityTestHelper {
   }
 
   /**
-   * Constructs an EntityTestHelper.
+   * Constructs a SubjectEntityFactory.
    *
    * @param \Deuteros\Entity\ServiceDoublerInterface $serviceDoubler
    *   The service doubler.
@@ -175,7 +178,7 @@ final class EntityTestHelper {
   }
 
   /**
-   * Creates a real entity instance with DEUTEROS field doubles.
+   * Creates a subject entity instance with DEUTEROS field doubles.
    *
    * Instantiates the specified entity class, creates field doubles from the
    * provided values, and injects them into the entity's field cache.
@@ -194,10 +197,10 @@ final class EntityTestHelper {
    * @throws \LogicException
    *   If ::installContainer has not been called.
    */
-  public function createEntity(string $entityClass, array $values = []): ContentEntityBase {
+  public function create(string $entityClass, array $values = []): ContentEntityBase {
     if (!$this->containerInstalled) {
       throw new \LogicException(
-        'Container not installed. Call installContainer() before createEntity().'
+        'Container not installed. Call installContainer() before create().'
       );
     }
 

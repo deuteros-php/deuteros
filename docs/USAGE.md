@@ -856,13 +856,16 @@ class ArticleProcessorTest extends TestCase {
 
 While entity doubles are the primary focus of Deuteros, sometimes you need to
 test code that specifically requires a real entity class instance (e.g.,
-`Node`, `User`, or custom entity classes). The `EntityTestHelper` provides this
-capability by instantiating actual Drupal entity classes with doubled service
-dependencies and DEUTEROS field doubles.
+`Node`, `User`, or custom entity classes). The `SubjectEntityFactory` provides
+this capability by instantiating actual Drupal entity classes with doubled
+service dependencies and DEUTEROS field doubles.
 
-### When to Use EntityTestHelper
+The term "subject" refers to the entity class being tested, as opposed to
+"doubles" which are test substitutes for dependencies.
 
-Use `EntityTestHelper` when you need to:
+### When to Use SubjectEntityFactory
+
+Use `SubjectEntityFactory` when you need to:
 - Test code that checks `instanceof` against concrete entity classes
 - Test entity class methods that are not defined on interfaces
 - Test bundle classes or entity-specific traits
@@ -874,24 +877,24 @@ preferred as they're lighter weight and framework-agnostic.
 ### Basic Usage
 
 ```php
-use Deuteros\Entity\EntityTestHelper;
+use Deuteros\Entity\SubjectEntityFactory;
 use Drupal\node\Entity\Node;
 
 class MyNodeTest extends TestCase {
 
-  private EntityTestHelper $helper;
+  private SubjectEntityFactory $factory;
 
   protected function setUp(): void {
-    $this->helper = EntityTestHelper::fromTest($this);
-    $this->helper->installContainer();
+    $this->factory = SubjectEntityFactory::fromTest($this);
+    $this->factory->installContainer();
   }
 
   protected function tearDown(): void {
-    $this->helper->uninstallContainer();
+    $this->factory->uninstallContainer();
   }
 
   public function testNodeCreation(): void {
-    $node = $this->helper->createEntity(Node::class, [
+    $node = $this->factory->create(Node::class, [
       'nid' => 42,
       'type' => 'article',
       'title' => 'Test Article',
@@ -918,15 +921,15 @@ You can use DEUTEROS doubles as entity reference targets:
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
 
 public function testWithEntityReference(): void {
-  // Create author double using the helper's factory.
-  $author = $this->helper->getDoubleFactory()->create(
+  // Create author double using the factory.
+  $author = $this->factory->getDoubleFactory()->create(
     EntityDoubleDefinitionBuilder::create('user')
       ->id(42)
       ->label('Jane Doe')
       ->build()
   );
 
-  $node = $this->helper->createEntity(Node::class, [
+  $node = $this->factory->create(Node::class, [
     'nid' => 1,
     'type' => 'article',
     'title' => 'Test',
@@ -942,7 +945,7 @@ public function testWithEntityReference(): void {
 
 ```php
 public function testMultiValueField(): void {
-  $node = $this->helper->createEntity(Node::class, [
+  $node = $this->factory->create(Node::class, [
     'nid' => 1,
     'type' => 'article',
     'title' => 'Test',
@@ -961,26 +964,26 @@ public function testMultiValueField(): void {
 
 ### Auto-Detection
 
-Like `EntityDoubleFactory`, `EntityTestHelper::fromTest()` auto-detects
+Like `EntityDoubleFactory`, `SubjectEntityFactory::fromTest()` auto-detects
 whether your test uses PHPUnit or Prophecy:
 
 ```php
 // Works with both PHPUnit and Prophecy
-$helper = EntityTestHelper::fromTest($this);
+$factory = SubjectEntityFactory::fromTest($this);
 ```
 
 ### Container Lifecycle
 
-The helper installs a Symfony container with doubled services:
+The factory installs a Symfony container with doubled services:
 
 ```php
 protected function setUp(): void {
-  $this->helper = EntityTestHelper::fromTest($this);
-  $this->helper->installContainer(); // Required before createEntity()
+  $this->factory = SubjectEntityFactory::fromTest($this);
+  $this->factory->installContainer(); // Required before create()
 }
 
 protected function tearDown(): void {
-  $this->helper->uninstallContainer(); // Cleanup
+  $this->factory->uninstallContainer(); // Cleanup
 }
 ```
 
@@ -989,7 +992,7 @@ Calling `installContainer()` twice throws `LogicException`. Calling
 
 ### Limitations
 
-Entity objects created by `EntityTestHelper` have these limitations:
+Entity objects created by `SubjectEntityFactory` have these limitations:
 
 | Operation | Status | Notes |
 |-----------|--------|-------|

@@ -109,7 +109,7 @@ Workflow file: `.github/workflows/ci.yml`
    - `Deuteros\Prophecy\ProphecyEntityDoubleFactory` - Prophecy doubles
 
 5. **Entity Testing Layer** (`Deuteros\Entity`)
-   - `EntityTestHelper` - Creates real entity instances with doubled dependencies
+   - `SubjectEntityFactory` - Creates real entity instances with doubled dependencies
    - `ServiceDoublerInterface` - Contract for service doubler implementations
    - `PhpUnit\PhpUnitServiceDoubler` - PHPUnit service doubler
    - `Prophecy\ProphecyServiceDoubler` - Prophecy service doubler
@@ -180,13 +180,13 @@ These constraints must never be violated:
     `FieldItemDoubleBuilderTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
     `EntityReferenceNormalizerTest`
-- `tests/Unit/Entity/` - Unit tests for EntityTestHelper
+- `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory
 - `tests/Integration/PhpUnit/` - PHPUnit factory integration tests
 - `tests/Integration/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by
   both adapter test classes (parity verified via inheritance)
-- `tests/Integration/Entity/` - EntityTestHelper integration tests
-  - `EntityTestHelperTestBase.php` - Shared tests for adapter parity
+- `tests/Integration/Entity/` - SubjectEntityFactory integration tests
+  - `SubjectEntityFactoryTestBase.php` - Shared tests for adapter parity
   - `PhpUnit/` - PHPUnit adapter tests
   - `Prophecy/` - Prophecy adapter tests
 - `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,

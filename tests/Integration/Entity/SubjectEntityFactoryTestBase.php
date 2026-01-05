@@ -5,38 +5,38 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Integration\Entity;
 
 use Deuteros\Common\EntityDoubleDefinitionBuilder;
-use Deuteros\Entity\EntityTestHelper;
+use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Tests\Fixtures\TestContentEntity;
 use Drupal\node\Entity\Node;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Base test class for EntityTestHelper integration tests.
+ * Base test class for SubjectEntityFactory integration tests.
  *
  * Contains shared tests that work identically across PHPUnit and Prophecy
  * factory implementations.
  */
-abstract class EntityTestHelperTestBase extends TestCase {
+abstract class SubjectEntityFactoryTestBase extends TestCase {
 
   /**
-   * The entity test helper.
+   * The subject entity factory.
    */
-  protected EntityTestHelper $helper;
+  protected SubjectEntityFactory $factory;
 
   /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->helper = EntityTestHelper::fromTest($this);
-    $this->helper->installContainer();
+    $this->factory = SubjectEntityFactory::fromTest($this);
+    $this->factory->installContainer();
   }
 
   /**
    * {@inheritdoc}
    */
   protected function tearDown(): void {
-    $this->helper->uninstallContainer();
+    $this->factory->uninstallContainer();
     parent::tearDown();
   }
 
@@ -44,7 +44,7 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests creating a test entity with minimal values.
    */
   public function testCreateMinimalEntity(): void {
-    $entity = $this->helper->createEntity(TestContentEntity::class, [
+    $entity = $this->factory->create(TestContentEntity::class, [
       'id' => 1,
       'type' => 'test_bundle',
     ]);
@@ -57,7 +57,7 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests creating a Node entity with values.
    */
   public function testCreateNodeEntity(): void {
-    $entity = $this->helper->createEntity(Node::class, [
+    $entity = $this->factory->create(Node::class, [
       'nid' => 42,
       'type' => 'article',
       'title' => 'Test Article',
@@ -72,7 +72,7 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests that field values are accessible via field doubles.
    */
   public function testFieldValuesAccessible(): void {
-    $entity = $this->helper->createEntity(Node::class, [
+    $entity = $this->factory->create(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test Title',
@@ -89,14 +89,14 @@ abstract class EntityTestHelperTestBase extends TestCase {
    */
   public function testEntityReferenceField(): void {
     // Create an author double using the factory.
-    $author = $this->helper->getDoubleFactory()->create(
+    $author = $this->factory->getDoubleFactory()->create(
       EntityDoubleDefinitionBuilder::create('user')
         ->id(99)
         ->label('Test Author')
         ->build()
     );
 
-    $entity = $this->helper->createEntity(Node::class, [
+    $entity = $this->factory->create(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test',
@@ -112,7 +112,7 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests multi-value field.
    */
   public function testMultiValueField(): void {
-    $entity = $this->helper->createEntity(Node::class, [
+    $entity = $this->factory->create(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Test',
@@ -143,13 +143,13 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests creating multiple entities of the same type.
    */
   public function testMultipleEntities(): void {
-    $entity1 = $this->helper->createEntity(Node::class, [
+    $entity1 = $this->factory->create(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'First',
     ]);
 
-    $entity2 = $this->helper->createEntity(Node::class, [
+    $entity2 = $this->factory->create(Node::class, [
       'nid' => 2,
       'type' => 'page',
       'title' => 'Second',
@@ -165,7 +165,7 @@ abstract class EntityTestHelperTestBase extends TestCase {
    * Tests property-style field access.
    */
   public function testPropertyStyleFieldAccess(): void {
-    $entity = $this->helper->createEntity(Node::class, [
+    $entity = $this->factory->create(Node::class, [
       'nid' => 1,
       'type' => 'article',
       'title' => 'Property Access Test',

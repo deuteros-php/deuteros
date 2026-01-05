@@ -413,7 +413,7 @@ Deuteros was implemented in phases with subsequent refactoring to improve API er
 
 ## Entity Testing Layer
 
-In addition to entity doubles, Deuteros provides an `EntityTestHelper` for
+In addition to entity doubles, Deuteros provides a `SubjectEntityFactory` for
 testing actual Drupal entity class instances with doubled dependencies.
 
 ### Architecture Overview
@@ -425,10 +425,10 @@ testing actual Drupal entity class instances with doubled dependencies.
                               │
                               ▼
 ┌────────────────────────────────────────────────────────────┐
-│              EntityTestHelper (Single Entry Point)         │
+│            SubjectEntityFactory (Single Entry Point)       │
 │  - fromTest() → auto-detects PHPUnit/Prophecy              │
-│  - installContainer() → sets up mock service container     │
-│  - createEntity() → real entity with field doubles         │
+│  - installContainer() → sets up container with doubles     │
+│  - create() → real entity with field doubles               │
 │  - uninstallContainer() → cleanup                          │
 └────────────────────────────────────────────────────────────┘
                               │
@@ -488,7 +488,7 @@ class Node extends ContentEntityBase { }
 
 | File | Purpose |
 |------|---------|
-| `src/Entity/EntityTestHelper.php` | Main entry point |
+| `src/Entity/SubjectEntityFactory.php` | Main entry point |
 | `src/Entity/ServiceDoublerInterface.php` | Service doubler contract |
 | `src/Entity/PhpUnit/PhpUnitServiceDoubler.php` | PHPUnit service doubler |
 | `src/Entity/Prophecy/ProphecyServiceDoubler.php` | Prophecy service doubler |
@@ -497,8 +497,8 @@ class Node extends ContentEntityBase { }
 
 | Directory | Purpose |
 |-----------|---------|
-| `tests/Unit/Entity/` | Unit tests for EntityTestHelper |
+| `tests/Unit/Entity/` | Unit tests for SubjectEntityFactory |
 | `tests/Integration/Entity/` | Integration tests |
-| `tests/Integration/Entity/EntityTestHelperTestBase.php` | Shared tests for adapter parity |
+| `tests/Integration/Entity/SubjectEntityFactoryTestBase.php` | Shared tests for adapter parity |
 | `tests/Integration/Entity/PhpUnit/` | PHPUnit adapter tests |
 | `tests/Integration/Entity/Prophecy/` | Prophecy adapter tests |

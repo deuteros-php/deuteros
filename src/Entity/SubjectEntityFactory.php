@@ -87,6 +87,13 @@ final class SubjectEntityFactory {
   private array $entityTypeConfigs = [];
 
   /**
+   * Auto-incremented ID counters keyed by entity type ID.
+   *
+   * @var array<string, int>
+   */
+  private array $idCounters = [];
+
+  /**
    * Creates a SubjectEntityFactory from a test case.
    *
    * Auto-detects whether the test uses Prophecy (via "ProphecyTrait") or
@@ -178,6 +185,7 @@ final class SubjectEntityFactory {
 
     $this->containerInstalled = FALSE;
     $this->entityTypeConfigs = [];
+    $this->idCounters = [];
   }
 
   /**
@@ -252,6 +260,38 @@ final class SubjectEntityFactory {
     }
 
     return $entity;
+  }
+
+  /**
+   * Creates a subject entity instance with an auto-incremented ID.
+   *
+   * Automatically assigns the next available integer ID for the entity type,
+   * emulating loading an existing entity. IDs are tracked separately per
+   * entity type.
+   *
+   * @param class-string $entityClass
+   *   The entity class to instantiate.
+   * @param array<string, mixed> $values
+   *   Field/property values. The ID key will be set automatically.
+   *
+   * @return \Drupal\Core\Entity\EntityBase
+   *   The created entity instance with an assigned ID.
+   */
+  public function createWithId(string $entityClass, array $values = []): EntityBase {
+    $config = $this->getEntityTypeConfig($entityClass);
+    $entityTypeId = $config['id'];
+    $idKey = $config['keys']['id'] ?? 'id';
+
+    // Get next ID for this entity type.
+    if (!isset($this->idCounters[$entityTypeId])) {
+      $this->idCounters[$entityTypeId] = 0;
+    }
+    $this->idCounters[$entityTypeId]++;
+
+    // Set the ID in values.
+    $values[$idKey] = $this->idCounters[$entityTypeId];
+
+    return $this->create($entityClass, $values);
   }
 
   /**

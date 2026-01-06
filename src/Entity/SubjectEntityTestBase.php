@@ -81,6 +81,23 @@ abstract class SubjectEntityTestBase extends TestCase {
   }
 
   /**
+   * Creates a subject entity instance with an auto-incremented ID.
+   *
+   * Convenience method that delegates to the factory.
+   *
+   * @param class-string $entityClass
+   *   The entity class to instantiate.
+   * @param array<string, mixed> $values
+   *   Field/property values. The ID key will be set automatically.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The created entity instance with an assigned ID.
+   */
+  protected function createEntityWithId(string $entityClass, array $values = []): EntityInterface {
+    return $this->subjectEntityFactory()->createWithId($entityClass, $values);
+  }
+
+  /**
    * Gets the entity double factory.
    *
    * Useful for creating entity doubles to use as entity references.

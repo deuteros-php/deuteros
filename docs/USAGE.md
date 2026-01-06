@@ -1034,7 +1034,60 @@ class MyNodeTest extends SubjectEntityTestBase {
 |--------|-------------|
 | `$this->subjectEntityFactory` | The underlying `SubjectEntityFactory` instance |
 | `$this->createEntity($class, $values)` | Convenience method for creating entities |
+| `$this->createEntityWithId($class, $values)` | Create entities with auto-incremented IDs |
 | `$this->getDoubleFactory()` | Get the entity double factory for references |
+
+### Auto-Incremented IDs
+
+When testing scenarios that involve multiple entities, you can use
+`createWithId()` (or `createEntityWithId()` on `SubjectEntityTestBase`) to
+automatically assign sequential integer IDs. IDs are tracked separately per
+entity type:
+
+```php
+class MyNodeTest extends SubjectEntityTestBase {
+
+  public function testMultipleNodes(): void {
+    // IDs are auto-incremented: 1, 2, 3
+    $node1 = $this->createEntityWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'First Article',
+    ]);
+    $node2 = $this->createEntityWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'Second Article',
+    ]);
+    $node3 = $this->createEntityWithId(Node::class, [
+      'type' => 'page',
+      'title' => 'A Page',
+    ]);
+
+    $this->assertSame(1, $node1->id());
+    $this->assertSame(2, $node2->id());
+    $this->assertSame(3, $node3->id());
+  }
+
+  public function testDifferentEntityTypes(): void {
+    // Each entity type has its own ID sequence.
+    $node = $this->createEntityWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'An Article',
+    ]);
+    $user = $this->createEntityWithId(User::class, [
+      'name' => 'testuser',
+    ]);
+
+    // Both get ID 1 (separate counters).
+    $this->assertSame(1, $node->id());
+    $this->assertSame(1, $user->id());
+  }
+
+}
+```
+
+This is useful when emulating loading existing entities and you don't need
+specific ID values. The counters reset automatically via `uninstallContainer()`,
+so each test method starts fresh.
 
 ### Config Entities
 

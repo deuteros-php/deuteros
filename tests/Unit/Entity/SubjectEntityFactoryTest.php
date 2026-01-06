@@ -184,4 +184,63 @@ class SubjectEntityFactoryTest extends TestCase {
     $this->factory()->uninstallContainer();
   }
 
+  /**
+   * Tests ::createWithId auto-increments IDs.
+   */
+  public function testCreateWithIdAutoIncrements(): void {
+    $this->factory()->installContainer();
+
+    $entity1 = $this->factory()->createWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'First',
+    ]);
+
+    $entity2 = $this->factory()->createWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'Second',
+    ]);
+
+    $entity3 = $this->factory()->createWithId(Node::class, [
+      'type' => 'page',
+      'title' => 'Third',
+    ]);
+
+    $this->assertSame(1, $entity1->id());
+    $this->assertSame(2, $entity2->id());
+    $this->assertSame(3, $entity3->id());
+  }
+
+  /**
+   * Tests ::createWithId tracks IDs separately per entity type.
+   */
+  public function testCreateWithIdTracksPerEntityType(): void {
+    $this->factory()->installContainer();
+
+    $node1 = $this->factory()->createWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'Node 1',
+    ]);
+
+    $testEntity1 = $this->factory()->createWithId(TestContentEntityChild::class, [
+      'type' => 'test_bundle',
+    ]);
+
+    $node2 = $this->factory()->createWithId(Node::class, [
+      'type' => 'page',
+      'title' => 'Node 2',
+    ]);
+
+    $testEntity2 = $this->factory()->createWithId(TestContentEntityChild::class, [
+      'type' => 'test_bundle',
+    ]);
+
+    // Nodes should have sequential IDs: 1, 2.
+    $this->assertSame(1, $node1->id());
+    $this->assertSame(2, $node2->id());
+
+    // TestContentEntityChild should have its own sequence: 1, 2.
+    $this->assertSame(1, $testEntity1->id());
+    $this->assertSame(2, $testEntity2->id());
+  }
+
 }

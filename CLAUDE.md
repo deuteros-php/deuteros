@@ -173,6 +173,13 @@ These constraints must never be violated:
 - **All code must pass `composer phpcs`** - Run before completing any code change
 - **All code must pass `composer phpstan`** - Run before completing any code change
 
+While working on any code change:
+- coding standards should be kept front and center
+- quality checks should always be run
+- documentation should be updated including CLAUDE.MD (this file)
+- test coverage should follow the test pyramid paradigm
+- @composer.dev.json should be used when running quality checks: always prefer unit tests over integration tests, when possible 
+
 ## Test Structure
 
 - `tests/Unit/Double/` - Unit tests for definition, support, and builder classes

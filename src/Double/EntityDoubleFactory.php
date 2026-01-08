@@ -399,6 +399,13 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Declares a runtime interface via eval.
    *
+   * Security note: This uses eval() which is generally discouraged. However,
+   * the security risk is minimal because:
+   * - Input is developer-controlled (interface names from test code)
+   * - No user input is ever passed to eval()
+   * - Results are cached, so eval() runs at most once per interface combo
+   * - Interface names are generated deterministically from a hash.
+   *
    * @param string $interfaceName
    *   The fully-qualified interface name to declare.
    * @param list<class-string> $interfaces
@@ -535,6 +542,13 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
   /**
    * Declares a trait stub class via eval.
+   *
+   * Security note: This uses eval() which is generally discouraged. However,
+   * the security risk is minimal because:
+   * - Input is developer-controlled (trait names from test code)
+   * - No user input is ever passed to eval()
+   * - Results are cached, so eval() runs at most once per trait combo
+   * - Class names are generated deterministically from a hash.
    *
    * @param string $stubClassName
    *   The fully-qualified stub class name to declare.

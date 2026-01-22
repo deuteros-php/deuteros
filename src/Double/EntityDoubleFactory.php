@@ -7,6 +7,7 @@ namespace Deuteros\Double;
 use Deuteros\Double\PhpUnit\MockEntityDoubleFactory;
 use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Url;
@@ -111,6 +112,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     '__get',
     '__set',
     'toUrl',
+    'getIterator',
   ];
 
   /**
@@ -300,6 +302,21 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     }
     if (!$coversEntity) {
       array_unshift($filtered, EntityInterface::class);
+    }
+
+    // If "FieldableEntityInterface" is present, ensure "IteratorAggregate" is
+    // also present to enable entity field iteration. This is necessary because
+    // Drupal's FieldableEntityInterface extends only \Traversable (a marker
+    // interface) while ContentEntityBase implements \IteratorAggregate.
+    $coversFieldable = FALSE;
+    foreach ($filtered as $interface) {
+      if (is_a($interface, FieldableEntityInterface::class, TRUE)) {
+        $coversFieldable = TRUE;
+        break;
+      }
+    }
+    if ($coversFieldable && !in_array(\IteratorAggregate::class, $filtered, TRUE)) {
+      $filtered[] = \IteratorAggregate::class;
     }
 
     return $filtered;

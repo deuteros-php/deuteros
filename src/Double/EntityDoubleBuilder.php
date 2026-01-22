@@ -99,6 +99,7 @@ final class EntityDoubleBuilder {
       '__get' => $this->buildMagicGetResolver(),
       'set' => $this->buildSetResolver(),
       'toUrl' => $this->buildToUrlResolver(),
+      'getIterator' => $this->buildIteratorResolver(),
     ];
   }
 
@@ -306,6 +307,28 @@ final class EntityDoubleBuilder {
       $this->urlDoubleCache = $urlDouble;
 
       return $urlDouble;
+    };
+  }
+
+  /**
+   * Builds the ::getIterator resolver.
+   *
+   * Returns an iterator over all defined fields as field name => field list
+   * pairs. This implements entity-level iteration similar to Drupal's
+   * "ContentEntityBase::getIterator".
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildIteratorResolver(): callable {
+    $getResolver = $this->buildGetResolver();
+    return function (array $context) use ($getResolver): \Traversable {
+      /** @var array<string, mixed> $context */
+      $items = [];
+      foreach (array_keys($this->definition->fields) as $name) {
+        $items[$name] = $getResolver($context, $name);
+      }
+      return new \ArrayIterator($items);
     };
   }
 

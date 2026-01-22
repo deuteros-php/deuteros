@@ -142,6 +142,15 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       );
     }
 
+    // Wire getIterator if FieldableEntityInterface is present (entity field
+    // iteration). IteratorAggregate is automatically added to interfaces when
+    // FieldableEntityInterface is present.
+    if ($definition->hasInterface(FieldableEntityInterface::class)) {
+      $mock->method('getIterator')->willReturnCallback(
+        fn() => $resolvers['getIterator']($context)
+      );
+    }
+
     // Wire remaining method overrides (those not already wired above).
     foreach ($definition->methods as $method => $override) {
       if (in_array($method, self::CORE_ENTITY_METHODS, TRUE)) {

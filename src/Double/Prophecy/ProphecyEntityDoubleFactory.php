@@ -75,6 +75,21 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       }
     }
 
+    // If "FieldableEntityInterface" is present, ensure "IteratorAggregate" is
+    // also present to enable entity field iteration. This is necessary because
+    // Drupal's FieldableEntityInterface extends only \Traversable (a marker
+    // interface) while ContentEntityBase implements \IteratorAggregate.
+    $coversFieldable = FALSE;
+    foreach ($interfaces as $interface) {
+      if (is_a($interface, FieldableEntityInterface::class, TRUE)) {
+        $coversFieldable = TRUE;
+        break;
+      }
+    }
+    if ($coversFieldable && !in_array(\IteratorAggregate::class, $interfaces, TRUE)) {
+      $interfaces[] = \IteratorAggregate::class;
+    }
+
     return $interfaces;
   }
 
@@ -171,6 +186,17 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $prophecy->toUrl(Argument::cetera())->will(
         fn() => throw new \LogicException(self::TO_URL_NOT_CONFIGURED_ERROR)
       );
+    }
+
+    // Wire getIterator if FieldableEntityInterface is present (entity field
+    // iteration). IteratorAggregate is automatically added to interfaces when
+    // FieldableEntityInterface is present. We check the revealed object's class
+    // implements IteratorAggregate because method_exists may not work correctly
+    // with Prophecy before methods are wired.
+    $revealed = $prophecy->reveal();
+    if ($definition->hasInterface(FieldableEntityInterface::class)
+        && $revealed instanceof \IteratorAggregate) {
+      $prophecy->getIterator()->will(fn() => $resolvers['getIterator']($context));
     }
 
     // Wire method overrides.

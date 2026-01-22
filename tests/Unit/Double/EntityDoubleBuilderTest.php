@@ -502,4 +502,108 @@ class EntityDoubleBuilderTest extends TestCase {
     $resolvers['toUrl']([]);
   }
 
+  /**
+   * Tests ::getIterator resolver iterates over all defined fields.
+   */
+  public function testIteratorResolver(): void {
+    $definition = new EntityDoubleDefinition(
+      entityType: 'node',
+      fields: [
+        'field_a' => new FieldDoubleDefinition('value_a'),
+        'field_b' => new FieldDoubleDefinition('value_b'),
+        'field_c' => new FieldDoubleDefinition('value_c'),
+      ],
+      interfaces: [FieldableEntityInterface::class],
+    );
+    $builder = new EntityDoubleBuilder($definition);
+
+    $fieldLists = [];
+    $builder->setFieldListFactory(function (string $fieldName) use (&$fieldLists) {
+      $mock = new \stdClass();
+      $mock->name = $fieldName;
+      $fieldLists[$fieldName] = $mock;
+      return $mock;
+    });
+
+    $resolvers = $builder->getResolvers();
+    /** @var \Traversable<string, \stdClass> $iterator */
+    $iterator = $resolvers['getIterator']([]);
+
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertInstanceOf(\Traversable::class, $iterator);
+
+    /** @var array<string, \stdClass> $result */
+    $result = iterator_to_array($iterator);
+
+    $this->assertCount(3, $result);
+    $this->assertArrayHasKey('field_a', $result);
+    $this->assertArrayHasKey('field_b', $result);
+    $this->assertArrayHasKey('field_c', $result);
+    $this->assertSame('field_a', $result['field_a']->name);
+    $this->assertSame('field_b', $result['field_b']->name);
+    $this->assertSame('field_c', $result['field_c']->name);
+  }
+
+  /**
+   * Tests ::getIterator resolver with no fields returns empty iterator.
+   */
+  public function testIteratorResolverEmpty(): void {
+    $definition = new EntityDoubleDefinition(
+      entityType: 'node',
+      fields: [],
+      interfaces: [FieldableEntityInterface::class],
+    );
+    $builder = new EntityDoubleBuilder($definition);
+    $builder->setFieldListFactory(fn() => new \stdClass());
+
+    $resolvers = $builder->getResolvers();
+    /** @var \Traversable<string, mixed> $iterator */
+    $iterator = $resolvers['getIterator']([]);
+
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertInstanceOf(\Traversable::class, $iterator);
+
+    /** @var array<string, mixed> $result */
+    $result = iterator_to_array($iterator);
+    $this->assertSame([], $result);
+  }
+
+  /**
+   * Tests ::getIterator resolver returns cached field list instances.
+   */
+  public function testIteratorResolverFieldListCaching(): void {
+    $definition = new EntityDoubleDefinition(
+      entityType: 'node',
+      fields: [
+        'field_test' => new FieldDoubleDefinition('value'),
+      ],
+      interfaces: [FieldableEntityInterface::class],
+    );
+    $builder = new EntityDoubleBuilder($definition);
+
+    $callCount = 0;
+    $mockFieldList = new \stdClass();
+    $builder->setFieldListFactory(function () use (&$callCount, $mockFieldList) {
+      $callCount++;
+      return $mockFieldList;
+    });
+
+    $resolvers = $builder->getResolvers();
+
+    // First, access via get().
+    $fieldFromGet = $resolvers['get']([], 'field_test');
+    $this->assertSame(1, $callCount);
+
+    // Then iterate - should use cached instance.
+    /** @var \Traversable<string, mixed> $iterator */
+    $iterator = $resolvers['getIterator']([]);
+
+    /** @var array<string, mixed> $result */
+    $result = iterator_to_array($iterator);
+
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertSame(1, $callCount, 'Factory should not be called again');
+    $this->assertSame($fieldFromGet, $result['field_test']);
+  }
+
 }

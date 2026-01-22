@@ -41,7 +41,8 @@ Deuteros is built around these core principles:
 │              Resolution Layer (Framework-Agnostic)         │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │                 EntityDoubleBuilder                  │  │
-│  │    (id, uuid, label, bundle, get, hasField, set)     │  │
+│  │  (id, uuid, label, bundle, get, hasField, set,       │  │
+│  │   getIterator)                                       │  │
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │             FieldItemListDoubleBuilder               │  │

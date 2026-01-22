@@ -78,7 +78,7 @@ interface EntityReferenceFieldItemListInterface extends FieldItemListInterface {
 // Interfaces extending EntityInterface.
 namespace Drupal\Core\Entity;
 
-interface FieldableEntityInterface extends EntityInterface, \Traversable {
+interface FieldableEntityInterface extends EntityInterface, \IteratorAggregate {
 
   public function hasField($field_name);
 

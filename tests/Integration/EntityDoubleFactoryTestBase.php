@@ -1515,4 +1515,121 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->assertFalse($fieldList->isEmpty());
   }
 
+  /**
+   * Tests iterating over entity fields with foreach.
+   */
+  public function testEntityFieldIteration(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->field('field_body', 'Test Body')
+        ->field('field_count', 42)
+        ->build()
+    );
+
+    $fieldNames = [];
+    /** @var array<string, mixed> $fieldValues */
+    $fieldValues = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity as $name => $fieldList) {
+      assert(is_string($name));
+      $fieldNames[] = $name;
+      // @phpstan-ignore property.nonObject
+      $fieldValues[$name] = $fieldList->value;
+    }
+
+    $this->assertCount(3, $fieldNames);
+    $this->assertContains('field_title', $fieldNames);
+    $this->assertContains('field_body', $fieldNames);
+    $this->assertContains('field_count', $fieldNames);
+    $this->assertSame('Test Title', $fieldValues['field_title']);
+    $this->assertSame('Test Body', $fieldValues['field_body']);
+    $this->assertSame(42, $fieldValues['field_count']);
+  }
+
+  /**
+   * Tests iterating over entity with no fields returns empty iterator.
+   */
+  public function testEntityFieldIterationEmpty(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->build()
+    );
+
+    $fieldNames = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity as $name => $fieldList) {
+      $fieldNames[] = $name;
+    }
+
+    $this->assertSame([], $fieldNames);
+  }
+
+  /**
+   * Tests entity iteration returns same field list instances as get().
+   */
+  public function testEntityFieldIterationCaching(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Get field list via get().
+    $fieldListFromGet = $entity->get('field_title');
+
+    // Get field list via iteration.
+    $fieldListFromIteration = NULL;
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity as $name => $fieldList) {
+      if ($name === 'field_title') {
+        $fieldListFromIteration = $fieldList;
+        break;
+      }
+    }
+
+    $this->assertSame($fieldListFromGet, $fieldListFromIteration);
+  }
+
+  /**
+   * Tests entity iteration works with mutable doubles.
+   */
+  public function testEntityFieldIterationWithMutableState(): void {
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_status', 'draft')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Initial iteration.
+    /** @var array<string, mixed> $values */
+    $values = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity as $name => $fieldList) {
+      assert(is_string($name));
+      // @phpstan-ignore property.nonObject
+      $values[$name] = $fieldList->value;
+    }
+    $this->assertSame('draft', $values['field_status']);
+
+    // Mutate the field.
+    $entity->set('field_status', 'published');
+
+    // Iterate again - should see updated value.
+    $values = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity as $name => $fieldList) {
+      assert(is_string($name));
+      // @phpstan-ignore property.nonObject
+      $values[$name] = $fieldList->value;
+    }
+    $this->assertSame('published', $values['field_status']);
+  }
+
 }

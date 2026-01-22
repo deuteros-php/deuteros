@@ -92,7 +92,7 @@ Workflow file: `.github/workflows/ci.yml`
    - Pure PHP, no Drupal dependencies
 
 2. **Core Resolution Layer** (`Deuteros\Double\*DoubleBuilder`)
-   - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, etc.)
+   - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, getIterator, etc.)
    - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getIterator, count)
    - `FieldItemDoubleBuilder` - Resolvers for field items
    - `UrlDoubleBuilder` - Resolvers for Url doubles (toString)
@@ -152,6 +152,15 @@ be used by user-provided context.
 - Field item lists support `foreach` via `::getIterator` (if interface extends
   `\IteratorAggregate`) and `count()` via `::count` (if interface extends `\Countable`)
 - Adapters conditionally wire these methods only when the interface supports them
+
+**Entity Field Iteration Support:**
+- Entity doubles implementing "FieldableEntityInterface" support iterating over all
+  defined fields via `foreach($entity as $fieldName => $fieldList)`
+- The stub `FieldableEntityInterface` extends `\IteratorAggregate` (not just
+  `\Traversable`) to ensure `getIterator()` is available
+- The `EntityDoubleBuilder::buildIteratorResolver()` returns an `ArrayIterator`
+  keyed by field name, reusing cached field list instances from the `get` resolver
+- Adapters conditionally wire `getIterator` when `method_exists($mock, 'getIterator')`
 
 **ArrayAccess Support:**
 - Field item lists support bracket syntax access via `\ArrayAccess` interface

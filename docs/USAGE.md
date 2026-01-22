@@ -217,7 +217,7 @@ $entity = $factory->create(
 $first = $entity->get('field_tags')->get(0);
 $second = $entity->get('field_tags')->get(1);
 
-// Iterate
+// Iterate over field items
 foreach ($entity->get('field_tags') as $delta => $item) {
   echo $item->target_id;
 }
@@ -225,6 +225,32 @@ foreach ($entity->get('field_tags') as $delta => $item) {
 // Shorthand accesses first item
 $entity->get('field_tags')->target_id; // Returns 1
 ```
+
+**Iterating Over All Entity Fields**
+
+Entity doubles support iterating over all defined fields:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_title', 'Test Title')
+    ->field('field_body', 'Body content')
+    ->field('field_author', ['target_id' => 1])
+    ->build()
+);
+
+// Iterate over all fields
+foreach ($entity as $fieldName => $fieldList) {
+  echo "$fieldName: {$fieldList->value}\n";
+}
+// Output:
+// field_title: Test Title
+// field_body: Body content
+// field_author: 1
+```
+
+This mirrors Drupal's `ContentEntityBase::getIterator()` behavior.
 
 **Field Item Properties**
 

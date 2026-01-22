@@ -1532,11 +1532,11 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     /** @var array<string, mixed> $fieldValues */
     $fieldValues = [];
     // @phpstan-ignore foreach.nonIterable
-    foreach ($entity as $name => $fieldList) {
+    foreach ($entity as $name => $items) {
       assert(is_string($name));
       $fieldNames[] = $name;
       // @phpstan-ignore property.nonObject
-      $fieldValues[$name] = $fieldList->value;
+      $fieldValues[$name] = $items->value;
     }
 
     $this->assertCount(3, $fieldNames);
@@ -1560,7 +1560,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
 
     $fieldNames = [];
     // @phpstan-ignore foreach.nonIterable
-    foreach ($entity as $name => $fieldList) {
+    foreach ($entity as $name => $items) {
       $fieldNames[] = $name;
     }
 
@@ -1585,9 +1585,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     // Get field list via iteration.
     $fieldListFromIteration = NULL;
     // @phpstan-ignore foreach.nonIterable
-    foreach ($entity as $name => $fieldList) {
+    foreach ($entity as $name => $items) {
       if ($name === 'field_title') {
-        $fieldListFromIteration = $fieldList;
+        $fieldListFromIteration = $items;
         break;
       }
     }
@@ -1611,10 +1611,10 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     /** @var array<string, mixed> $values */
     $values = [];
     // @phpstan-ignore foreach.nonIterable
-    foreach ($entity as $name => $fieldList) {
+    foreach ($entity as $name => $items) {
       assert(is_string($name));
       // @phpstan-ignore property.nonObject
-      $values[$name] = $fieldList->value;
+      $values[$name] = $items->value;
     }
     $this->assertSame('draft', $values['field_status']);
 

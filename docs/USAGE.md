@@ -170,7 +170,7 @@ All core field access patterns are supported, which allows to pass the entity do
 
 ```php
 // Get field list
-$fieldList = $entity->get('field_name');
+$items = $entity->get('field_name');
 
 // Get scalar value (first item's main value)
 $value = $entity->get('field_name')->value;
@@ -193,7 +193,7 @@ $values = $entity->get('field_name')->getValue();
 
 ```php
 // Equivalent to $entity->get('field_name')
-$fieldList = $entity->field_name;
+$items = $entity->field_name;
 
 // Chain with value access
 $value = $entity->field_name->value;
@@ -241,8 +241,8 @@ $entity = $factory->create(
 );
 
 // Iterate over all fields
-foreach ($entity as $fieldName => $fieldList) {
-  echo "$fieldName: {$fieldList->value}\n";
+foreach ($entity as $name => $items) {
+  echo "$name: {$items->value}\n";
 }
 // Output:
 // field_title: Test Title

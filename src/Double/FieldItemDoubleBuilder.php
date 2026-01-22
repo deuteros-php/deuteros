@@ -90,7 +90,7 @@ final class FieldItemDoubleBuilder {
    * Builds the ::getValue resolver.
    *
    * Returns the field item value as an associative array with property names
-   * as keys, matching Drupal's "FieldItemInterface"::getValue behavior.
+   * as keys, matching Drupal's "FieldItemInterface::getValue" behavior.
    *
    * @return callable
    *   The resolver callable.

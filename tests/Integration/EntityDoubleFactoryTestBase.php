@@ -321,7 +321,7 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
 
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage("Cannot modify field 'field_status' on immutable entity double");
-    $this->expectExceptionMessage('createMutableEntityDouble()');
+    $this->expectExceptionMessage('createMutable()');
 
     $entity->set('field_status', 'published');
   }

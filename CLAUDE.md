@@ -148,12 +148,6 @@ be used by user-provided context.
 - PHPUnit: All mock properties are copied via reflection
 - Prophecy: The `objectProphecyClosure` property is copied to maintain prophecy binding
 
-**Static Cache Clearing:**
-- `EntityDoubleFactory::clearStaticCaches()` clears runtime interface and trait stub
-  class caches - useful for testing the factory itself
-- In normal test usage, caches are deterministic (same inputs = same cached output),
-  so clearing is not required between tests
-
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
   `\IteratorAggregate`) and `count()` via `::count` (if interface extends `\Countable`)

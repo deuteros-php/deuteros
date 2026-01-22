@@ -1388,13 +1388,15 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    */
   public function testEdgeCaseCircularEntityReferences(): void {
     // Create entity1 first without a reference.
-    $entity1 = $this->factory->create(
+    $entity1 = $this->factory->createMutable(
       EntityDoubleDefinitionBuilder::create('node')
         ->bundle('article')
         ->id(1)
         ->label('Entity 1')
+        ->field('field_ref', 2)
         ->build()
     );
+    assert($entity1 instanceof FieldableEntityInterface);
 
     // Create entity2 referencing entity1.
     $entity2 = $this->factory->create(
@@ -1405,12 +1407,15 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
         ->field('field_ref', $entity1)
         ->build()
     );
-
     assert($entity2 instanceof FieldableEntityInterface);
 
-    // Verify entity2 can reference entity1.
+    $entity1->set('field_ref', $entity2);
+
+    // Verify that both entities reference each other.
     $this->assertSame('Entity 1', $entity2->get('field_ref')->entity->label());
     $this->assertSame(1, $entity2->get('field_ref')->entity->id());
+    $this->assertSame('Entity 2', $entity1->get('field_ref')->entity->label());
+    $this->assertSame(2, $entity1->get('field_ref')->entity->id());
   }
 
   /**

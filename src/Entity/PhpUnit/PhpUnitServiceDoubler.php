@@ -42,7 +42,12 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
    * {@inheritdoc}
    */
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
-    $container = new ContainerBuilder();
+    try {
+      $container = \Drupal::getContainer();
+    }
+    catch (\Exception $exception) {
+      $container = new ContainerBuilder();
+    }
 
     // Create and register service doubles.
     $container->set(

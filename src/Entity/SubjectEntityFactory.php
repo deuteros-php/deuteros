@@ -254,6 +254,9 @@ final class SubjectEntityFactory {
       // Create and inject field doubles for fieldable entities.
       $fieldDoubles = $this->createFieldDoubles($values, $config);
       $this->injectFieldDoubles($entity, $fieldDoubles);
+
+      // Populate field definitions cache so hasField() works.
+      $this->injectFieldDefinitions($entity, array_keys($fieldDoubles));
     }
     elseif ($entity instanceof ConfigEntityBase) {
       $this->initializeConfigEntity($entity, $values, $config);
@@ -558,6 +561,30 @@ final class SubjectEntityFactory {
     }
 
     $fieldsProperty->setValue($entity, $fieldsArray);
+  }
+
+  /**
+   * Injects field definition mocks into the entity's field definitions cache.
+   *
+   * Populates the "$fieldDefinitions" property so that "hasField()" and
+   * "getFieldDefinition()" work correctly without calling the entity field
+   * manager service.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityBase $entity
+   *   The entity instance.
+   * @param array<string> $fieldNames
+   *   The field names to create definitions for.
+   */
+  private function injectFieldDefinitions(ContentEntityBase $entity, array $fieldNames): void {
+    $reflection = new \ReflectionClass(ContentEntityBase::class);
+    $fieldDefinitionsProperty = $reflection->getProperty('fieldDefinitions');
+
+    $fieldDefinitions = [];
+    foreach ($fieldNames as $fieldName) {
+      $fieldDefinitions[$fieldName] = $this->serviceDoubler->createFieldDefinitionMock($fieldName);
+    }
+
+    $fieldDefinitionsProperty->setValue($entity, $fieldDefinitions);
   }
 
 }

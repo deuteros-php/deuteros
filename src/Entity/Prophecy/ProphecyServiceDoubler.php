@@ -8,6 +8,7 @@ use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -311,6 +312,19 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     $prophecy->getFieldStorageDefinitions(Argument::any())->willReturn([]);
 
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface */
+    return $prophecy->reveal();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createFieldDefinitionMock(string $fieldName): FieldDefinitionInterface {
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldDefinitionInterface> $prophecy */
+    $prophecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
+
+    $prophecy->getName()->willReturn($fieldName);
+
+    /** @var \Drupal\Core\Field\FieldDefinitionInterface */
     return $prophecy->reveal();
   }
 

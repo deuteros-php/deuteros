@@ -8,6 +8,7 @@ use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -299,6 +300,18 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
     $reflection = new \ReflectionMethod($this->testCase, 'createMock');
     /** @var \PHPUnit\Framework\MockObject\MockObject */
     return $reflection->invoke($this->testCase, $interface);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createFieldDefinitionMock(string $fieldName): FieldDefinitionInterface {
+    $mock = $this->createMock(FieldDefinitionInterface::class);
+
+    $mock->method('getName')->willReturn($fieldName);
+
+    /** @var \Drupal\Core\Field\FieldDefinitionInterface $mock */
+    return $mock;
   }
 
 }

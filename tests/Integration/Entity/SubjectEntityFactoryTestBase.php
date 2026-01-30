@@ -252,4 +252,47 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
     $this->assertSame('Test Config', $configEntity->label());
   }
 
+  /**
+   * Tests hasField() returns correct boolean for defined fields.
+   */
+  public function testHasFieldReturnsCorrectValue(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+      'body' => 'Body content',
+    ]);
+    assert($entity instanceof Node);
+
+    // Defined fields should return true.
+    $this->assertTrue($entity->hasField('title'));
+    $this->assertTrue($entity->hasField('body'));
+    $this->assertTrue($entity->hasField('nid'));
+    $this->assertTrue($entity->hasField('type'));
+
+    // Undefined fields should return false.
+    $this->assertFalse($entity->hasField('nonexistent_field'));
+    $this->assertFalse($entity->hasField('field_that_does_not_exist'));
+  }
+
+  /**
+   * Tests getFieldDefinition() returns definition for defined fields.
+   */
+  public function testGetFieldDefinitionReturnsDefinition(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+    assert($entity instanceof Node);
+
+    // Defined fields should return a field definition.
+    $definition = $entity->getFieldDefinition('title');
+    $this->assertNotNull($definition);
+    $this->assertSame('title', $definition->getName());
+
+    // Undefined fields should return null.
+    $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
+  }
+
 }

@@ -295,4 +295,122 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
     $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
   }
 
+  /**
+   * Tests toUrl() returns default URL pattern.
+   */
+  public function testToUrlReturnsDefaultUrl(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+    assert($entity instanceof Node);
+
+    $url = $entity->toUrl();
+    $this->assertSame('/node/42', $url->toString());
+  }
+
+  /**
+   * Tests toUrl() with custom string URL.
+   */
+  public function testToUrlWithCustomString(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test',
+    ], ['url' => '/custom/path']);
+    assert($entity instanceof Node);
+
+    $url = $entity->toUrl();
+    $this->assertSame('/custom/path', $url->toString());
+  }
+
+  /**
+   * Tests toUrl() with callable URL.
+   */
+  public function testToUrlWithCallable(): void {
+    $urlCallback = static function (array $ctx): string {
+      /** @var int|string $id */
+      $id = $ctx['id'];
+      return '/articles/' . $id;
+    };
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test',
+    ], ['url' => $urlCallback]);
+    assert($entity instanceof Node);
+
+    $url = $entity->toUrl();
+    $this->assertSame('/articles/42', $url->toString());
+  }
+
+  /**
+   * Tests toUrl() disabled via url option.
+   */
+  public function testToUrlDisabled(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test',
+    ], ['url' => FALSE]);
+
+    // When disabled, entity is the original class (not stub).
+    // Verify stub class is not used by checking class name.
+    $this->assertSame(Node::class, get_class($entity));
+  }
+
+  /**
+   * Tests toUrl() toString with metadata returns GeneratedUrl.
+   */
+  public function testToUrlToStringWithMetadataReturnsGeneratedUrl(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+    assert($entity instanceof Node);
+
+    $url = $entity->toUrl();
+    $generatedUrl = $url->toString(TRUE);
+
+    // toString(TRUE) returns GeneratedUrl object.
+    $this->assertSame('/node/42', $generatedUrl->getGeneratedUrl());
+  }
+
+  /**
+   * Tests toUrl() with createWithId uses auto-incremented ID.
+   */
+  public function testToUrlWithCreateWithId(): void {
+    $entity1 = $this->createEntityWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'First',
+    ]);
+    assert($entity1 instanceof Node);
+
+    $entity2 = $this->createEntityWithId(Node::class, [
+      'type' => 'article',
+      'title' => 'Second',
+    ]);
+    assert($entity2 instanceof Node);
+
+    // Default URLs use the auto-incremented IDs.
+    $this->assertSame('/node/1', $entity1->toUrl()->toString());
+    $this->assertSame('/node/2', $entity2->toUrl()->toString());
+  }
+
+  /**
+   * Tests toUrl() with config entity uses entity type and ID.
+   */
+  public function testToUrlWithConfigEntity(): void {
+    $entity = $this->createEntity(TestConfigEntity::class, [
+      'id' => 'my_config',
+      'label' => 'My Config',
+    ]);
+    assert($entity instanceof TestConfigEntity);
+
+    $url = $entity->toUrl();
+    $this->assertSame('/test_config/my_config', $url->toString());
+  }
+
 }

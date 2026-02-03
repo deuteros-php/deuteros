@@ -501,20 +501,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   }
 
   /**
-   * Creates a Url double.
-   *
-   * Creates a Url mock/prophecy with ::toString wired to return the URL string
-   * or a GeneratedUrl double when $collect_bubbleable_metadata is TRUE.
-   *
-   * @param string $url
-   *   The URL string.
-   * @param array<string, mixed> $context
-   *   The context.
-   *
-   * @return \Drupal\Core\Url
-   *   The Url double.
+   * {@inheritdoc}
    */
-  protected function createUrlDouble(string $url, array $context): Url {
+  public function createUrlDouble(string $url, array $context = []): Url {
     $urlBuilder = new UrlDoubleBuilder($url);
 
     // Set up GeneratedUrl factory.

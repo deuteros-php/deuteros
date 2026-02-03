@@ -70,6 +70,15 @@ final class SubjectEntityFactory {
   private static array $entityTypeConfigCache = [];
 
   /**
+   * Cache of generated toUrl stub classes.
+   *
+   * Maps base class name (as cache key) to stub class name.
+   *
+   * @var array<class-string, class-string>
+   */
+  private static array $toUrlStubClassCache = [];
+
+  /**
    * The original container (for restoration).
    */
   private ?ContainerInterface $originalContainer = NULL;
@@ -201,6 +210,10 @@ final class SubjectEntityFactory {
    *   Field/property values. Entity keys (id, bundle, etc.) are used for the
    *   entity initialization. For content entities, other values are converted
    *   to field doubles.
+   * @param array{url?: string|callable|false} $options
+   *   Options for entity creation:
+   *   - url: URL string, callable receiving context, or FALSE to disable.
+   *     Defaults to fn($ctx) => "/{entityType}/{id}".
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
@@ -210,7 +223,7 @@ final class SubjectEntityFactory {
    * @throws \LogicException
    *   If ::installContainer has not been called.
    */
-  public function create(string $entityClass, array $values = []): EntityBase {
+  public function create(string $entityClass, array $values = [], array $options = []): EntityBase {
     if (!$this->containerInstalled) {
       throw new \LogicException(
         'Container not installed. Call installContainer() before create().'
@@ -242,9 +255,22 @@ final class SubjectEntityFactory {
       \Drupal::setContainer($container);
     }
 
+    // Determine whether toUrl() support is enabled.
+    // Default: generate /{entityType}/{id} URL pattern.
+    $urlOption = $options['url'] ?? NULL;
+    $toUrlEnabled = $urlOption !== FALSE;
+
+    // Determine the class to instantiate.
+    // The stub class extends the entity class, so it's always an EntityBase.
+    /** @var class-string<\Drupal\Core\Entity\EntityBase> $classToInstantiate */
+    $classToInstantiate = $toUrlEnabled
+      ? $this->getOrCreateToUrlStubClass($entityClass)
+      : $entityClass;
+
     // Create entity instance without calling the constructor.
     // This bypasses all the service dependencies in entity base classes.
-    $reflection = new \ReflectionClass($entityClass);
+    $reflection = new \ReflectionClass($classToInstantiate);
+    /** @var \Drupal\Core\Entity\EntityBase $entity */
     $entity = $reflection->newInstanceWithoutConstructor();
 
     // Initialize entity based on type.
@@ -262,6 +288,11 @@ final class SubjectEntityFactory {
       $this->initializeConfigEntity($entity, $values, $config);
     }
 
+    // Configure toUrl() if enabled.
+    if ($toUrlEnabled) {
+      $this->configureToUrl($entity, $values, $config, $urlOption);
+    }
+
     return $entity;
   }
 
@@ -276,11 +307,13 @@ final class SubjectEntityFactory {
    *   The entity class to instantiate.
    * @param array<string, mixed> $values
    *   Field/property values. The ID key will be set automatically.
+   * @param array{url?: string|callable|false} $options
+   *   Options for entity creation. See ::create for available options.
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance with an assigned ID.
    */
-  public function createWithId(string $entityClass, array $values = []): EntityBase {
+  public function createWithId(string $entityClass, array $values = [], array $options = []): EntityBase {
     $config = $this->getEntityTypeConfig($entityClass);
     $entityTypeId = $config['id'];
     $idKey = $config['keys']['id'] ?? 'id';
@@ -294,7 +327,7 @@ final class SubjectEntityFactory {
     // Set the ID in values.
     $values[$idKey] = $this->idCounters[$entityTypeId];
 
-    return $this->create($entityClass, $values);
+    return $this->create($entityClass, $values, $options);
   }
 
   /**
@@ -585,6 +618,129 @@ final class SubjectEntityFactory {
     }
 
     $fieldDefinitionsProperty->setValue($entity, $fieldDefinitions);
+  }
+
+  /**
+   * Gets or creates a toUrl stub class.
+   *
+   * Generates a stub class dynamically that extends the entity class and
+   * overrides the ::toUrl method to return a configured Url double.
+   *
+   * @param class-string $baseClassName
+   *   The base entity class to extend.
+   *
+   * @return class-string
+   *   The toUrl stub class name.
+   */
+  private function getOrCreateToUrlStubClass(string $baseClassName): string {
+    if (isset(self::$toUrlStubClassCache[$baseClassName])) {
+      return self::$toUrlStubClassCache[$baseClassName];
+    }
+
+    // Generate unique stub class name.
+    $hash = substr(md5($baseClassName), 0, 12);
+    /** @var class-string $stubClassName */
+    $stubClassName = "Deuteros\\Generated\\ToUrlStub_{$hash}";
+
+    if (!class_exists($stubClassName, FALSE)) {
+      $this->declareToUrlStubClass($stubClassName, $baseClassName);
+    }
+
+    self::$toUrlStubClassCache[$baseClassName] = $stubClassName;
+    return $stubClassName;
+  }
+
+  /**
+   * Declares a toUrl stub class via eval.
+   *
+   * Security note: This uses eval() which is generally discouraged. However,
+   * the security risk is minimal because:
+   * - Input is developer-controlled (class names from test code)
+   * - No user input is ever passed to eval()
+   * - Results are cached, so eval() runs at most once per entity class
+   * - Class names are generated deterministically from a hash.
+   *
+   * @param string $stubClassName
+   *   The fully-qualified stub class name to declare.
+   * @param string $baseClassName
+   *   The base entity class to extend.
+   */
+  private function declareToUrlStubClass(string $stubClassName, string $baseClassName): void {
+    $parts = explode('\\', $stubClassName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $code = sprintf(
+      'namespace %s { class %s extends \\%s { '
+      . 'private ?\\Drupal\\Core\\Url $_deuterosUrlDouble = NULL; '
+      . 'public function _deuterosSetUrlDouble(?\\Drupal\\Core\\Url $url): void { '
+      . '$this->_deuterosUrlDouble = $url; '
+      . '} '
+      . 'public function toUrl($rel = NULL, array $options = []) { '
+      . 'if ($this->_deuterosUrlDouble === NULL) { '
+      . 'throw new \\LogicException("Method \'toUrl\' called but no URL double was configured."); '
+      . '} '
+      . 'return $this->_deuterosUrlDouble; '
+      . '} '
+      . '} }',
+      $namespace,
+      $shortName,
+      $baseClassName
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
+  }
+
+  /**
+   * Configures the toUrl() method on an entity with a Url double.
+   *
+   * @param \Drupal\Core\Entity\EntityBase $entity
+   *   The entity instance (must be a toUrl stub class).
+   * @param array<string, mixed> $values
+   *   The entity values.
+   * @param array{id: string, keys: array<string, string>} $config
+   *   The entity type configuration.
+   * @param string|callable|null $urlOption
+   *   The URL option: string, callable, or NULL for default pattern.
+   */
+  private function configureToUrl(EntityBase $entity, array $values, array $config, string|callable|null $urlOption): void {
+    // Build context for URL resolution.
+    $idKey = $config['keys']['id'] ?? 'id';
+    $bundleKey = $config['keys']['bundle'] ?? 'type';
+
+    /** @var int|string|null $id */
+    $id = $values[$idKey] ?? NULL;
+
+    /** @var string|null $bundle */
+    $bundle = $values[$bundleKey] ?? $config['id'];
+
+    /** @var array{entityType: string, id: int|string|null, bundle: string|null} $context */
+    $context = [
+      'entityType' => $config['id'],
+      'id' => $id,
+      'bundle' => $bundle,
+    ];
+
+    // Determine URL value.
+    if ($urlOption === NULL) {
+      // Default pattern: "/{entityType}/{id}".
+      $url = '/' . $context['entityType'] . '/' . $context['id'];
+    }
+    elseif (is_callable($urlOption)) {
+      /** @var string $url */
+      $url = $urlOption($context);
+    }
+    else {
+      $url = $urlOption;
+    }
+
+    // Create and inject the URL double.
+    $urlDouble = $this->doubleFactory->createUrlDouble($url, $context);
+
+    // Call the setter on the stub class.
+    // @phpstan-ignore method.notFound
+    $entity->_deuterosSetUrlDouble($urlDouble);
   }
 
 }

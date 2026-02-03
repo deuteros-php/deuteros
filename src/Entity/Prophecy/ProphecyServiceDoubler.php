@@ -53,7 +53,13 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
    * {@inheritdoc}
    */
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
-    $container = new ContainerBuilder();
+    try {
+      // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
+      $container = \Drupal::getContainer();
+    }
+    catch (\Exception $exception) {
+      $container = new ContainerBuilder();
+    }
 
     // Create and register service doubles.
     $container->set(
@@ -164,7 +170,26 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     $prophecy->isTranslatable()->willReturn(isset($config['keys']['langcode']));
     $prophecy->getBundleEntityType()->willReturn(NULL);
     $prophecy->getLabel()->willReturn($entityTypeId);
-    $prophecy->getLinkTemplates()->willReturn([]);
+
+    // Default link templates for common entity operations.
+    $linkTemplates = [
+      'canonical' => "/$entityTypeId/{" . $entityTypeId . '}',
+      'edit-form' => "/$entityTypeId/{" . $entityTypeId . '}/edit',
+      'delete-form' => "/$entityTypeId/{" . $entityTypeId . '}/delete',
+    ];
+    $prophecy->getLinkTemplates()->willReturn($linkTemplates);
+    $prophecy->hasLinkTemplate(Argument::type('string'))
+      ->will(function (array $args) use ($linkTemplates) {
+        $key = $args[0];
+        assert(is_string($key));
+        return isset($linkTemplates[$key]);
+      });
+    $prophecy->getLinkTemplate(Argument::type('string'))
+      ->will(function (array $args) use ($linkTemplates) {
+        $key = $args[0];
+        assert(is_string($key));
+        return $linkTemplates[$key] ?? FALSE;
+      });
     $prophecy->getUriCallback()->willReturn(NULL);
 
     /** @var \Drupal\Core\Entity\ContentEntityTypeInterface */

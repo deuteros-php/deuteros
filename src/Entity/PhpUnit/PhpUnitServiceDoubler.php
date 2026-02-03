@@ -42,7 +42,13 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
    * {@inheritdoc}
    */
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
-    $container = new ContainerBuilder();
+    try {
+      // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
+      $container = \Drupal::getContainer();
+    }
+    catch (\Exception $exception) {
+      $container = new ContainerBuilder();
+    }
 
     // Create and register service doubles.
     $container->set(
@@ -140,7 +146,20 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
     $mock->method('isTranslatable')->willReturn(isset($config['keys']['langcode']));
     $mock->method('getBundleEntityType')->willReturn(NULL);
     $mock->method('getLabel')->willReturn($entityTypeId);
-    $mock->method('getLinkTemplates')->willReturn([]);
+
+    // Default link templates for common entity operations.
+    $linkTemplates = [
+      'canonical' => "/$entityTypeId/{" . $entityTypeId . '}',
+      'edit-form' => "/$entityTypeId/{" . $entityTypeId . '}/edit',
+      'delete-form' => "/$entityTypeId/{" . $entityTypeId . '}/delete',
+    ];
+    $mock->method('getLinkTemplates')->willReturn($linkTemplates);
+    $mock->method('hasLinkTemplate')->willReturnCallback(
+      fn(string $key) => isset($linkTemplates[$key])
+    );
+    $mock->method('getLinkTemplate')->willReturnCallback(
+      fn(string $key) => $linkTemplates[$key] ?? FALSE
+    );
     $mock->method('getUriCallback')->willReturn(NULL);
 
     /** @var \Drupal\Core\Entity\ContentEntityTypeInterface $mock */

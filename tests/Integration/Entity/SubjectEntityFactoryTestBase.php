@@ -6,8 +6,11 @@ namespace Deuteros\Tests\Integration\Entity;
 
 use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Entity\SubjectEntityTestBase;
+use Deuteros\Tests\Fixtures\FinalContentEntity;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
+use Drupal\Core\GeneratedUrl;
+use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 
 /**
@@ -250,6 +253,143 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
     $this->assertSame('test_config', $configEntity->getEntityTypeId());
     $this->assertSame('Test Node', $contentEntity->get('title')->value);
     $this->assertSame('Test Config', $configEntity->label());
+  }
+
+  /**
+   * Tests hasField() returns correct boolean for defined fields.
+   */
+  public function testHasFieldReturnsCorrectValue(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+      'body' => 'Body content',
+    ]);
+    assert($entity instanceof Node);
+
+    // Defined fields should return true.
+    $this->assertTrue($entity->hasField('title'));
+    $this->assertTrue($entity->hasField('body'));
+    $this->assertTrue($entity->hasField('nid'));
+    $this->assertTrue($entity->hasField('type'));
+
+    // Undefined fields should return false.
+    $this->assertFalse($entity->hasField('nonexistent_field'));
+    $this->assertFalse($entity->hasField('field_that_does_not_exist'));
+  }
+
+  /**
+   * Tests getFieldDefinition() returns definition for defined fields.
+   */
+  public function testGetFieldDefinitionReturnsDefinition(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+    assert($entity instanceof Node);
+
+    // Defined fields should return a field definition.
+    $definition = $entity->getFieldDefinition('title');
+    $this->assertNotNull($definition);
+    $this->assertSame('title', $definition->getName());
+
+    // Undefined fields should return null.
+    $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
+  }
+
+  /**
+   * Tests toUrl() returns a Url instance on subject entities.
+   */
+  public function testToUrlReturnsUrlInstance(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test Article',
+    ], '/node/42');
+
+    // Critical: Entity must still pass instanceof check after URL wrapping.
+    $this->assertInstanceOf(Node::class, $entity);
+
+    $url = $entity->toUrl();
+
+    // Critical: The URL must pass instanceof check.
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertInstanceOf(Url::class, $url);
+    $this->assertSame('/node/42', $url->toString());
+  }
+
+  /**
+   * Tests toUrl() with final entity class throws clear exception.
+   *
+   * PHP does not allow extending final classes, so URL stubs cannot pass
+   * instanceof checks for the entity class. We throw an exception with
+   * a clear message explaining the limitation.
+   */
+  public function testToUrlWithFinalEntityClassThrows(): void {
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage("Cannot use URL parameter with final entity class");
+    $this->expectExceptionMessage("Remove the 'final' keyword");
+
+    $this->createEntity(FinalContentEntity::class, [
+      'id' => 1,
+      'type' => 'test_bundle',
+    ], '/final/1');
+  }
+
+  /**
+   * Tests final entity class works without URL parameter.
+   */
+  public function testFinalEntityClassWithoutUrl(): void {
+    $entity = $this->createEntity(FinalContentEntity::class, [
+      'id' => 1,
+      'type' => 'test_bundle',
+    ]);
+
+    // Entity should pass instanceof check when no URL wrapping occurs.
+    $this->assertInstanceOf(FinalContentEntity::class, $entity);
+    $this->assertSame('final_entity', $entity->getEntityTypeId());
+  }
+
+  /**
+   * Tests toUrl() with GeneratedUrl returns proper instance.
+   */
+  public function testToUrlWithGeneratedUrl(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test Article',
+    ], '/node/42');
+
+    $url = $entity->toUrl();
+    $generatedUrl = $url->toString(TRUE);
+
+    // The GeneratedUrl must pass instanceof check.
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertInstanceOf(GeneratedUrl::class, $generatedUrl);
+    $this->assertSame('/node/42', $generatedUrl->getGeneratedUrl());
+  }
+
+  /**
+   * Tests toUrl() respects the "absolute" option.
+   */
+  public function testToUrlRespectsAbsoluteOption(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 42,
+      'type' => 'article',
+      'title' => 'Test Article',
+    ], '/node/42');
+
+    // Relative URL (default).
+    $relativeUrl = $entity->toUrl();
+    $this->assertSame('/node/42', $relativeUrl->toString());
+
+    // Absolute URL.
+    $absoluteUrl = $entity->toUrl('canonical', ['absolute' => TRUE]);
+    $this->assertSame('http://example.com/node/42', $absoluteUrl->toString());
+
+    // Verify each call creates a new Url double.
+    $this->assertNotSame($relativeUrl, $absoluteUrl);
   }
 
 }

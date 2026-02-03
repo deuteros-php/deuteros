@@ -70,6 +70,13 @@ final class SubjectEntityFactory {
   private static array $entityTypeConfigCache = [];
 
   /**
+   * Cache of URL stub class names keyed by entity class name.
+   *
+   * @var array<class-string, class-string>
+   */
+  private static array $urlStubClassCache = [];
+
+  /**
    * The original container (for restoration).
    */
   private ?ContainerInterface $originalContainer = NULL;
@@ -201,6 +208,9 @@ final class SubjectEntityFactory {
    *   Field/property values. Entity keys (id, bundle, etc.) are used for the
    *   entity initialization. For content entities, other values are converted
    *   to field doubles.
+   * @param string|null $url
+   *   Optional URL string. If provided, the entity's ::toUrl method will
+   *   return a Url double with this URL.
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
@@ -210,7 +220,7 @@ final class SubjectEntityFactory {
    * @throws \LogicException
    *   If ::installContainer has not been called.
    */
-  public function create(string $entityClass, array $values = []): EntityBase {
+  public function create(string $entityClass, array $values = [], ?string $url = NULL): EntityBase {
     if (!$this->containerInstalled) {
       throw new \LogicException(
         'Container not installed. Call installContainer() before create().'
@@ -259,6 +269,23 @@ final class SubjectEntityFactory {
       $this->initializeConfigEntity($entity, $values, $config);
     }
 
+    // Wrap entity with URL override if URL is provided.
+    if ($url !== NULL) {
+      $reflection = new \ReflectionClass($entityClass);
+      if ($reflection->isFinal()) {
+        throw new \LogicException(sprintf(
+          "Cannot use URL parameter with final entity class '%s'. "
+          . "PHP does not allow extending final classes, so the URL stub "
+          . "cannot pass 'instanceof %s'. Either: (1) Remove the 'final' "
+          . "keyword from the entity class, or (2) Don't use the URL "
+          . "parameter and mock toUrl() separately in your test.",
+          $entityClass,
+          (new \ReflectionClass($entityClass))->getShortName()
+        ));
+      }
+      $entity = $this->wrapWithUrlOverride($entity, $url, $entityClass);
+    }
+
     return $entity;
   }
 
@@ -273,11 +300,14 @@ final class SubjectEntityFactory {
    *   The entity class to instantiate.
    * @param array<string, mixed> $values
    *   Field/property values. The ID key will be set automatically.
+   * @param string|null $url
+   *   Optional URL string. If provided, the entity's ::toUrl method will
+   *   return a Url double with this URL.
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance with an assigned ID.
    */
-  public function createWithId(string $entityClass, array $values = []): EntityBase {
+  public function createWithId(string $entityClass, array $values = [], ?string $url = NULL): EntityBase {
     $config = $this->getEntityTypeConfig($entityClass);
     $entityTypeId = $config['id'];
     $idKey = $config['keys']['id'] ?? 'id';
@@ -291,7 +321,7 @@ final class SubjectEntityFactory {
     // Set the ID in values.
     $values[$idKey] = $this->idCounters[$entityTypeId];
 
-    return $this->create($entityClass, $values);
+    return $this->create($entityClass, $values, $url);
   }
 
   /**
@@ -558,6 +588,204 @@ final class SubjectEntityFactory {
     }
 
     $fieldsProperty->setValue($entity, $fieldsArray);
+  }
+
+  /**
+   * Wraps an entity with a URL stub that overrides ::toUrl.
+   *
+   * Creates a dynamic subclass that overrides ::toUrl and copies entity state.
+   * This method is only called for non-final classes (final classes throw an
+   * exception earlier in ::create).
+   *
+   * @param \Drupal\Core\Entity\EntityBase $entity
+   *   The entity instance.
+   * @param string $url
+   *   The URL string.
+   * @param class-string $entityClass
+   *   The entity class.
+   *
+   * @return \Drupal\Core\Entity\EntityBase
+   *   The wrapped entity with URL override.
+   */
+  private function wrapWithUrlOverride(EntityBase $entity, string $url, string $entityClass): EntityBase {
+    // Get or create URL stub class.
+    $stubClassName = $this->getOrCreateUrlStubClass($entityClass);
+
+    // Create Url double factory.
+    $urlDoubleFactory = $this->createUrlDoubleFactory($url);
+
+    // Create stub instance without calling constructor.
+    $stubReflection = new \ReflectionClass($stubClassName);
+    $stub = $stubReflection->newInstanceWithoutConstructor();
+    assert($stub instanceof EntityBase);
+
+    // Copy entity properties from original to stub.
+    $this->copyEntityProperties($entity, $stub);
+
+    // Inject the Url double factory into the stub.
+    $urlProperty = $stubReflection->getProperty('deuterosUrlDoubleFactory');
+    $urlProperty->setValue($stub, $urlDoubleFactory);
+
+    return $stub;
+  }
+
+  /**
+   * Gets or creates a URL stub class for the entity class.
+   *
+   * URL stub classes are cached statically for performance.
+   *
+   * @param class-string $entityClass
+   *   The entity class.
+   *
+   * @return class-string
+   *   The URL stub class name.
+   */
+  private function getOrCreateUrlStubClass(string $entityClass): string {
+    if (isset(self::$urlStubClassCache[$entityClass])) {
+      return self::$urlStubClassCache[$entityClass];
+    }
+
+    // Generate unique stub class name.
+    $hash = substr(md5($entityClass), 0, 12);
+    /** @var class-string $stubClassName */
+    $stubClassName = "Deuteros\\Generated\\UrlStub_{$hash}";
+
+    if (!class_exists($stubClassName, FALSE)) {
+      $this->declareUrlStubClass($stubClassName, $entityClass);
+    }
+
+    self::$urlStubClassCache[$entityClass] = $stubClassName;
+    return $stubClassName;
+  }
+
+  /**
+   * Declares a URL stub class via eval.
+   *
+   * Creates a subclass that extends the entity class and overrides ::toUrl.
+   * This method is only called for non-final classes (final classes throw an
+   * exception earlier in ::create).
+   *
+   * Security note: This uses eval() which is generally discouraged. However,
+   * the security risk is minimal because:
+   * - Input is developer-controlled (entity class names from test code)
+   * - No user input is ever passed to eval()
+   * - Results are cached, so eval() runs at most once per entity class
+   * - Class names are generated deterministically from a hash.
+   *
+   * @param string $stubClassName
+   *   The fully-qualified stub class name to declare.
+   * @param class-string $entityClass
+   *   The entity class to extend.
+   */
+  private function declareUrlStubClass(string $stubClassName, string $entityClass): void {
+    $parts = explode('\\', $stubClassName);
+    $shortName = array_pop($parts);
+    $namespace = implode('\\', $parts);
+
+    $code = sprintf(
+      'namespace %s { final class %s extends \\%s { private $deuterosUrlDoubleFactory; public function toUrl($rel = "canonical", $options = []) { return ($this->deuterosUrlDoubleFactory)($rel, $options); } } }',
+      $namespace,
+      $shortName,
+      $entityClass
+    );
+
+    // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+    eval($code);
+  }
+
+  /**
+   * Copies entity properties from source to destination.
+   *
+   * Uses reflection to copy all properties, including private and protected
+   * ones from the entity base classes.
+   *
+   * @param \Drupal\Core\Entity\EntityBase $source
+   *   The source entity.
+   * @param \Drupal\Core\Entity\EntityBase $destination
+   *   The destination entity.
+   */
+  private function copyEntityProperties(EntityBase $source, EntityBase $destination): void {
+    // Copy properties from EntityBase.
+    $this->copyClassProperties($source, $destination, EntityBase::class);
+
+    // Copy properties from ContentEntityBase if applicable.
+    if ($source instanceof ContentEntityBase && $destination instanceof ContentEntityBase) {
+      $this->copyClassProperties($source, $destination, ContentEntityBase::class);
+    }
+
+    // Copy properties from ConfigEntityBase if applicable.
+    if ($source instanceof ConfigEntityBase && $destination instanceof ConfigEntityBase) {
+      $this->copyClassProperties($source, $destination, ConfigEntityBase::class);
+    }
+  }
+
+  /**
+   * Copies properties from a specific class.
+   *
+   * @param \Drupal\Core\Entity\EntityBase $source
+   *   The source entity.
+   * @param \Drupal\Core\Entity\EntityBase $destination
+   *   The destination entity.
+   * @param class-string $className
+   *   The class name to copy properties from.
+   */
+  private function copyClassProperties(EntityBase $source, EntityBase $destination, string $className): void {
+    $reflection = new \ReflectionClass($className);
+    foreach ($reflection->getProperties() as $property) {
+      $value = $property->getValue($source);
+      $property->setValue($destination, $value);
+    }
+  }
+
+  /**
+   * Creates a Url double factory callable.
+   *
+   * Returns a callable that accepts $rel and $options and creates appropriate
+   * Url doubles.
+   *
+   * @param string $url
+   *   The base URL string.
+   *
+   * @return callable
+   *   A callable that accepts (?string $rel, array $options) and returns a
+   *   Url double.
+   */
+  private function createUrlDoubleFactory(string $url): callable {
+    return function (?string $rel = 'canonical', array $options = []) use ($url): object {
+      // Create a temporary entity double with URL configured.
+      $definition = EntityDoubleDefinitionBuilder::create('node')
+        ->url($url)
+        ->build();
+
+      $tempEntity = $this->doubleFactory->create($definition);
+
+      // Call toUrl() with the provided options to get the Url double.
+      return $tempEntity->toUrl($rel, $options);
+    };
+  }
+
+  /**
+   * Injects field definition mocks into the entity's field definitions cache.
+   *
+   * Populates the "$fieldDefinitions" property so that "hasField()" and
+   * "getFieldDefinition()" work correctly without calling the entity field
+   * manager service.
+   *
+   * @param \Drupal\Core\Entity\ContentEntityBase $entity
+   *   The entity instance.
+   * @param array<string> $fieldNames
+   *   The field names to create definitions for.
+   */
+  private function injectFieldDefinitions(ContentEntityBase $entity, array $fieldNames): void {
+    $reflection = new \ReflectionClass(ContentEntityBase::class);
+    $fieldDefinitionsProperty = $reflection->getProperty('fieldDefinitions');
+
+    $fieldDefinitions = [];
+    foreach ($fieldNames as $fieldName) {
+      $fieldDefinitions[$fieldName] = $this->serviceDoubler->createFieldDefinitionMock($fieldName);
+    }
+
+    $fieldDefinitionsProperty->setValue($entity, $fieldDefinitions);
   }
 
 }

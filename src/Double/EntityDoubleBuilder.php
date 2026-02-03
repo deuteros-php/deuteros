@@ -39,13 +39,6 @@ final class EntityDoubleBuilder {
   private mixed $urlDoubleFactory = NULL;
 
   /**
-   * Cached Url double.
-   *
-   * @var object|null
-   */
-  private ?object $urlDoubleCache = NULL;
-
-  /**
    * Constructs an EntityDoubleBuilder.
    *
    * @param \Deuteros\Double\EntityDoubleDefinition $definition
@@ -74,8 +67,8 @@ final class EntityDoubleBuilder {
    * Sets the factory for creating Url doubles.
    *
    * @param callable $factory
-   *   A callable that accepts (string $url, array $context) and returns a Url
-   *   double.
+   *   A callable that accepts (string $url, array $options, array $context)
+   *   and returns a Url double.
    */
   public function setUrlDoubleFactory(callable $factory): void {
     $this->urlDoubleFactory = $factory;
@@ -268,18 +261,13 @@ final class EntityDoubleBuilder {
    * Builds the ::toUrl resolver.
    *
    * Returns a Url double when url is configured, throws otherwise.
-   * The $rel and $options parameters are accepted but ignored.
+   * The Url double is created with the provided options (e.g., "absolute").
    *
    * @return callable
    *   The resolver callable.
    */
   private function buildToUrlResolver(): callable {
-    return function (array $context): object {
-      // Return cached Url double if available.
-      if ($this->urlDoubleCache !== NULL) {
-        return $this->urlDoubleCache;
-      }
-
+    return function (array $context, ?string $rel = NULL, array $options = []): object {
       $url = $this->definition->url;
       if ($url === NULL) {
         throw new \LogicException(
@@ -301,10 +289,10 @@ final class EntityDoubleBuilder {
         throw new \LogicException("Url double factory not set. Cannot create Url double.");
       }
 
-      // Create and cache the Url double.
-      $urlDouble = ($this->urlDoubleFactory)($resolvedUrl, $context);
+      // Create the Url double with the provided options.
+      // We don't cache because different options should create different URLs.
+      $urlDouble = ($this->urlDoubleFactory)($resolvedUrl, $options, $context);
       assert(is_object($urlDouble));
-      $this->urlDoubleCache = $urlDouble;
 
       return $urlDouble;
     };

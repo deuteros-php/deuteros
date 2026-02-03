@@ -148,6 +148,24 @@ be used by user-provided context.
 - PHPUnit: All mock properties are copied via reflection
 - Prophecy: The `objectProphecyClosure` property is copied to maintain prophecy binding
 
+**Subject Entity Field Definitions:**
+- `SubjectEntityFactory` injects field definition mocks into the entity's
+  `$fieldDefinitions` cache property via reflection
+- This enables `hasField()` and `getFieldDefinition()` to work correctly without
+  relying on the `entity_field.manager` service
+- Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
+- Only fields passed to `create()` are defined; undefined fields return false/null
+
+**Subject Entity URL Support:**
+- `SubjectEntityFactory::create()` accepts an optional `$url` parameter
+- When provided, a URL stub class is generated that extends the entity class and
+  overrides `toUrl()` to return a Url double
+- The entity passes `instanceof` checks because the stub extends the entity class
+- **Limitation:** Final entity classes cannot use the URL parameter because PHP
+  does not allow extending final classes. A clear `LogicException` is thrown
+  with instructions to either remove the `final` keyword or mock `toUrl()`
+  separately
+
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
   `\IteratorAggregate`) and `count()` via `::count` (if interface extends `\Countable`)
@@ -214,7 +232,7 @@ While working on any code change:
 - quality checks should always be run
 - documentation should be updated including CLAUDE.MD (this file)
 - test coverage should follow the test pyramid paradigm
-- @composer.dev.json should be used when running quality checks: always prefer unit tests over integration tests, when possible 
+- @composer.dev.json should be used when running quality checks: always prefer unit tests over integration tests, when possible
 
 ## Test Structure
 

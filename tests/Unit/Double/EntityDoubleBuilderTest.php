@@ -423,7 +423,7 @@ class EntityDoubleBuilderTest extends TestCase {
   }
 
   /**
-   * Tests ::toUrl resolver caches the Url double.
+   * Tests ::toUrl resolver creates new Url doubles on each call.
    */
   public function testToUrlResolverCachesUrlDouble(): void {
     $definition = new EntityDoubleDefinition(
@@ -433,23 +433,21 @@ class EntityDoubleBuilderTest extends TestCase {
     $builder = new EntityDoubleBuilder($definition);
 
     $callCount = 0;
-    $urlDouble = new \stdClass();
-    $builder->setUrlDoubleFactory(function () use ($urlDouble, &$callCount) {
+    $builder->setUrlDoubleFactory(function () use (&$callCount) {
       $callCount++;
-      return $urlDouble;
+      return new \stdClass();
     });
 
     $resolvers = $builder->getResolvers();
     $first = $resolvers['toUrl']([]);
     $second = $resolvers['toUrl']([]);
 
-    $this->assertSame($urlDouble, $first);
-    $this->assertSame($first, $second);
-    $this->assertSame(1, $callCount, 'Factory should only be called once');
+    $this->assertNotSame($first, $second, 'Each call should create a new Url double');
+    $this->assertSame(2, $callCount, 'Factory should be called for each toUrl() call');
   }
 
   /**
-   * Tests ::toUrl resolver ignores $rel and $options parameters.
+   * Tests ::toUrl resolver passes options to factory.
    */
   public function testToUrlResolverIgnoresParameters(): void {
     $definition = new EntityDoubleDefinition(
@@ -458,17 +456,25 @@ class EntityDoubleBuilderTest extends TestCase {
     );
     $builder = new EntityDoubleBuilder($definition);
 
-    $urlDouble = new \stdClass();
-    $builder->setUrlDoubleFactory(fn() => $urlDouble);
+    $capturedCalls = [];
+    $builder->setUrlDoubleFactory(
+      function (string $url, array $options, array $context) use (&$capturedCalls) {
+        $capturedCalls[] = ['url' => $url, 'options' => $options];
+        return new \stdClass();
+      }
+    );
 
     $resolvers = $builder->getResolvers();
 
-    // All these should return the same cached double.
-    $canonical = $resolvers['toUrl']([], 'canonical', []);
-    $editForm = $resolvers['toUrl']([], 'edit-form', ['absolute' => TRUE]);
+    // Call with different options.
+    $resolvers['toUrl']([], 'canonical', []);
+    $resolvers['toUrl']([], 'edit-form', ['absolute' => TRUE]);
 
-    $this->assertSame($urlDouble, $canonical);
-    $this->assertSame($urlDouble, $editForm);
+    $this->assertCount(2, $capturedCalls);
+    $this->assertSame('/node/1', $capturedCalls[0]['url']);
+    $this->assertSame([], $capturedCalls[0]['options']);
+    $this->assertSame('/node/1', $capturedCalls[1]['url']);
+    $this->assertSame(['absolute' => TRUE], $capturedCalls[1]['options']);
   }
 
   /**

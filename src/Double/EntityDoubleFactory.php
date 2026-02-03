@@ -222,9 +222,10 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     // Set up URL double factory if URL is configured.
     if ($definition->url !== NULL) {
       $builder->setUrlDoubleFactory(
-        function (string $url, array $context) {
+        function (string $url, array $options, array $context) {
+          /** @var array<string, mixed> $options */
           /** @var array<string, mixed> $context */
-          return $this->createUrlDouble($url, $context);
+          return $this->createUrlDouble($url, $options, $context);
         }
       );
     }
@@ -505,17 +506,20 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *
    * Creates a Url mock/prophecy with ::toString wired to return the URL string
    * or a GeneratedUrl double when $collect_bubbleable_metadata is TRUE.
+   * Respects the "absolute" option.
    *
    * @param string $url
    *   The URL string.
+   * @param array<string, mixed> $options
+   *   The URL options (e.g., ['absolute' => TRUE]).
    * @param array<string, mixed> $context
    *   The context.
    *
    * @return \Drupal\Core\Url
    *   The Url double.
    */
-  protected function createUrlDouble(string $url, array $context): Url {
-    $urlBuilder = new UrlDoubleBuilder($url);
+  protected function createUrlDouble(string $url, array $options, array $context): Url {
+    $urlBuilder = new UrlDoubleBuilder($url, $options);
 
     // Set up GeneratedUrl factory.
     $urlBuilder->setGeneratedUrlFactory(

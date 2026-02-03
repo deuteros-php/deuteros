@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Integration\Entity;
 
 use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
@@ -293,6 +294,62 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
     // Undefined fields should return null.
     $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
+  }
+
+  /**
+   * Tests that custom services are preserved when entity types are registered.
+   *
+   * When creating entities of different types, the container is rebuilt to
+   * register new entity type configurations. Custom services added by the test
+   * should be preserved across these rebuilds.
+   */
+  public function testCustomServicesPreservedAcrossEntityTypeRegistration(): void {
+    // Get the container and add a custom service.
+    assert($this->subjectEntityFactory !== NULL);
+    $container = $this->subjectEntityFactory->getContainer();
+    $customService = new \stdClass();
+    $customService->value = 'test_value';
+    $container->set('my_custom_service', $customService);
+
+    // Verify the service is accessible.
+    $this->assertSame($customService, $container->get('my_custom_service'));
+
+    // Create a Node entity - this registers the 'node' entity type.
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test Node',
+    ]);
+    $this->assertInstanceOf(Node::class, $node);
+
+    // The custom service should still be accessible after container rebuild.
+    $containerAfterNode = $this->subjectEntityFactory->getContainer();
+    $retrievedService = $containerAfterNode->get('my_custom_service');
+    $this->assertSame($customService, $retrievedService);
+
+    // Create a TestConfigEntity - this registers a different entity type.
+    $config = $this->createEntity(TestConfigEntity::class, [
+      'id' => 'test_config',
+      'label' => 'Test Config',
+    ]);
+    $this->assertInstanceOf(TestConfigEntity::class, $config);
+
+    // The custom service should still be accessible after second rebuild.
+    $containerAfterConfig = $this->subjectEntityFactory->getContainer();
+    $this->assertSame($customService, $containerAfterConfig->get('my_custom_service'));
+    $this->assertSame('test_value', $containerAfterConfig->get('my_custom_service')->value);
+  }
+
+  /**
+   * Tests getContainer() throws exception when container not installed.
+   */
+  public function testGetContainerThrowsWhenNotInstalled(): void {
+    // Create a fresh factory without installing the container.
+    $factory = SubjectEntityFactory::fromTest($this);
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('Container not installed. Call installContainer() before getContainer().');
+    $factory->getContainer();
   }
 
 }

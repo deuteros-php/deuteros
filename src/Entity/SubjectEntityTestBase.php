@@ -8,6 +8,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base test class for unit testing Drupal entity objects.
@@ -107,6 +108,20 @@ abstract class SubjectEntityTestBase extends TestCase {
    */
   protected function getDoubleFactory(): EntityDoubleFactoryInterface {
     return $this->subjectEntityFactory()->getDoubleFactory();
+  }
+
+  /**
+   * Gets the current container managed by the factory.
+   *
+   * Useful for adding custom service doubles. Services added this way will be
+   * preserved when the container is rebuilt (e.g., when new entity types are
+   * registered via ::createEntity).
+   *
+   * @return \Symfony\Component\DependencyInjection\ContainerInterface
+   *   The current container.
+   */
+  protected function getContainer(): ContainerInterface {
+    return $this->subjectEntityFactory()->getContainer();
   }
 
   /**

@@ -1062,6 +1062,45 @@ class MyNodeTest extends SubjectEntityTestBase {
 | `$this->createEntity($class, $values)` | Convenience method for creating entities |
 | `$this->createEntityWithId($class, $values)` | Create entities with auto-incremented IDs |
 | `$this->getDoubleFactory()` | Get the entity double factory for references |
+| `$this->getContainer()` | Get the container to add custom service doubles |
+
+### Adding Custom Services
+
+You can add custom service doubles to the container for testing code that
+depends on services beyond the defaults provided by `SubjectEntityFactory`.
+Custom services are preserved when the container is rebuilt (e.g., when
+creating entities of different types):
+
+```php
+use Prophecy\PhpUnit\ProphecyTrait;
+
+class MyServiceTest extends SubjectEntityTestBase {
+
+  use ProphecyTrait;
+
+  public function testWithCustomService(): void {
+    // Add a custom service to the container using Prophecy.
+    $customService = $this->prophesize(MyServiceInterface::class);
+    $customService->doSomething()->willReturn('test result');
+    $this->getContainer()->set('my_custom_service', $customService->reveal());
+
+    // Create entities - custom services are preserved across container rebuilds.
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+
+    // Your code can now use both the entity and the custom service.
+    $myCode = new MyClass($node);
+    // The custom service is still available via \Drupal::service().
+  }
+
+}
+```
+
+This is useful when testing code that calls services beyond entity-related
+ones (e.g., custom services, event dispatchers, etc.).
 
 ### Auto-Incremented IDs
 

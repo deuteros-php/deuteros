@@ -75,6 +75,11 @@ final class SubjectEntityFactory {
   private ?ContainerInterface $originalContainer = NULL;
 
   /**
+   * The current container managed by this factory.
+   */
+  private ?ContainerInterface $container = NULL;
+
+  /**
    * Whether the container has been installed.
    */
   private bool $containerInstalled = FALSE;
@@ -155,9 +160,9 @@ final class SubjectEntityFactory {
     }
 
     // Build and install the container with doubled services.
-    $container = $this->serviceDoubler->buildContainer($this->entityTypeConfigs);
+    $this->container = $this->serviceDoubler->buildContainer($this->entityTypeConfigs);
     // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
-    \Drupal::setContainer($container);
+    \Drupal::setContainer($this->container);
 
     $this->containerInstalled = TRUE;
   }
@@ -184,6 +189,7 @@ final class SubjectEntityFactory {
     }
 
     $this->containerInstalled = FALSE;
+    $this->container = NULL;
     $this->entityTypeConfigs = [];
     $this->idCounters = [];
   }
@@ -236,10 +242,13 @@ final class SubjectEntityFactory {
         'class' => $entityClass,
         'keys' => $config['keys'],
       ];
-      // Rebuild container with new entity type.
-      $container = $this->serviceDoubler->buildContainer($this->entityTypeConfigs);
+      // Rebuild container with new entity type, preserving existing services.
+      $this->container = $this->serviceDoubler->buildContainer(
+        $this->entityTypeConfigs,
+        $this->container,
+      );
       // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
-      \Drupal::setContainer($container);
+      \Drupal::setContainer($this->container);
     }
 
     // Create entity instance without calling the constructor.
@@ -435,6 +444,28 @@ final class SubjectEntityFactory {
    */
   public function getDoubleFactory(): EntityDoubleFactoryInterface {
     return $this->doubleFactory;
+  }
+
+  /**
+   * Gets the current container managed by this factory.
+   *
+   * This allows adding custom service doubles to the container. Services
+   * added this way will be preserved when the container is rebuilt (e.g.,
+   * when new entity types are registered via ::create).
+   *
+   * @return \Symfony\Component\DependencyInjection\ContainerInterface
+   *   The current container.
+   *
+   * @throws \LogicException
+   *   If ::installContainer has not been called.
+   */
+  public function getContainer(): ContainerInterface {
+    if ($this->container === NULL) {
+      throw new \LogicException(
+        'Container not installed. Call installContainer() before getContainer().'
+      );
+    }
+    return $this->container;
   }
 
   /**

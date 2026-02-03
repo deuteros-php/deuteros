@@ -157,6 +157,14 @@ be used by user-provided context.
 - Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
 - Only fields passed to `create()` are defined; undefined fields return false/null
 
+**Container Reuse:**
+- `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
+- When new entity types are registered via `create()`, the existing container is
+  passed to `buildContainer()` for reconfiguration rather than creating a new one
+- This preserves custom services added by tests via `getContainer()->set()`
+- `ServiceDoublerInterface::buildContainer()` accepts an optional container parameter;
+  if NULL, a new container is created; if provided, the existing container is reused
+
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
   `\IteratorAggregate`) and `count()` via `::count` (if interface extends `\Countable`)

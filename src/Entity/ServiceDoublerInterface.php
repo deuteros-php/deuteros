@@ -17,13 +17,23 @@ interface ServiceDoublerInterface {
   /**
    * Builds a container with doubled services.
    *
+   * If a container is provided, it will be configured with the doubled
+   * services; otherwise a new container is created. Passing an existing
+   * container allows preserving user-added services when the container needs
+   * to be rebuilt (e.g., when new entity types are registered).
+   *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations keyed by entity type ID.
+   * @param \Symfony\Component\DependencyInjection\ContainerInterface|null $container
+   *   Optional container to configure. If NULL, a new container is created.
    *
    * @return \Symfony\Component\DependencyInjection\ContainerInterface
    *   The container with doubled services.
    */
-  public function buildContainer(array $entityTypeConfigs): ContainerInterface;
+  public function buildContainer(
+    array $entityTypeConfigs,
+    ?ContainerInterface $container = NULL,
+  ): ContainerInterface;
 
   /**
    * Creates a minimal field definition mock for a field.

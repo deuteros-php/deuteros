@@ -157,6 +157,17 @@ be used by user-provided context.
 - Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
 - Only fields passed to `create()` are defined; undefined fields return false/null
 
+**Subject Entity toUrl Support:**
+- `SubjectEntityFactory` creates a stub class that overrides `::toUrl()` to return
+  a Url double
+- The stub class is generated via `eval()` and cached statically for performance
+- Default URL pattern: `/{entityType}/{id}` (e.g., "/node/42")
+- Custom URLs supported via `options` array: static string, callable, or FALSE to
+  disable
+- The `createUrlDouble()` method is exposed on `EntityDoubleFactoryInterface` for
+  reuse
+- When `['url' => FALSE]` is passed, the original entity class is used (no stub)
+
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
   `\IteratorAggregate`) and `count()` via `::count` (if interface extends `\Countable`)

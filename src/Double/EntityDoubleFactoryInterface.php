@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deuteros\Double;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
 
 /**
  * Interface for entity double factories.
@@ -43,5 +44,21 @@ interface EntityDoubleFactoryInterface {
    *   The mutable entity double.
    */
   public function createMutable(EntityDoubleDefinition $definition, array $context = []): EntityInterface;
+
+  /**
+   * Creates a Url double.
+   *
+   * Creates a Url mock/prophecy with ::toString wired to return the URL string
+   * or a GeneratedUrl double when $collect_bubbleable_metadata is TRUE.
+   *
+   * @param string $url
+   *   The URL string.
+   * @param array<string, mixed> $context
+   *   The context.
+   *
+   * @return \Drupal\Core\Url
+   *   The Url double.
+   */
+  public function createUrlDouble(string $url, array $context = []): Url;
 
 }

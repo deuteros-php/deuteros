@@ -1172,6 +1172,69 @@ $customNode = $factory->create(CustomNode::class, ['nid' => 2, 'type' => 'articl
 This is particularly useful for testing custom bundle classes that extend core
 entity classes like `Node` or `User`.
 
+### URL Support (toUrl)
+
+Subject entities support the `::toUrl()` method for URL generation. By default,
+entities get a URL pattern of `/{entityType}/{id}`:
+
+```php
+$node = $this->createEntity(Node::class, [
+  'nid' => 42,
+  'type' => 'article',
+  'title' => 'Test Article',
+]);
+
+$url = $node->toUrl();
+$url->toString();        // '/node/42'
+$url->toString(TRUE);    // Returns GeneratedUrl object
+```
+
+**Custom Static URL**
+
+```php
+$node = $this->createEntity(Node::class, [
+  'nid' => 42,
+  'type' => 'article',
+  'title' => 'Test',
+], ['url' => '/custom/path']);
+
+$node->toUrl()->toString(); // '/custom/path'
+```
+
+**Dynamic URL via Callable**
+
+Use a callable for dynamic URL generation based on entity context:
+
+```php
+$node = $this->createEntity(Node::class, [
+  'nid' => 42,
+  'type' => 'article',
+  'title' => 'Test',
+], ['url' => fn(array $ctx) => "/articles/{$ctx['bundle']}/{$ctx['id']}"]);
+
+$node->toUrl()->toString(); // '/articles/article/42'
+```
+
+The context array contains:
+- `entityType`: The entity type ID (e.g., "node")
+- `id`: The entity ID
+- `bundle`: The entity bundle
+
+**Disabling toUrl() Support**
+
+If you don't need `::toUrl()` support, you can disable it:
+
+```php
+$node = $this->createEntity(Node::class, [
+  'nid' => 42,
+  'type' => 'article',
+  'title' => 'Test',
+], ['url' => FALSE]);
+
+// Entity is the exact original class (no toUrl stub).
+get_class($node); // 'Drupal\node\Entity\Node'
+```
+
 ### Limitations
 
 Entity objects created by `SubjectEntityFactory` have these limitations:
@@ -1180,6 +1243,7 @@ Entity objects created by `SubjectEntityFactory` have these limitations:
 |-----------|--------|-------|
 | `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
 | `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles (content entities only) |
+| `toUrl()` | Works | Returns Url double (default: `/{entityType}/{id}`) |
 | `save()`, `delete()` | Throws | No storage backend |
 | Entity queries | Not supported | No database |
 | `access()` | Throws | No access control handler |

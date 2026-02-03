@@ -112,6 +112,7 @@ Workflow file: `.github/workflows/ci.yml`
    - `SubjectEntityFactory` - Creates real entity instances with doubled dependencies
    - `SubjectEntityTestBase` - Abstract test base class for simplified DX
    - `ServiceDoublerInterface` - Contract for service doubler implementations
+     (includes `createFieldDefinitionMock()` for field definition doubles)
    - `PhpUnit\PhpUnitServiceDoubler` - PHPUnit service doubler
    - `Prophecy\ProphecyServiceDoubler` - Prophecy service doubler
 
@@ -147,6 +148,14 @@ be used by user-provided context.
 - The stub's internal state is copied from the original double (adapter-specific)
 - PHPUnit: All mock properties are copied via reflection
 - Prophecy: The `objectProphecyClosure` property is copied to maintain prophecy binding
+
+**Subject Entity Field Definitions:**
+- `SubjectEntityFactory` injects field definition mocks into the entity's
+  `$fieldDefinitions` cache property via reflection
+- This enables `hasField()` and `getFieldDefinition()` to work correctly without
+  relying on the `entity_field.manager` service
+- Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
+- Only fields passed to `create()` are defined; undefined fields return false/null
 
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends

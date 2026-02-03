@@ -53,7 +53,13 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
    * {@inheritdoc}
    */
   public function buildContainer(array $entityTypeConfigs): ContainerInterface {
-    $container = new ContainerBuilder();
+    try {
+      // @phpstan-ignore-next-line globalDrupalDependencyInjection.useDependencyInjection
+      $container = \Drupal::getContainer();
+    }
+    catch (\Exception $exception) {
+      $container = new ContainerBuilder();
+    }
 
     // Create and register service doubles.
     $container->set(

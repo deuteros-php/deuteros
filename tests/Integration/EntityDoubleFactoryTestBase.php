@@ -1144,6 +1144,33 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests toUrl respects the "absolute" option.
+   */
+  public function testToUrlRespectsAbsoluteOption(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->id(42)
+        ->url('/node/42')
+        ->build()
+    );
+
+    // Relative URL (default).
+    $relativeUrl = $entity->toUrl();
+    $this->assertSame('/node/42', $relativeUrl->toString());
+
+    // Absolute URL.
+    $absoluteUrl = $entity->toUrl('canonical', ['absolute' => TRUE]);
+    $this->assertSame('http://example.com/node/42', $absoluteUrl->toString());
+
+    // Verify each call creates a new Url double.
+    $this->assertNotSame($relativeUrl, $absoluteUrl);
+
+    // Verify absolute URL works with GeneratedUrl.
+    $generatedUrl = $absoluteUrl->toString(TRUE);
+    $this->assertSame('http://example.com/node/42', $generatedUrl->getGeneratedUrl());
+  }
+
+  /**
    * Tests toUrl with GeneratedUrl.
    */
   public function testToUrlWithGeneratedUrl(): void {

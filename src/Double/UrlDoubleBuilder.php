@@ -25,9 +25,12 @@ final class UrlDoubleBuilder {
    *
    * @param string $url
    *   The URL string to return from ::toString.
+   * @param array<string, mixed> $options
+   *   The URL options (e.g., ['absolute' => TRUE]).
    */
   public function __construct(
     private readonly string $url,
+    private readonly array $options = [],
   ) {}
 
   /**
@@ -56,21 +59,41 @@ final class UrlDoubleBuilder {
    * Builds the ::toString resolver.
    *
    * Returns the URL string when $collect_bubbleable_metadata is FALSE,
-   * or a GeneratedUrl double when TRUE.
+   * or a GeneratedUrl double when TRUE. Respects the "absolute" option.
    *
    * @return callable
    *   The resolver callable.
    */
   private function buildToStringResolver(): callable {
     return function (array $context, bool $collectBubbleableMetadata = FALSE): mixed {
+      $url = $this->url;
+
+      // Apply absolute option if set.
+      if (($this->options['absolute'] ?? FALSE) && !$this->isAbsoluteUrl($url)) {
+        $url = 'http://example.com' . $url;
+      }
+
       if ($collectBubbleableMetadata) {
         if ($this->generatedUrlFactory === NULL) {
           throw new \LogicException('GeneratedUrl factory not set. Cannot create GeneratedUrl double.');
         }
-        return ($this->generatedUrlFactory)($this->url);
+        return ($this->generatedUrlFactory)($url);
       }
-      return $this->url;
+      return $url;
     };
+  }
+
+  /**
+   * Checks if a URL is absolute.
+   *
+   * @param string $url
+   *   The URL to check.
+   *
+   * @return bool
+   *   TRUE if the URL is absolute (has a scheme), FALSE otherwise.
+   */
+  private function isAbsoluteUrl(string $url): bool {
+    return str_contains($url, '://');
   }
 
   /**

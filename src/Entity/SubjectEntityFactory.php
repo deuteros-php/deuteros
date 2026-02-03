@@ -271,6 +271,18 @@ final class SubjectEntityFactory {
 
     // Wrap entity with URL override if URL is provided.
     if ($url !== NULL) {
+      $reflection = new \ReflectionClass($entityClass);
+      if ($reflection->isFinal()) {
+        throw new \LogicException(sprintf(
+          "Cannot use URL parameter with final entity class '%s'. "
+          . "PHP does not allow extending final classes, so the URL stub "
+          . "cannot pass 'instanceof %s'. Either: (1) Remove the 'final' "
+          . "keyword from the entity class, or (2) Don't use the URL "
+          . "parameter and mock toUrl() separately in your test.",
+          $entityClass,
+          (new \ReflectionClass($entityClass))->getShortName()
+        ));
+      }
       $entity = $this->wrapWithUrlOverride($entity, $url, $entityClass);
     }
 
@@ -581,11 +593,9 @@ final class SubjectEntityFactory {
   /**
    * Wraps an entity with a URL stub that overrides ::toUrl.
    *
-   * For non-final classes: Creates a dynamic subclass that overrides ::toUrl
-   * and copies entity state.
-   *
-   * For final classes: Creates a wrapper that uses composition and delegates
-   * all method calls except ::toUrl to the wrapped entity.
+   * Creates a dynamic subclass that overrides ::toUrl and copies entity state.
+   * This method is only called for non-final classes (final classes throw an
+   * exception earlier in ::create).
    *
    * @param \Drupal\Core\Entity\EntityBase $entity
    *   The entity instance.
@@ -598,33 +608,23 @@ final class SubjectEntityFactory {
    *   The wrapped entity with URL override.
    */
   private function wrapWithUrlOverride(EntityBase $entity, string $url, string $entityClass): EntityBase {
-    // Check if the entity class is final.
-    $reflection = new \ReflectionClass($entityClass);
-    $isFinal = $reflection->isFinal();
-
     // Get or create URL stub class.
-    $stubClassName = $this->getOrCreateUrlStubClass($entityClass, $isFinal);
+    $stubClassName = $this->getOrCreateUrlStubClass($entityClass);
 
-    // Create Url double.
-    $urlDouble = $this->createUrlDouble($url);
+    // Create Url double factory.
+    $urlDoubleFactory = $this->createUrlDoubleFactory($url);
 
     // Create stub instance without calling constructor.
     $stubReflection = new \ReflectionClass($stubClassName);
     $stub = $stubReflection->newInstanceWithoutConstructor();
+    assert($stub instanceof EntityBase);
 
-    if ($isFinal) {
-      // For final classes, inject the wrapped entity.
-      $entityProperty = $stubReflection->getProperty('deuterosWrappedEntity');
-      $entityProperty->setValue($stub, $entity);
-    }
-    else {
-      // For non-final classes, copy entity properties from original to stub.
-      $this->copyEntityProperties($entity, $stub);
-    }
+    // Copy entity properties from original to stub.
+    $this->copyEntityProperties($entity, $stub);
 
-    // Inject the Url double into the stub.
-    $urlProperty = $stubReflection->getProperty('deuterosUrlDouble');
-    $urlProperty->setValue($stub, $urlDouble);
+    // Inject the Url double factory into the stub.
+    $urlProperty = $stubReflection->getProperty('deuterosUrlDoubleFactory');
+    $urlProperty->setValue($stub, $urlDoubleFactory);
 
     return $stub;
   }
@@ -636,37 +636,34 @@ final class SubjectEntityFactory {
    *
    * @param class-string $entityClass
    *   The entity class.
-   * @param bool $isFinal
-   *   Whether the entity class is final.
    *
    * @return class-string
    *   The URL stub class name.
    */
-  private function getOrCreateUrlStubClass(string $entityClass, bool $isFinal): string {
-    $cacheKey = $entityClass . ($isFinal ? '|final' : '');
-    if (isset(self::$urlStubClassCache[$cacheKey])) {
-      return self::$urlStubClassCache[$cacheKey];
+  private function getOrCreateUrlStubClass(string $entityClass): string {
+    if (isset(self::$urlStubClassCache[$entityClass])) {
+      return self::$urlStubClassCache[$entityClass];
     }
 
     // Generate unique stub class name.
-    $hash = substr(md5($cacheKey), 0, 12);
+    $hash = substr(md5($entityClass), 0, 12);
     /** @var class-string $stubClassName */
     $stubClassName = "Deuteros\\Generated\\UrlStub_{$hash}";
 
     if (!class_exists($stubClassName, FALSE)) {
-      $this->declareUrlStubClass($stubClassName, $entityClass, $isFinal);
+      $this->declareUrlStubClass($stubClassName, $entityClass);
     }
 
-    self::$urlStubClassCache[$cacheKey] = $stubClassName;
+    self::$urlStubClassCache[$entityClass] = $stubClassName;
     return $stubClassName;
   }
 
   /**
    * Declares a URL stub class via eval.
    *
-   * For non-final classes: Creates a subclass that extends the entity class.
-   * For final classes: Creates a wrapper that uses composition with generated
-   * delegation methods for all interface methods.
+   * Creates a subclass that extends the entity class and overrides ::toUrl.
+   * This method is only called for non-final classes (final classes throw an
+   * exception earlier in ::create).
    *
    * Security note: This uses eval() which is generally discouraged. However,
    * the security risk is minimal because:
@@ -678,159 +675,19 @@ final class SubjectEntityFactory {
    * @param string $stubClassName
    *   The fully-qualified stub class name to declare.
    * @param class-string $entityClass
-   *   The entity class to extend or wrap.
-   * @param bool $isFinal
-   *   Whether the entity class is final.
+   *   The entity class to extend.
    */
-  private function declareUrlStubClass(string $stubClassName, string $entityClass, bool $isFinal): void {
+  private function declareUrlStubClass(string $stubClassName, string $entityClass): void {
     $parts = explode('\\', $stubClassName);
     $shortName = array_pop($parts);
     $namespace = implode('\\', $parts);
 
-    if ($isFinal) {
-      // For final classes, create a wrapper using composition.
-      // Generate delegation methods for all interface methods.
-      $reflection = new \ReflectionClass($entityClass);
-      $interfaces = $reflection->getInterfaceNames();
-      $implementsClause = $interfaces !== []
-        ? ' implements \\' . implode(', \\', $interfaces)
-        : '';
-
-      // Generate delegation methods for all public methods except toUrl.
-      $delegationMethods = [];
-      $staticMethods = [];
-      $builtInTypes = [
-        'int', 'float', 'string', 'bool', 'array', 'object', 'callable',
-        'iterable', 'void', 'mixed', 'never', 'null', 'true', 'false',
-        'self', 'static', 'parent',
-      ];
-      $magicMethods = [
-        '__get', '__set', '__isset', '__unset', '__call', '__callStatic',
-        '__toString', '__invoke', '__clone', '__sleep', '__wakeup',
-        '__serialize', '__unserialize', '__set_state', '__debugInfo',
-      ];
-
-      // Find static methods from interfaces that need stub implementations.
-      // These are required because the stub extends EntityBase (not the entity
-      // class) but implements the entity's interfaces.
-      $staticMethodNames = [];
-      foreach ($interfaces as $interfaceName) {
-        $interfaceReflection = new \ReflectionClass($interfaceName);
-        foreach ($interfaceReflection->getMethods(\ReflectionMethod::IS_STATIC) as $method) {
-          $methodName = $method->getName();
-          if (isset($staticMethodNames[$methodName])) {
-            continue;
-          }
-          $staticMethodNames[$methodName] = TRUE;
-
-          // Build parameter list with types and references.
-          $params = [];
-          foreach ($method->getParameters() as $param) {
-            $paramStr = '';
-            if ($param->hasType()) {
-              $type = $param->getType();
-              if ($type instanceof \ReflectionNamedType) {
-                $typeName = $type->getName();
-                $isBuiltIn = in_array($typeName, $builtInTypes, TRUE);
-                $prefix = $type->allowsNull() && !$isBuiltIn ? '?' : '';
-                $paramStr .= $prefix . ($isBuiltIn ? $typeName : '\\' . $typeName) . ' ';
-              }
-            }
-            if ($param->isPassedByReference()) {
-              $paramStr .= '&';
-            }
-            $paramStr .= '$' . $param->getName();
-            if ($param->isDefaultValueAvailable()) {
-              $paramStr .= ' = ' . var_export($param->getDefaultValue(), TRUE);
-            }
-            elseif ($param->isOptional()) {
-              $paramStr .= ' = NULL';
-            }
-            $params[] = $paramStr;
-          }
-
-          $staticMethods[] = sprintf(
-            'public static function %s(%s) { return []; }',
-            $methodName,
-            implode(', ', $params)
-          );
-        }
-      }
-
-      foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-        $methodName = $method->getName();
-        if ($methodName === 'toUrl' || $method->isFinal() || $method->isStatic() || in_array($methodName, $magicMethods, TRUE)) {
-          continue;
-        }
-
-        $params = [];
-        foreach ($method->getParameters() as $param) {
-          $paramStr = '';
-          if ($param->hasType()) {
-            $type = $param->getType();
-            if ($type instanceof \ReflectionNamedType) {
-              $typeName = $type->getName();
-              $isBuiltIn = in_array($typeName, $builtInTypes, TRUE);
-              $paramStr .= ($type->allowsNull() && !$isBuiltIn ? '?' : '') . ($isBuiltIn ? $typeName : '\\' . $typeName) . ' ';
-            }
-          }
-          $paramStr .= '$' . $param->getName();
-          if ($param->isDefaultValueAvailable()) {
-            $paramStr .= ' = ' . var_export($param->getDefaultValue(), TRUE);
-          }
-          elseif ($param->isOptional()) {
-            $paramStr .= ' = NULL';
-          }
-          $params[] = $paramStr;
-        }
-
-        $returnType = '';
-        $isVoid = FALSE;
-        if ($method->hasReturnType()) {
-          $type = $method->getReturnType();
-          if ($type instanceof \ReflectionNamedType) {
-            $typeName = $type->getName();
-            $isVoid = $typeName === 'void';
-            $isBuiltIn = in_array($typeName, $builtInTypes, TRUE);
-            $returnType = ': ' . ($type->allowsNull() && !$isBuiltIn ? '?' : '') . ($isBuiltIn ? $typeName : '\\' . $typeName);
-          }
-        }
-
-        $paramsList = implode(', ', $params);
-        $argsPass = implode(', ', array_map(fn($p) => '$' . $p->getName(), $method->getParameters()));
-        $delegationMethods[] = sprintf(
-          'public function %s(%s)%s { %s$this->deuterosWrappedEntity->%s(%s); }',
-          $method->getName(),
-          $paramsList,
-          $returnType,
-          $isVoid ? '' : 'return ',
-          $method->getName(),
-          $argsPass
-        );
-      }
-
-      $delegationCode = implode(' ', $delegationMethods);
-      $staticCode = implode(' ', $staticMethods);
-
-      $code = sprintf(
-        'namespace %s { final class %s extends \\%s%s { private object $deuterosWrappedEntity; private object $deuterosUrlDouble; public function toUrl($rel = "canonical", $options = []) { return $this->deuterosUrlDouble; } %s %s public function __get($name) { return $this->deuterosWrappedEntity->$name; } public function __set($name, $value) { $this->deuterosWrappedEntity->$name = $value; } public function __isset($name) { return isset($this->deuterosWrappedEntity->$name); } } }',
-        $namespace,
-        $shortName,
-        EntityBase::class,
-        $implementsClause,
-        $delegationCode,
-        $staticCode
-      );
-    }
-    else {
-      // For non-final classes, extend the entity class directly.
-      $code = sprintf(
-        'namespace %s { final class %s extends \\%s { private object $deuterosUrlDouble; public function toUrl($rel = "canonical", $options = []) { return $this->deuterosUrlDouble; } } }',
-        $namespace,
-        $shortName,
-        $entityClass
-      );
-    }
+    $code = sprintf(
+      'namespace %s { final class %s extends \\%s { private $deuterosUrlDoubleFactory; public function toUrl($rel = "canonical", $options = []) { return ($this->deuterosUrlDoubleFactory)($rel, $options); } } }',
+      $namespace,
+      $shortName,
+      $entityClass
+    );
 
     // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
     eval($code);
@@ -881,24 +738,30 @@ final class SubjectEntityFactory {
   }
 
   /**
-   * Creates a Url double.
+   * Creates a Url double factory callable.
+   *
+   * Returns a callable that accepts $rel and $options and creates appropriate
+   * Url doubles.
    *
    * @param string $url
-   *   The URL string.
+   *   The base URL string.
    *
-   * @return \Drupal\Core\Url
-   *   The Url double.
+   * @return callable
+   *   A callable that accepts (?string $rel, array $options) and returns a
+   *   Url double.
    */
-  private function createUrlDouble(string $url): object {
-    // Create a temporary entity double with URL configured.
-    $definition = EntityDoubleDefinitionBuilder::create('node')
-      ->url($url)
-      ->build();
+  private function createUrlDoubleFactory(string $url): callable {
+    return function (?string $rel = 'canonical', array $options = []) use ($url): object {
+      // Create a temporary entity double with URL configured.
+      $definition = EntityDoubleDefinitionBuilder::create('node')
+        ->url($url)
+        ->build();
 
-    $tempEntity = $this->doubleFactory->create($definition);
+      $tempEntity = $this->doubleFactory->create($definition);
 
-    // Call toUrl() to get the Url double.
-    return $tempEntity->toUrl();
+      // Call toUrl() with the provided options to get the Url double.
+      return $tempEntity->toUrl($rel, $options);
+    };
   }
 
   /**

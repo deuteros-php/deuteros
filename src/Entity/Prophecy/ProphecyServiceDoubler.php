@@ -9,6 +9,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -326,6 +327,14 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     $prophecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
 
     $prophecy->getName()->willReturn($fieldName);
+
+    // Mock field storage definition for entity key access.
+    /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldStorageDefinitionInterface> $storageProphecy */
+    $storageProphecy = $this->prophet->prophesize(FieldStorageDefinitionInterface::class);
+    $storageProphecy->getMainPropertyName()->willReturn('value');
+
+    $prophecy->getFieldStorageDefinition()->willReturn($storageProphecy->reveal());
+    $prophecy->isTranslatable()->willReturn(FALSE);
 
     /** @var \Drupal\Core\Field\FieldDefinitionInterface */
     return $prophecy->reveal();

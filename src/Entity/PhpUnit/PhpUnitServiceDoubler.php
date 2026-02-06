@@ -9,6 +9,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -312,6 +313,13 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
     $mock = $this->createMock(FieldDefinitionInterface::class);
 
     $mock->method('getName')->willReturn($fieldName);
+
+    // Mock field storage definition for entity key access.
+    $storageDefinition = $this->createMock(FieldStorageDefinitionInterface::class);
+    $storageDefinition->method('getMainPropertyName')->willReturn('value');
+
+    $mock->method('getFieldStorageDefinition')->willReturn($storageDefinition);
+    $mock->method('isTranslatable')->willReturn(FALSE);
 
     /** @var \Drupal\Core\Field\FieldDefinitionInterface $mock */
     return $mock;

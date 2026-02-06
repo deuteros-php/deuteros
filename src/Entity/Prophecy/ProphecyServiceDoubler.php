@@ -314,6 +314,7 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     $prophecy->getFieldDefinitions(Argument::any(), Argument::any())->willReturn([]);
     $prophecy->getBaseFieldDefinitions(Argument::any())->willReturn([]);
     $prophecy->getFieldStorageDefinitions(Argument::any())->willReturn([]);
+    $prophecy->getFieldMapByFieldType(Argument::any())->willReturn([]);
 
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface */
     return $prophecy->reveal();

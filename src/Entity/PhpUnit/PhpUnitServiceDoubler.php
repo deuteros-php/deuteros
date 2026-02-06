@@ -286,6 +286,7 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
     $mock->method('getFieldDefinitions')->willReturn([]);
     $mock->method('getBaseFieldDefinitions')->willReturn([]);
     $mock->method('getFieldStorageDefinitions')->willReturn([]);
+    $mock->method('getFieldMapByFieldType')->willReturn([]);
 
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $mock */
     return $mock;

@@ -378,9 +378,11 @@ These constraints must never be violated:
 
 | Directory | Purpose |
 |-----------|---------|
-| `tests/Unit/Common/` | Unit tests for definition, builder, and support classes |
-| `tests/Integration/PhpUnit/` | PHPUnit factory integration tests |
-| `tests/Integration/Prophecy/` | Prophecy factory integration tests |
+| `tests/Unit/Double/` | Unit tests for definition, builder, and support classes |
+| `tests/Unit/Entity/` | Unit tests for SubjectEntityFactory and service doublers |
+| `tests/Integration/Double/PhpUnit/` | PHPUnit factory integration tests |
+| `tests/Integration/Double/Prophecy/` | Prophecy factory integration tests |
+| `tests/Integration/Entity/` | SubjectEntityFactory integration tests |
 | `tests/Performance/` | Benchmark tests |
 
 ### Adapter Parity
@@ -519,7 +521,10 @@ doubles. Config entities have their properties set directly via reflection.
 
 | Directory | Purpose |
 |-----------|---------|
-| `tests/Unit/Entity/` | Unit tests for SubjectEntityFactory |
+| `tests/Unit/Entity/` | Unit tests for SubjectEntityFactory and service doublers |
+| `tests/Unit/Entity/ServiceDoublerTestBase.php` | Shared tests for service doubler adapter parity |
+| `tests/Unit/Entity/PhpUnit/` | PhpUnitServiceDoubler unit tests |
+| `tests/Unit/Entity/Prophecy/` | ProphecyServiceDoubler unit tests |
 | `tests/Integration/Entity/` | Integration tests |
 | `tests/Integration/Entity/SubjectEntityFactoryTestBase.php` | Shared tests for adapter parity |
 | `tests/Integration/Entity/PhpUnit/` | PHPUnit adapter tests |

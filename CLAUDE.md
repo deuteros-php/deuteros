@@ -242,7 +242,10 @@ While working on any code change:
     `FieldItemDoubleBuilderTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
     `EntityReferenceNormalizerTest`
-- `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory
+- `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory and service doublers
+  - `ServiceDoublerTestBase.php` - Shared tests for service doubler adapter parity
+  - `PhpUnit/` - PhpUnitServiceDoubler unit tests
+  - `Prophecy/` - ProphecyServiceDoubler unit tests
 - `tests/Integration/Double/PhpUnit/` - PHPUnit factory integration tests
 - `tests/Integration/Double/Prophecy/` - Prophecy factory integration tests
 - `tests/Integration/EntityDoubleFactoryTestBase.php` - Shared tests inherited by

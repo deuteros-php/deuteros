@@ -341,6 +341,60 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
   }
 
   /**
+   * Tests that ::label works on content entities.
+   *
+   * The ::label method resolves through entity keys and field definitions,
+   * requiring ::getFieldStorageDefinition and ::isTranslatable to work on
+   * field definition mocks.
+   */
+  public function testContentEntityLabel(): void {
+    // Node uses 'title' as the label key.
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'My Article',
+    ]);
+    assert($node instanceof Node);
+    $this->assertSame('My Article', $node->label());
+
+    // TestContentEntity uses 'name' as the label key.
+    $entity = $this->createEntity(TestContentEntity::class, [
+      'id' => 2,
+      'type' => 'test_bundle',
+      'name' => 'Test Name',
+    ]);
+    assert($entity instanceof TestContentEntity);
+    $this->assertSame('Test Name', $entity->label());
+  }
+
+  /**
+   * Tests that ::isPublished works on Node entities.
+   *
+   * The ::isPublished method resolves through entity keys and field
+   * definitions, requiring ::getFieldStorageDefinition and
+   * ::isTranslatable to work on field definition mocks.
+   */
+  public function testContentEntityIsPublished(): void {
+    $published = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Published',
+      'status' => 1,
+    ]);
+    assert($published instanceof Node);
+    $this->assertTrue($published->isPublished());
+
+    $unpublished = $this->createEntity(Node::class, [
+      'nid' => 2,
+      'type' => 'article',
+      'title' => 'Unpublished',
+      'status' => 0,
+    ]);
+    assert($unpublished instanceof Node);
+    $this->assertFalse($unpublished->isPublished());
+  }
+
+  /**
    * Tests getContainer() throws exception when container not installed.
    */
   public function testGetContainerThrowsWhenNotInstalled(): void {

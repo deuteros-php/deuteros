@@ -310,14 +310,16 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
   /**
    * {@inheritdoc}
    */
-  public function createFieldDefinitionMock(string $fieldName): FieldDefinitionInterface {
+  public function createFieldDefinitionMock(string $fieldName, string $fieldType = 'string'): FieldDefinitionInterface {
     $mock = $this->createMock(FieldDefinitionInterface::class);
 
     $mock->method('getName')->willReturn($fieldName);
+    $mock->method('getType')->willReturn($fieldType);
 
     // Mock field storage definition for entity key access.
     $storageDefinition = $this->createMock(FieldStorageDefinitionInterface::class);
     $storageDefinition->method('getMainPropertyName')->willReturn('value');
+    $storageDefinition->method('getType')->willReturn($fieldType);
 
     $mock->method('getFieldStorageDefinition')->willReturn($storageDefinition);
     $mock->method('isTranslatable')->willReturn(FALSE);

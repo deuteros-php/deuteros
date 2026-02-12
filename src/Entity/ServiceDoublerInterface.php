@@ -41,12 +41,20 @@ interface ServiceDoublerInterface {
    * Used to populate the entity's "$fieldDefinitions" cache so that
    * "hasField()" and "getFieldDefinition()" work correctly.
    *
+   * The mock supports ::getName, ::getType,
+   * ::getFieldStorageDefinition, and ::isTranslatable. The
+   * storage definition mock also supports ::getType and
+   * ::getMainPropertyName.
+   *
    * @param string $fieldName
    *   The field name.
+   * @param string $fieldType
+   *   The field type (e.g., "string", "entity_reference").
+   *   Defaults to "string".
    *
    * @return \Drupal\Core\Field\FieldDefinitionInterface
    *   A minimal field definition mock.
    */
-  public function createFieldDefinitionMock(string $fieldName): FieldDefinitionInterface;
+  public function createFieldDefinitionMock(string $fieldName, string $fieldType = 'string'): FieldDefinitionInterface;
 
 }

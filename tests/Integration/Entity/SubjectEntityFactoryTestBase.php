@@ -395,6 +395,39 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
   }
 
   /**
+   * Tests getFieldDefinition() returns the correct type.
+   */
+  public function testGetFieldDefinitionType(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+      'field_ref' => ['target_id' => 42],
+    ], [
+      'title' => 'string',
+      'field_ref' => 'entity_reference',
+    ]);
+    assert($entity instanceof Node);
+
+    $this->assertSame('string', $entity->getFieldDefinition('title')->getType());
+    $this->assertSame('entity_reference', $entity->getFieldDefinition('field_ref')->getType());
+  }
+
+  /**
+   * Tests that field definitions default to type "string".
+   */
+  public function testGetFieldDefinitionDefaultType(): void {
+    $entity = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'title' => 'Test',
+    ]);
+    assert($entity instanceof Node);
+
+    $this->assertSame('string', $entity->getFieldDefinition('title')->getType());
+  }
+
+  /**
    * Tests getContainer() throws exception when container not installed.
    */
   public function testGetContainerThrowsWhenNotInstalled(): void {

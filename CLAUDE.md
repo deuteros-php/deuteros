@@ -155,7 +155,12 @@ be used by user-provided context.
 - This enables `hasField()` and `getFieldDefinition()` to work correctly without
   relying on the `entity_field.manager` service
 - Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
+  and support `getName()`, `getFieldStorageDefinition()`, and `isTranslatable()`
 - Only fields passed to `create()` are defined; undefined fields return false/null
+- Note: `getFieldDefinition()` and `getFieldDefinitions()` are unsupported on
+  entity doubles (via `GuardrailEnforcer`); `hasField()` works on both entity
+  doubles (via `EntityDoubleBuilder` resolver) and subject entities (via injected
+  field definitions)
 
 **Container Reuse:**
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)

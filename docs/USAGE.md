@@ -752,10 +752,14 @@ Entity doubles are lightweight value objects. Operations requiring runtime servi
 - `access()` - Requires access control handler
 - `toLink()` - Requires link generator service
 
-**Field Definition Operations**
+**Field Definition Operations** (entity doubles only)
 
 - `getFieldDefinition()` - Requires entity field manager
 - `getFieldDefinitions()` - Requires entity field manager
+
+> **Note:** `getFieldDefinition()` **does** work on subject entities created
+> via `SubjectEntityFactory`. See [Field Definitions](#field-definitions)
+> under "Testing Entity Objects".
 
 **Revision Operations**
 
@@ -961,6 +965,33 @@ public function testWithEntityReference(): void {
   $this->assertEquals(42, $node->get('uid')->target_id);
 }
 ```
+
+### Field Definitions
+
+Unlike entity doubles (where `getFieldDefinition()` is unsupported),
+subject entities automatically support `getFieldDefinition()` for all
+fields passed to `create()`. The factory injects minimal field
+definition mocks that support `getName()`,
+`getFieldStorageDefinition()`, and `isTranslatable()`:
+
+```php
+$node = $this->factory->create(Node::class, [
+  'nid' => 1,
+  'type' => 'article',
+  'title' => 'Test Article',
+]);
+
+$def = $node->getFieldDefinition('title');
+$def->getName();                   // 'title'
+
+// Undefined fields return null.
+$node->getFieldDefinition('nonexistent'); // null
+```
+
+`hasField()` also works — it returns `true` for any field passed to
+`create()` and `false` otherwise. (Note that `hasField()` works on
+entity doubles too; see
+[Checking Field Existence](#checking-field-existence).)
 
 ### Multi-Value Fields
 
@@ -1219,6 +1250,7 @@ Entity objects created by `SubjectEntityFactory` have these limitations:
 |-----------|--------|-------|
 | `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
 | `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles (content entities only) |
+| `hasField()`, `getFieldDefinition()` | Works | Via injected field definition mocks (content entities only) |
 | `save()`, `delete()` | Throws | No storage backend |
 | Entity queries | Not supported | No database |
 | `access()` | Throws | No access control handler |

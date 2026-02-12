@@ -207,6 +207,10 @@ final class SubjectEntityFactory {
    *   Field/property values. Entity keys (id, bundle, etc.) are used for the
    *   entity initialization. For content entities, other values are converted
    *   to field doubles.
+   * @param array<string, string> $fieldTypes
+   *   Optional map of field name to field type (e.g.,
+   *   `['field_ref' => 'entity_reference']`). Fields not listed
+   *   default to "string".
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
@@ -216,7 +220,7 @@ final class SubjectEntityFactory {
    * @throws \LogicException
    *   If ::installContainer has not been called.
    */
-  public function create(string $entityClass, array $values = []): EntityBase {
+  public function create(string $entityClass, array $values = [], array $fieldTypes = []): EntityBase {
     if (!$this->containerInstalled) {
       throw new \LogicException(
         'Container not installed. Call installContainer() before create().'
@@ -265,7 +269,7 @@ final class SubjectEntityFactory {
       $this->injectFieldDoubles($entity, $fieldDoubles);
 
       // Populate field definitions cache so hasField() works.
-      $this->injectFieldDefinitions($entity, array_keys($fieldDoubles));
+      $this->injectFieldDefinitions($entity, array_keys($fieldDoubles), $fieldTypes);
     }
     elseif ($entity instanceof ConfigEntityBase) {
       $this->initializeConfigEntity($entity, $values, $config);
@@ -285,11 +289,15 @@ final class SubjectEntityFactory {
    *   The entity class to instantiate.
    * @param array<string, mixed> $values
    *   Field/property values. The ID key will be set automatically.
+   * @param array<string, string> $fieldTypes
+   *   Optional map of field name to field type (e.g.,
+   *   `['field_ref' => 'entity_reference']`). Fields not listed
+   *   default to "string".
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance with an assigned ID.
    */
-  public function createWithId(string $entityClass, array $values = []): EntityBase {
+  public function createWithId(string $entityClass, array $values = [], array $fieldTypes = []): EntityBase {
     $config = $this->getEntityTypeConfig($entityClass);
     $entityTypeId = $config['id'];
     $idKey = $config['keys']['id'] ?? 'id';
@@ -303,7 +311,7 @@ final class SubjectEntityFactory {
     // Set the ID in values.
     $values[$idKey] = $this->idCounters[$entityTypeId];
 
-    return $this->create($entityClass, $values);
+    return $this->create($entityClass, $values, $fieldTypes);
   }
 
   /**
@@ -605,14 +613,18 @@ final class SubjectEntityFactory {
    *   The entity instance.
    * @param array<string> $fieldNames
    *   The field names to create definitions for.
+   * @param array<string, string> $fieldTypes
+   *   Optional map of field name to field type. Fields not listed
+   *   default to "string".
    */
-  private function injectFieldDefinitions(ContentEntityBase $entity, array $fieldNames): void {
+  private function injectFieldDefinitions(ContentEntityBase $entity, array $fieldNames, array $fieldTypes = []): void {
     $reflection = new \ReflectionClass(ContentEntityBase::class);
     $fieldDefinitionsProperty = $reflection->getProperty('fieldDefinitions');
 
     $fieldDefinitions = [];
     foreach ($fieldNames as $fieldName) {
-      $fieldDefinitions[$fieldName] = $this->serviceDoubler->createFieldDefinitionMock($fieldName);
+      $fieldType = $fieldTypes[$fieldName] ?? 'string';
+      $fieldDefinitions[$fieldName] = $this->serviceDoubler->createFieldDefinitionMock($fieldName, $fieldType);
     }
 
     $fieldDefinitionsProperty->setValue($entity, $fieldDefinitions);

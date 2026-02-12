@@ -73,12 +73,16 @@ abstract class SubjectEntityTestBase extends TestCase {
    *   The entity class to instantiate.
    * @param array<string, mixed> $values
    *   Field/property values.
+   * @param array<string, string> $fieldTypes
+   *   Optional map of field name to field type (e.g.,
+   *   `['field_ref' => 'entity_reference']`). Fields not listed
+   *   default to "string".
    *
    * @return \Drupal\Core\Entity\EntityBase
    *   The created entity instance.
    */
-  protected function createEntity(string $entityClass, array $values = []): EntityInterface {
-    return $this->subjectEntityFactory()->create($entityClass, $values);
+  protected function createEntity(string $entityClass, array $values = [], array $fieldTypes = []): EntityInterface {
+    return $this->subjectEntityFactory()->create($entityClass, $values, $fieldTypes);
   }
 
   /**
@@ -90,12 +94,16 @@ abstract class SubjectEntityTestBase extends TestCase {
    *   The entity class to instantiate.
    * @param array<string, mixed> $values
    *   Field/property values. The ID key will be set automatically.
+   * @param array<string, string> $fieldTypes
+   *   Optional map of field name to field type (e.g.,
+   *   `['field_ref' => 'entity_reference']`). Fields not listed
+   *   default to "string".
    *
    * @return \Drupal\Core\Entity\EntityInterface
    *   The created entity instance with an assigned ID.
    */
-  protected function createEntityWithId(string $entityClass, array $values = []): EntityInterface {
-    return $this->subjectEntityFactory()->createWithId($entityClass, $values);
+  protected function createEntityWithId(string $entityClass, array $values = [], array $fieldTypes = []): EntityInterface {
+    return $this->subjectEntityFactory()->createWithId($entityClass, $values, $fieldTypes);
   }
 
   /**

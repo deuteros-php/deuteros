@@ -323,16 +323,18 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
   /**
    * {@inheritdoc}
    */
-  public function createFieldDefinitionMock(string $fieldName): FieldDefinitionInterface {
+  public function createFieldDefinitionMock(string $fieldName, string $fieldType = 'string'): FieldDefinitionInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldDefinitionInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
 
     $prophecy->getName()->willReturn($fieldName);
+    $prophecy->getType()->willReturn($fieldType);
 
     // Mock field storage definition for entity key access.
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldStorageDefinitionInterface> $storageProphecy */
     $storageProphecy = $this->prophet->prophesize(FieldStorageDefinitionInterface::class);
     $storageProphecy->getMainPropertyName()->willReturn('value');
+    $storageProphecy->getType()->willReturn($fieldType);
 
     $prophecy->getFieldStorageDefinition()->willReturn($storageProphecy->reveal());
     $prophecy->isTranslatable()->willReturn(FALSE);

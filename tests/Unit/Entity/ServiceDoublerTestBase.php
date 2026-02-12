@@ -71,6 +71,30 @@ abstract class ServiceDoublerTestBase extends TestCase {
   }
 
   /**
+   * Tests that field definition mock returns default type "string".
+   */
+  public function testFieldDefinitionMockDefaultType(): void {
+    $definition = $this->serviceDoubler->createFieldDefinitionMock('title');
+    $this->assertSame('string', $definition->getType());
+  }
+
+  /**
+   * Tests field definition mock with an explicit type.
+   */
+  public function testFieldDefinitionMockExplicitType(): void {
+    $definition = $this->serviceDoubler->createFieldDefinitionMock('field_ref', 'entity_reference');
+    $this->assertSame('entity_reference', $definition->getType());
+  }
+
+  /**
+   * Tests that storage definition type matches field definition type.
+   */
+  public function testFieldDefinitionMockStorageType(): void {
+    $definition = $this->serviceDoubler->createFieldDefinitionMock('field_ref', 'entity_reference');
+    $this->assertSame('entity_reference', $definition->getFieldStorageDefinition()->getType());
+  }
+
+  /**
    * Tests that field definition mock is not translatable.
    */
   public function testFieldDefinitionMockIsNotTranslatable(): void {

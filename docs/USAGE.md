@@ -489,6 +489,70 @@ $entity = $factory->create(/* ... */);
 $entity->set('field_status', 'new'); // Throws LogicException
 ```
 
+### Raw Entity Doubles (Post-Creation Customization)
+
+Use `createEntityDouble()` or `createMutableEntityDouble()` when you need
+to add custom stubs or expectations after creation. These methods return
+the framework-specific raw double object instead of a finalized
+`EntityInterface`.
+
+**PHPUnit** — returns a `MockObject` (also implements `EntityInterface`):
+
+```php
+$double = $factory->createEntityDouble(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->interface(EntityChangedInterface::class)
+    ->build()
+);
+
+// Add custom stubs after creation.
+$double->method('getChangedTime')->willReturn(1704067200);
+
+// Add expectations.
+$double->expects($this->once())
+  ->method('getChangedTime')
+  ->willReturn(1704067200);
+
+// The double is already an EntityInterface.
+$myService->process($double);
+```
+
+**Prophecy** — returns an `ObjectProphecy`:
+
+```php
+$double = $factory->createEntityDouble(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->interface(EntityChangedInterface::class)
+    ->build()
+);
+
+// Add custom stubs.
+$double->getChangedTime()->willReturn(1704067200);
+
+// Add expectations.
+$double->getChangedTime()->shouldBeCalled();
+
+// Reveal to get the EntityInterface.
+$entity = $double->reveal();
+$myService->process($entity);
+```
+
+**Mutable variant:**
+
+```php
+$double = $factory->createMutableEntityDouble(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_status', 'draft')
+    ->build()
+);
+```
+
+**Limitations:** Raw entity doubles do not support traits. Use `create()`
+or `createMutable()` for trait support.
+
 ### Method Overrides
 
 Override any method with a custom implementation:

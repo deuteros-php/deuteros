@@ -193,6 +193,26 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function createEntityDouble(EntityDoubleDefinition $definition, array $context = []): object {
+    $this->validateNoTraits($definition);
+    return $this->buildAndWireDouble(
+      $definition->withContext($context)->withMutable(FALSE)
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createMutableEntityDouble(EntityDoubleDefinition $definition, array $context = []): object {
+    $this->validateNoTraits($definition);
+    return $this->buildAndWireDouble(
+      $definition->withContext($context)->withMutable(TRUE)
+    );
+  }
+
+  /**
    * Builds an entity double from a definition.
    *
    * @param \Deuteros\Double\EntityDoubleDefinition $definition
@@ -202,6 +222,33 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   The entity double.
    */
   protected function buildEntityDouble(EntityDoubleDefinition $definition): EntityInterface {
+    $double = $this->buildAndWireDouble($definition);
+    $entity = $this->instantiateDouble($double);
+
+    // If traits are specified, wrap the entity in a trait stub.
+    if ($definition->traits !== []) {
+      $entity = $this->createTraitStub($entity, $definition->traits);
+    }
+
+    return $entity;
+  }
+
+  /**
+   * Builds and wires a raw entity double from a definition.
+   *
+   * Creates the double, sets up resolvers and guardrails, but does not
+   * finalize (instantiate) or apply traits. This is the shared core
+   * used by both ::buildEntityDouble and ::createEntityDouble /
+   * ::createMutableEntityDouble.
+   *
+   * @param \Deuteros\Double\EntityDoubleDefinition $definition
+   *   The normalized entity double definition.
+   *
+   * @return object
+   *   The raw double object (PHPUnit "MockObject" or Prophecy
+   *   "ObjectProphecy").
+   */
+  protected function buildAndWireDouble(EntityDoubleDefinition $definition): object {
     // Determine interfaces to mock.
     $interfaces = $this->resolveInterfaces($definition);
 
@@ -238,14 +285,29 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     // Wire guardrails for unsupported methods.
     $this->wireGuardrails($double, $definition, $interfaces);
 
-    $entity = $this->instantiateDouble($double);
+    return $double;
+  }
 
-    // If traits are specified, wrap the entity in a trait stub.
+  /**
+   * Validates that a definition does not contain traits.
+   *
+   * Raw entity doubles do not support traits because trait stubs
+   * require finalization (instantiation) which is skipped for raw
+   * doubles.
+   *
+   * @param \Deuteros\Double\EntityDoubleDefinition $definition
+   *   The entity double definition to validate.
+   *
+   * @throws \InvalidArgumentException
+   *   If the definition contains traits.
+   */
+  private function validateNoTraits(EntityDoubleDefinition $definition): void {
     if ($definition->traits !== []) {
-      $entity = $this->createTraitStub($entity, $definition->traits);
+      throw new \InvalidArgumentException(
+        'Traits are not supported with raw entity doubles. '
+        . 'Use create() or createMutable() for trait support.'
+      );
     }
-
-    return $entity;
   }
 
   /**

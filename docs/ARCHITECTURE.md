@@ -196,15 +196,22 @@ When a method is called on an entity double:
 
 ```php
 abstract class EntityDoubleFactory {
-  // Template method
-  protected function buildEntityDouble(EntityDoubleDefinition $definition): object {
+  // Core build logic (shared by all creation paths)
+  protected function buildAndWireDouble(EntityDoubleDefinition $definition): object {
     // 1. Resolve interfaces
     // 2. Create mutable state container (if needed)
     // 3. Create builder
     // 4. Create mock/prophecy object (abstract)
     // 5. Wire resolvers (abstract)
     // 6. Wire guardrails (abstract)
-    // 7. Instantiate and return
+    // 7. Return raw double
+  }
+
+  // Template method (finalized entity)
+  protected function buildEntityDouble(EntityDoubleDefinition $definition): object {
+    // 1. buildAndWireDouble()
+    // 2. instantiateDouble() (abstract)
+    // 3. Apply trait stubs (if any)
   }
 
   // Abstract methods for adapters
@@ -213,6 +220,17 @@ abstract class EntityDoubleFactory {
   // ... more abstract methods
 }
 ```
+
+### Raw Entity Doubles
+
+The `createEntityDouble()` and `createMutableEntityDouble()` methods
+return the raw framework-specific double (PHPUnit `MockObject` or
+Prophecy `ObjectProphecy`) without finalization. This enables
+post-creation customization (custom stubs and expectations).
+
+These methods call `buildAndWireDouble()` directly, bypassing
+`instantiateDouble()` and trait stub application. Traits are explicitly
+rejected since trait stubs require finalization.
 
 ### Field List Caching
 

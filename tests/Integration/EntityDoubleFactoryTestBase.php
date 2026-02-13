@@ -51,6 +51,21 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   abstract protected function getClassName(): string;
 
   /**
+   * Gets a finalized entity from a raw double.
+   *
+   * Converts the framework-specific raw double to an "EntityInterface".
+   * PHPUnit: casts to "EntityInterface" (mock already implements it).
+   * Prophecy: calls ::reveal on the "ObjectProphecy".
+   *
+   * @param object $double
+   *   The raw double object.
+   *
+   * @return \Drupal\Core\Entity\EntityInterface
+   *   The finalized entity.
+   */
+  abstract protected function getEntityFromRawDouble(object $double): EntityInterface;
+
+  /**
    * Tests creating an entity double with only "entity_type" specified.
    */
   public function testMinimalEntityDouble(): void {
@@ -1630,6 +1645,119 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
       $values[$name] = $fieldList->value;
     }
     $this->assertSame('published', $values['field_status']);
+  }
+
+  /**
+   * Tests ::createEntityDouble basic wiring.
+   */
+  public function testCreateEntityDoubleBasicWiring(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->id(42)
+      ->uuid('test-uuid')
+      ->label('Test Article')
+      ->build();
+
+    $double = $this->factory->createEntityDouble($definition);
+    $entity = $this->getEntityFromRawDouble($double);
+
+    // @phpstan-ignore method.alreadyNarrowedType
+    $this->assertInstanceOf(EntityInterface::class, $entity);
+    $this->assertSame('node', $entity->getEntityTypeId());
+    $this->assertSame('article', $entity->bundle());
+    $this->assertSame(42, $entity->id());
+    $this->assertSame('test-uuid', $entity->uuid());
+    $this->assertSame('Test Article', $entity->label());
+  }
+
+  /**
+   * Tests ::createEntityDouble with fields.
+   */
+  public function testCreateEntityDoubleWithFields(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_title', 'Test Title')
+      ->field('field_count', 42)
+      ->build();
+
+    $double = $this->factory->createEntityDouble($definition);
+    $entity = $this->getEntityFromRawDouble($double);
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame('Test Title', $entity->get('field_title')->value);
+    $this->assertSame(42, $entity->get('field_count')->value);
+  }
+
+  /**
+   * Tests ::createMutableEntityDouble wiring.
+   */
+  public function testCreateMutableEntityDoubleWiring(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_status', 'draft')
+      ->build();
+
+    $double = $this->factory->createMutableEntityDouble($definition);
+    $entity = $this->getEntityFromRawDouble($double);
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Initial value.
+    $this->assertSame('draft', $entity->get('field_status')->value);
+
+    // Mutate via set().
+    $entity->set('field_status', 'published');
+    $this->assertSame('published', $entity->get('field_status')->value);
+  }
+
+  /**
+   * Tests ::createEntityDouble throws on traits.
+   */
+  public function testCreateEntityDoubleThrowsOnTraits(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->trait(TestBundleTrait::class)
+      ->build();
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Traits are not supported with raw entity doubles');
+    $this->expectExceptionMessage('create()');
+
+    $this->factory->createEntityDouble($definition);
+  }
+
+  /**
+   * Tests ::createMutableEntityDouble throws on traits.
+   */
+  public function testCreateMutableEntityDoubleThrowsOnTraits(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->trait(TestBundleTrait::class)
+      ->build();
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Traits are not supported with raw entity doubles');
+    $this->expectExceptionMessage('createMutable()');
+
+    $this->factory->createMutableEntityDouble($definition);
+  }
+
+  /**
+   * Tests ::createEntityDouble with context.
+   */
+  public function testCreateEntityDoubleWithContext(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_dynamic', fn(array $context) => $context['val'])
+      ->build();
+
+    $double = $this->factory->createEntityDouble(
+      $definition,
+      ['val' => 'from context'],
+    );
+    $entity = $this->getEntityFromRawDouble($double);
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame('from context', $entity->get('field_dynamic')->value);
   }
 
 }

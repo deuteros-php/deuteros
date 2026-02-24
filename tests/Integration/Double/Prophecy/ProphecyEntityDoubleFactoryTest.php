@@ -83,6 +83,40 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
   }
 
   /**
+   * Tests overriding a guardrailed method on a raw entity double.
+   */
+  public function testCreateEntityDoubleOverrideGuardrailedMethod(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->build();
+
+    $double = $this->factory->createEntityDouble($definition);
+    assert($double instanceof ObjectProphecy);
+
+    $double->save()->willReturn(42);
+
+    $entity = $this->getEntityFromRawDouble($double);
+    $this->assertSame(42, $entity->save());
+  }
+
+  /**
+   * Tests overriding a guardrailed method on a mutable raw double.
+   */
+  public function testCreateMutableEntityDoubleOverrideGuardrailedMethod(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->build();
+
+    $double = $this->factory->createMutableEntityDouble($definition);
+    assert($double instanceof ObjectProphecy);
+
+    $double->save()->willReturn(42);
+
+    $entity = $this->getEntityFromRawDouble($double);
+    $this->assertSame(42, $entity->save());
+  }
+
+  /**
    * Tests custom expectations on a raw Prophecy entity double.
    */
   public function testCreateEntityDoubleCustomExpectation(): void {

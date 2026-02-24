@@ -198,7 +198,8 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   public function createEntityDouble(EntityDoubleDefinition $definition, array $context = []): object {
     $this->validateNoTraits($definition);
     return $this->buildAndWireDouble(
-      $definition->withContext($context)->withMutable(FALSE)
+      $definition->withContext($context)->withMutable(FALSE),
+      wireGuardrails: FALSE,
     );
   }
 
@@ -208,7 +209,8 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   public function createMutableEntityDouble(EntityDoubleDefinition $definition, array $context = []): object {
     $this->validateNoTraits($definition);
     return $this->buildAndWireDouble(
-      $definition->withContext($context)->withMutable(TRUE)
+      $definition->withContext($context)->withMutable(TRUE),
+      wireGuardrails: FALSE,
     );
   }
 
@@ -236,19 +238,23 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Builds and wires a raw entity double from a definition.
    *
-   * Creates the double, sets up resolvers and guardrails, but does not
-   * finalize (instantiate) or apply traits. This is the shared core
-   * used by both ::buildEntityDouble and ::createEntityDouble /
-   * ::createMutableEntityDouble.
+   * Creates the double, sets up resolvers and optionally guardrails,
+   * but does not finalize (instantiate) or apply traits. This is the
+   * shared core used by both ::buildEntityDouble and
+   * ::createEntityDouble / ::createMutableEntityDouble.
    *
    * @param \Deuteros\Double\EntityDoubleDefinition $definition
    *   The normalized entity double definition.
+   * @param bool $wireGuardrails
+   *   Whether to wire guardrails for unsupported methods. Defaults
+   *   to TRUE. Set to FALSE for raw entity doubles to allow
+   *   post-creation customization of guardrailed methods.
    *
    * @return object
    *   The raw double object (PHPUnit "MockObject" or Prophecy
    *   "ObjectProphecy").
    */
-  protected function buildAndWireDouble(EntityDoubleDefinition $definition): object {
+  protected function buildAndWireDouble(EntityDoubleDefinition $definition, bool $wireGuardrails = TRUE): object {
     // Determine interfaces to mock.
     $interfaces = $this->resolveInterfaces($definition);
 
@@ -282,8 +288,11 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     // Wire up resolvers.
     $this->wireEntityResolvers($double, $builder, $definition);
 
-    // Wire guardrails for unsupported methods.
-    $this->wireGuardrails($double, $definition, $interfaces);
+    // Wire guardrails for unsupported methods (skipped for raw doubles
+    // to allow post-creation customization).
+    if ($wireGuardrails) {
+      $this->wireGuardrails($double, $definition, $interfaces);
+    }
 
     return $double;
   }

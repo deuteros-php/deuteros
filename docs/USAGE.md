@@ -553,6 +553,33 @@ $double = $factory->createMutableEntityDouble(
 **Limitations:** Raw entity doubles do not support traits. Use `create()`
 or `createMutable()` for trait support.
 
+**Overriding guardrailed methods:** Raw entity doubles skip guardrails,
+so you can override methods like `save()`, `delete()`, `access()` etc.
+after creation:
+
+```php
+// PHPUnit
+$double = $factory->createEntityDouble($definition);
+$double->method('save')->willReturn(42);
+
+// Prophecy
+$double = $factory->createEntityDouble($definition);
+$double->save()->willReturn(42);
+$entity = $double->reveal();
+```
+
+For non-raw doubles, use the definition builder's `->method()`:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->method('save', fn() => 42)
+    ->build()
+);
+$entity->save(); // 42
+```
+
 ### Method Overrides
 
 Override any method with a custom implementation:

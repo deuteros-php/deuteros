@@ -197,7 +197,12 @@ be used by user-provided context.
 - Traits are explicitly rejected with `\InvalidArgumentException`
 - `buildAndWireDouble()` is the shared core extracted from
   `buildEntityDouble()` containing interface resolution, builder setup,
-  double creation, resolver wiring, and guardrail wiring
+  double creation, and resolver wiring
+- Guardrails are skipped (`wireGuardrails: FALSE`) so users can
+  override methods like `save()`, `delete()`, `access()` etc.
+  after creation; `create()` / `createMutable()` retain guardrails
+- Definition-based method overrides (via `->method()`) bypass
+  guardrails regardless, as they have higher precedence
 
 **Resolver Return Placeholders:**
 - `::set`, `::setValue` resolvers in builders return anonymous objects as placeholders

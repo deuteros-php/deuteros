@@ -301,6 +301,20 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests that definition-based method overrides bypass guardrails.
+   */
+  public function testMethodOverrideBypassesGuardrail(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->method('save', fn() => 42)
+        ->build()
+    );
+
+    $this->assertSame(42, $entity->save());
+  }
+
+  /**
    * Tests that mutable entities allow field value updates via set().
    */
   public function testMutableEntityFieldSet(): void {

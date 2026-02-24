@@ -228,9 +228,11 @@ return the raw framework-specific double (PHPUnit `MockObject` or
 Prophecy `ObjectProphecy`) without finalization. This enables
 post-creation customization (custom stubs and expectations).
 
-These methods call `buildAndWireDouble()` directly, bypassing
-`instantiateDouble()` and trait stub application. Traits are explicitly
-rejected since trait stubs require finalization.
+These methods call `buildAndWireDouble()` directly with
+`wireGuardrails: FALSE`, bypassing `instantiateDouble()`, trait stub
+application, and guardrail wiring. Skipping guardrails allows users to
+override methods like `save()` and `delete()` after creation. Traits
+are explicitly rejected since trait stubs require finalization.
 
 ### Field List Caching
 
@@ -279,7 +281,7 @@ User: $factory->create($definition)
   │     │     ├─► new EntityDoubleBuilder()
   │     │     ├─► createDoubleForInterfaces() - PHPUnit/Prophecy creates mock
   │     │     ├─► wireEntityResolvers() - Setup entity methods
-  │     │     ├─► wireGuardrails() - Setup exception handling
+  │     │     ├─► wireGuardrails() - If $wireGuardrails (skipped for raw doubles)
   │     │     └─► instantiateDouble() - Reveal mock/prophecy
   │     │
   │     └─► Return EntityInterface

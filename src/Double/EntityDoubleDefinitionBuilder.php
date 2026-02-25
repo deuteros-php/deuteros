@@ -278,14 +278,20 @@ final class EntityDoubleDefinitionBuilder {
    * @param string $fieldName
    *   The field name.
    * @param mixed $value
-   *   The field value (scalar, array, or callable).
+   *   The field value (scalar, array, or callable). If this is already a
+   *   "FieldDoubleDefinition", it is used as-is and "$type" is ignored.
+   * @param string $type
+   *   Optional field type (e.g., "text", "metatag"). When non-empty, the
+   *   factory wires "getFieldDefinition()" on the field list double to return
+   *   a "FieldDefinitionInterface" mock with "getName()" and "getType()"
+   *   populated.
    *
    * @return $this
    */
-  public function field(string $fieldName, mixed $value): self {
+  public function field(string $fieldName, mixed $value, string $type = ''): self {
     $this->fields[$fieldName] = $value instanceof FieldDoubleDefinition
       ? $value
-      : new FieldDoubleDefinition($value);
+      : new FieldDoubleDefinition($value, $type);
     return $this;
   }
 

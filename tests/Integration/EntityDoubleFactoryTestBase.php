@@ -1774,4 +1774,21 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->assertSame('from context', $entity->get('field_dynamic')->value);
   }
 
+  /**
+   * Tests that a field with a type wires "getFieldDefinition()" correctly.
+   */
+  public function testFieldWithTypeReturnsFieldDefinition(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_meta', ['value' => ''], 'metatag')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldDef = $entity->get('field_meta')->getFieldDefinition();
+    $this->assertSame('metatag', $fieldDef->getType());
+    $this->assertSame('field_meta', $fieldDef->getName());
+  }
+
 }

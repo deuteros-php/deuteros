@@ -15,6 +15,7 @@ use Deuteros\Double\UrlDoubleBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
@@ -290,6 +291,16 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       $mock->method('referencedEntities')->willReturnCallback(
         fn() => $resolvers['referencedEntities']($context)
       );
+    }
+
+    // Wire getFieldDefinition if a field type is configured.
+    if ($builder->getFieldType() !== '') {
+      $fieldDef = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldDefinitionInterface::class);
+      assert(is_object($fieldDef));
+      /** @var \PHPUnit\Framework\MockObject\MockObject $fieldDef */
+      $fieldDef->method('getName')->willReturn($builder->getFieldName());
+      $fieldDef->method('getType')->willReturn($builder->getFieldType());
+      $mock->method('getFieldDefinition')->willReturn($fieldDef);
     }
   }
 

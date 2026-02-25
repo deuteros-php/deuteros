@@ -51,6 +51,14 @@ interface FieldItemInterface {
 
 }
 
+interface FieldDefinitionInterface {
+
+  public function getName();
+
+  public function getType();
+
+}
+
 interface FieldItemListInterface extends \IteratorAggregate, \Countable, \ArrayAccess {
 
   public function first();
@@ -66,6 +74,8 @@ interface FieldItemListInterface extends \IteratorAggregate, \Countable, \ArrayA
   public function __set($property_name, $value);
 
   public function setValue($values, $notify = TRUE);
+
+  public function getFieldDefinition();
 
 }
 

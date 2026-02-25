@@ -48,6 +48,7 @@ final class FieldItemDoubleBuilder {
     return [
       '__get' => $this->buildMagicGetResolver(),
       'getValue' => $this->buildGetValueResolver(),
+      'getString' => $this->buildGetStringResolver(),
       'setValue' => $this->buildSetValueResolver(),
       '__set' => $this->buildMagicSetResolver(),
       'isEmpty' => $this->buildIsEmptyResolver(),
@@ -121,6 +122,60 @@ final class FieldItemDoubleBuilder {
 
     // Wrap scalar or indexed array with 'value' property.
     return ['value' => $value];
+  }
+
+  /**
+   * Builds the ::getString resolver.
+   *
+   * Returns the string representation of the field item value, matching
+   * Drupal's "TypedData::getString" / "Map::getString" behavior.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildGetStringResolver(): callable {
+    return fn(array $context): string => self::valueToString($this->value);
+  }
+
+  /**
+   * Converts a single field item value to its string representation.
+   *
+   * Matches Drupal's "TypedData::getString" / "Map::getString" behavior:
+   * NULL or empty string returns empty string, scalars are cast, arrays
+   * with a "value" key use that key, arrays without join non-empty scalar
+   * values with ", ".
+   *
+   * @param mixed $value
+   *   The raw item value.
+   *
+   * @return string
+   *   The string representation.
+   */
+  public static function valueToString(mixed $value): string {
+    if ($value === NULL || $value === '') {
+      return '';
+    }
+
+    if (is_scalar($value)) {
+      return (string) $value;
+    }
+
+    if (is_array($value)) {
+      if (array_key_exists('value', $value)) {
+        return $value['value'] === NULL ? '' : (string) $value['value'];
+      }
+
+      // Cast scalar properties to string, filter empties, then join.
+      $strings = [];
+      foreach ($value as $item) {
+        if (is_scalar($item)) {
+          $strings[] = (string) $item;
+        }
+      }
+      return implode(', ', array_filter($strings, fn(string $s) => $s !== ''));
+    }
+
+    return '';
   }
 
   /**

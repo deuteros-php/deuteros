@@ -1811,7 +1811,68 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
-   * Tests that field type is preserved after "set()" on a mutable entity.
+   * Tests ::getString on a scalar field returns a string.
+   */
+  public function testFieldGetString(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->field('field_title', 'Hello World')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame('Hello World', $entity->get('field_title')->getString());
+  }
+
+  /**
+   * Tests ::getString on a multi-value field returns comma-separated string.
+   */
+  public function testFieldGetStringMultiValue(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->field('field_tags', ['alpha', 'beta', 'gamma'])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame(
+      'alpha, beta, gamma',
+      $entity->get('field_tags')->getString()
+    );
+  }
+
+  /**
+   * Tests ::getString on an empty field returns empty string.
+   */
+  public function testFieldGetStringEmpty(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->field('field_empty', NULL)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertSame('', $entity->get('field_empty')->getString());
+  }
+
+  /**
+   * Tests ::getString on a field item returns a string.
+   */
+  public function testFieldItemGetString(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->field('field_title', 'Item Value')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $first = $entity->get('field_title')->first();
+    $this->assertNotNull($first);
+    $this->assertSame('Item Value', $first->getString());
+  }
+
+  /**
+   * Tests field type preserved after mutable entity ::set.
    */
   public function testMutableFieldTypePreservedAfterEntitySet(): void {
     $entity = $this->factory->createMutable(

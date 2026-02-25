@@ -272,6 +272,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $prophecy->first()->will(fn() => $resolvers['first']($context));
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
+    $prophecy->getString()->will(fn() => $resolvers['getString']($context));
     $prophecy->get(Argument::type('int'))->will(fn(array $args) => $resolvers['get']($context, (int) $args[0]));
 
     // Wire getIterator if the prophecy implements IteratorAggregate.
@@ -379,6 +380,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $prophecy->addMethodProphecy($getMethodProphecy);
 
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
+    $prophecy->getString()->will(fn() => $resolvers['getString']($context));
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
 
     if ($mutable) {

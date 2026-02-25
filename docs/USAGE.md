@@ -116,7 +116,7 @@ The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring 
 
 | Method | Description                    |
 |--------|--------------------------------|
-| `field(string $name, mixed $value)` | Adds a single field with value |
+| `field(string $name, mixed $value, string $type = '')` | Adds a single field with value and optional Drupal field type |
 | `fields(array $fields)` | Adds multiple fields at once   |
 
 ### Interface Methods
@@ -293,6 +293,46 @@ Accessing undefined fields throws `InvalidArgumentException`:
 ```php
 $entity->get('undefined_field'); // Throws InvalidArgumentException
 ```
+
+### Field Type Declaration
+
+When the code under test calls `$field->getFieldDefinition()` (e.g., to check
+the field type via `getType()`), you can declare the Drupal field type on the
+double so the call returns a real `FieldDefinitionInterface` mock.
+
+**Via the builder** — use the `type:` named parameter:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_meta', ['value' => ''], 'metatag')
+    ->build()
+);
+
+$fieldDef = $entity->get('field_meta')->getFieldDefinition();
+$fieldDef->getType(); // 'metatag'
+$fieldDef->getName(); // 'field_meta'
+```
+
+**Via direct construction** — pass the type as the second argument to
+`FieldDoubleDefinition`:
+
+```php
+$entity = $factory->create(
+  new EntityDoubleDefinition(
+    entityType: 'node',
+    fields: ['field_meta' => new FieldDoubleDefinition(['value' => ''], 'metatag')],
+    interfaces: [FieldableEntityInterface::class],
+  )
+);
+
+$entity->get('field_meta')->getFieldDefinition()->getType(); // 'metatag'
+```
+
+When no type is declared, calling `getFieldDefinition()` throws a
+`LogicException` (it appears in the guardrail list as an unsupported operation
+that requires the entity field manager).
 
 ---
 
@@ -845,7 +885,7 @@ Entity doubles are lightweight value objects. Operations requiring runtime servi
 
 **Field Definition Operations**
 
-- `getFieldDefinition()` - Requires entity field manager
+- `getFieldDefinition()` - Supported when the field is declared with a type (see [Field Type Declaration](#field-type-declaration)); throws otherwise
 - `getFieldDefinitions()` - Requires entity field manager
 
 **Revision Operations**

@@ -74,7 +74,8 @@ Deuteros is built around these core principles:
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │             FieldDoubleDefinition                    │  │
-│  │         (stores field value, scalar/array/callable   │  │
+│  │    (stores field value, scalar/array/callable, and   │  │
+│  │     optional Drupal field type for getFieldDefinition│  │
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │          EntityDoubleDefinitionBuilder               │  │
@@ -94,7 +95,7 @@ Deuteros is built around these core principles:
 | Class | File | Responsibility |
 |-------|------|----------------|
 | `EntityDoubleDefinition` | `src/Double/EntityDoubleDefinition.php` | Immutable value object storing entity metadata, fields, interfaces, method overrides |
-| `FieldDoubleDefinition` | `src/Double/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) |
+| `FieldDoubleDefinition` | `src/Double/FieldDoubleDefinition.php` | Stores a single field's value (scalar, array, or callable) and optional Drupal field type (e.g. `"metatag"`) |
 | `EntityDoubleDefinitionBuilder` | `src/Double/EntityDoubleDefinitionBuilder.php` | Fluent builder for creating definitions |
 
 **Key characteristics**:

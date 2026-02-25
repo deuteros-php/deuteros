@@ -187,6 +187,20 @@ be used by user-provided context.
 - Adapters conditionally wire these methods only when the interface implements
   `\ArrayAccess`
 
+**Field Type Declaration:**
+- `FieldDoubleDefinition` accepts an optional second `string $type` parameter
+  (e.g. `new FieldDoubleDefinition($value, 'metatag')`)
+- The `EntityDoubleDefinitionBuilder::field()` exposes this as a `type:` named
+  parameter: `->field('field_meta', $value, type: 'metatag')`
+- When a non-empty type is set, the PHPUnit and Prophecy adapters wire
+  `getFieldDefinition()` on the field list double to return a
+  `FieldDefinitionInterface` mock with `getName()` and `getType()` populated
+- `EntityDoubleBuilder::getFieldDefinitionForAccess()` preserves the type from
+  the original `FieldDoubleDefinition` when rebuilding from mutable state after
+  `$entity->set()`; the type is read from `$this->definition->getField($fieldName)`
+- Both the builder path and direct `EntityDoubleDefinition` construction with
+  manually-created `FieldDoubleDefinition` objects are supported
+
 **Raw Entity Doubles:**
 - `createEntityDouble()` / `createMutableEntityDouble()` return the raw
   framework-specific double (PHPUnit `MockObject` or Prophecy

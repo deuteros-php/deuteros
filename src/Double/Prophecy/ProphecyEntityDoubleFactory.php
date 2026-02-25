@@ -15,6 +15,7 @@ use Deuteros\Double\UrlDoubleBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
@@ -344,6 +345,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     // Wire referencedEntities if this is an entity reference field.
     if ($hasEntityReferences) {
       $prophecy->referencedEntities()->will(fn() => $resolvers['referencedEntities']($context));
+    }
+
+    // Wire getFieldDefinition if a field type is configured.
+    if ($builder->getFieldType() !== '') {
+      $fieldDefProphecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
+      $fieldDefProphecy->getName()->willReturn($builder->getFieldName());
+      $fieldDefProphecy->getType()->willReturn($builder->getFieldType());
+      $prophecy->getFieldDefinition()->willReturn($fieldDefProphecy->reveal());
     }
   }
 

@@ -7,8 +7,9 @@ namespace Deuteros\Double;
 /**
  * Immutable value object representing a field definition.
  *
- * Stores field value which can be a scalar, array, or callable.
- * No behavior beyond holding the value.
+ * Stores field value which can be a scalar, array, or callable. Optionally
+ * stores a field type string used to wire "getFieldDefinition()" on field
+ * list doubles.
  */
 final readonly class FieldDoubleDefinition {
 
@@ -17,10 +18,24 @@ final readonly class FieldDoubleDefinition {
    *
    * @param mixed $value
    *   The field value (scalar, array, or callable).
+   * @param string $type
+   *   The field type (e.g., "text", "metatag"). Defaults to empty string,
+   *   meaning "getFieldDefinition()" will not be wired.
    */
   public function __construct(
     private mixed $value,
+    private readonly string $type = '',
   ) {}
+
+  /**
+   * Gets the field type.
+   *
+   * @return string
+   *   The field type, or empty string if not set.
+   */
+  public function getType(): string {
+    return $this->type;
+  }
 
   /**
    * Gets the field value.

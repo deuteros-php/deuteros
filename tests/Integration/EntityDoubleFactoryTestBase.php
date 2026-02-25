@@ -6,6 +6,7 @@ namespace Deuteros\Tests\Integration;
 
 use Deuteros\Double\EntityDoubleDefinition;
 use Deuteros\Double\EntityDoubleDefinitionBuilder;
+use Deuteros\Double\FieldDoubleDefinition;
 use Deuteros\Double\EntityDoubleFactory;
 use Deuteros\Double\EntityDoubleFactoryInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
@@ -1772,6 +1773,60 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     assert($entity instanceof FieldableEntityInterface);
 
     $this->assertSame('from context', $entity->get('field_dynamic')->value);
+  }
+
+  /**
+   * Tests that a field with a type wires "getFieldDefinition()" correctly.
+   */
+  public function testFieldWithTypeReturnsFieldDefinition(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_meta', ['value' => ''], 'metatag')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldDef = $entity->get('field_meta')->getFieldDefinition();
+    $this->assertSame('metatag', $fieldDef->getType());
+    $this->assertSame('field_meta', $fieldDef->getName());
+  }
+
+  /**
+   * Tests that field type is preserved when using direct construction.
+   */
+  public function testFieldWithTypeDirectConstruction(): void {
+    $entity = $this->factory->create(
+      new EntityDoubleDefinition(
+        entityType: 'node',
+        fields: ['field_meta' => new FieldDoubleDefinition(['value' => ''], 'metatag')],
+        interfaces: [FieldableEntityInterface::class],
+      )
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $fieldDef = $entity->get('field_meta')->getFieldDefinition();
+    $this->assertSame('metatag', $fieldDef->getType());
+    $this->assertSame('field_meta', $fieldDef->getName());
+  }
+
+  /**
+   * Tests that field type is preserved after "set()" on a mutable entity.
+   */
+  public function testMutableFieldTypePreservedAfterEntitySet(): void {
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->field('field_meta', ['value' => 'original'], 'metatag')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Mutate via entity-level set().
+    $entity->set('field_meta', ['value' => 'updated']);
+
+    $fieldDef = $entity->get('field_meta')->getFieldDefinition();
+    $this->assertSame('metatag', $fieldDef->getType());
+    $this->assertSame('field_meta', $fieldDef->getName());
   }
 
 }

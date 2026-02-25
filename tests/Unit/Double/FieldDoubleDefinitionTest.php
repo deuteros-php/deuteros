@@ -68,4 +68,20 @@ class FieldDoubleDefinitionTest extends TestCase {
     $this->assertFalse($definition->isMultiValue());
   }
 
+  /**
+   * Tests that the default field type is an empty string.
+   */
+  public function testDefaultTypeIsEmpty(): void {
+    $definition = new FieldDoubleDefinition('val');
+    $this->assertSame('', $definition->getType());
+  }
+
+  /**
+   * Tests that an explicit field type is stored and returned.
+   */
+  public function testExplicitType(): void {
+    $definition = new FieldDoubleDefinition('val', 'metatag');
+    $this->assertSame('metatag', $definition->getType());
+  }
+
 }

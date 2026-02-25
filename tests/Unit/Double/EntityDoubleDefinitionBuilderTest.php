@@ -465,4 +465,16 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertSame('/node/42', $modified->url);
   }
 
+  /**
+   * Tests that field() stores the given type in the "FieldDoubleDefinition".
+   */
+  public function testFieldWithType(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_foo', 'bar', 'text')
+      ->build();
+
+    $this->assertSame('text', $definition->fields['field_foo']->getType());
+    $this->assertSame('bar', $definition->fields['field_foo']->getValue());
+  }
+
 }

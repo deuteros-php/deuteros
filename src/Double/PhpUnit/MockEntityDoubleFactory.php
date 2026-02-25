@@ -232,6 +232,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $mock->method('first')->willReturnCallback(fn() => $resolvers['first']($context));
     $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));
     $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
+    $mock->method('getString')->willReturnCallback(fn() => $resolvers['getString']($context));
     $mock->method('get')->willReturnCallback(fn(int $delta) => $resolvers['get']($context, $delta));
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
 
@@ -323,6 +324,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
     $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
+    $mock->method('getString')->willReturnCallback(fn() => $resolvers['getString']($context));
     $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));
 
     if ($mutable) {

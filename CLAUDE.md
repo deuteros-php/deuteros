@@ -93,8 +93,8 @@ Workflow file: `.github/workflows/ci.yml`
 
 2. **Core Resolution Layer** (`Deuteros\Double\*DoubleBuilder`)
    - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, getIterator, etc.)
-   - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getIterator, count)
-   - `FieldItemDoubleBuilder` - Resolvers for field items
+   - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getString, getIterator, count)
+   - `FieldItemDoubleBuilder` - Resolvers for field items (__get, getValue, getString, setValue, __set, isEmpty)
    - `UrlDoubleBuilder` - Resolvers for Url doubles (toString)
    - Framework-agnostic: no PHPUnit/Prophecy references
 

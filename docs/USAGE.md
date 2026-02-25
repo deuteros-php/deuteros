@@ -187,6 +187,13 @@ $isEmpty = $entity->get('field_name')->isEmpty();
 // Get all values as array of property arrays
 $values = $entity->get('field_name')->getValue();
 // Returns: [['value' => 'field value']]
+
+// Get string representation (comma-separated for multi-value)
+$string = $entity->get('field_name')->getString();
+// Returns: 'field value'
+
+// Get string from a single field item
+$itemString = $entity->get('field_name')->first()->getString();
 ```
 
 **Magic Property Access**

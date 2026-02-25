@@ -220,6 +220,56 @@ class FieldItemDoubleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests ::getString resolver returns string for scalar value.
+   */
+  public function testGetStringResolverScalar(): void {
+    $builder = new FieldItemDoubleBuilder('hello', 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('hello', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver casts integer to string.
+   */
+  public function testGetStringResolverInteger(): void {
+    $builder = new FieldItemDoubleBuilder(42, 0, 'field_number');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('42', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver returns empty string for null.
+   */
+  public function testGetStringResolverNull(): void {
+    $builder = new FieldItemDoubleBuilder(NULL, 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver uses "value" key from array.
+   */
+  public function testGetStringResolverArrayWithValue(): void {
+    $builder = new FieldItemDoubleBuilder(['value' => 'text'], 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('text', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver joins non-empty scalars from array.
+   */
+  public function testGetStringResolverArrayWithoutValue(): void {
+    $builder = new FieldItemDoubleBuilder(['target_id' => 5], 0, 'field_ref');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('5', $resolvers['getString']([]));
+  }
+
+  /**
    * Tests ::getDelta returns the delta.
    */
   public function testGetDelta(): void {

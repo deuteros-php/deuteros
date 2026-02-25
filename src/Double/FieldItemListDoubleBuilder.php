@@ -93,6 +93,7 @@ final class FieldItemListDoubleBuilder {
       'first' => $this->buildFirstResolver(),
       'isEmpty' => $this->buildIsEmptyResolver(),
       'getValue' => $this->buildGetValueResolver(),
+      'getString' => $this->buildGetStringResolver(),
       'get' => $this->buildGetResolver(),
       '__get' => $this->buildMagicGetResolver(),
       'setValue' => $this->buildSetValueResolver(),
@@ -183,6 +184,37 @@ final class FieldItemListDoubleBuilder {
 
     // Wrap scalar or indexed array with 'value' property.
     return ['value' => $value];
+  }
+
+  /**
+   * Builds the ::getString resolver.
+   *
+   * Returns a comma-separated string of all field item string values,
+   * matching Drupal's "ItemList::getString" behavior: calls
+   * ::getString on each item, filters empty strings, joins with ", ".
+   *
+   * Delegates per-item conversion to
+   * "FieldItemDoubleBuilder::valueToString" to share logic with the
+   * field item ::getString resolver.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildGetStringResolver(): callable {
+    return function (array $context): string {
+      /** @var array<string, mixed> $context */
+      $values = $this->resolveValues($context);
+
+      $strings = array_filter(
+        array_map(
+          fn(mixed $item) => FieldItemDoubleBuilder::valueToString($item),
+          $values
+        ),
+        fn(string $s) => $s !== ''
+      );
+
+      return implode(', ', $strings);
+    };
   }
 
   /**

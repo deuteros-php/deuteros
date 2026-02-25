@@ -49,6 +49,8 @@ interface FieldItemInterface {
 
   public function isEmpty();
 
+  public function getString();
+
 }
 
 interface FieldDefinitionInterface {
@@ -76,6 +78,8 @@ interface FieldItemListInterface extends \IteratorAggregate, \Countable, \ArrayA
   public function setValue($values, $notify = TRUE);
 
   public function getFieldDefinition();
+
+  public function getString();
 
 }
 

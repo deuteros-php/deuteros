@@ -450,6 +450,88 @@ class FieldItemListDoubleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests ::getString resolver returns string for scalar value.
+   */
+  public function testGetStringResolverScalar(): void {
+    $definition = new FieldDoubleDefinition('hello');
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('hello', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver joins multiple values.
+   */
+  public function testGetStringResolverMultiValue(): void {
+    $definition = new FieldDoubleDefinition(['hello', 'world']);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('hello, world', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver returns empty string for null.
+   */
+  public function testGetStringResolverEmpty(): void {
+    $definition = new FieldDoubleDefinition(NULL);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver returns empty string for empty array.
+   */
+  public function testGetStringResolverEmptyArray(): void {
+    $definition = new FieldDoubleDefinition([]);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver extracts "value" from associative array.
+   */
+  public function testGetStringResolverAssociativeValue(): void {
+    $definition = new FieldDoubleDefinition(['value' => 'text']);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('text', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver joins multiple associative items.
+   */
+  public function testGetStringResolverMultipleAssociative(): void {
+    $values = [
+      ['target_id' => 5],
+      ['target_id' => 10],
+    ];
+    $definition = new FieldDoubleDefinition($values);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_refs');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('5, 10', $resolvers['getString']([]));
+  }
+
+  /**
+   * Tests ::getString resolver filters empty items.
+   */
+  public function testGetStringResolverFiltersEmpty(): void {
+    $values = ['hello', NULL, 'world'];
+    $definition = new FieldDoubleDefinition($values);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('hello, world', $resolvers['getString']([]));
+  }
+
+  /**
    * Tests ::getFieldName returns the field name.
    */
   public function testGetFieldName(): void {

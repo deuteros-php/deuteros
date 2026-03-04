@@ -319,12 +319,10 @@ final class EntityDoubleDefinitionBuilder {
   public function fields(array $fields): self {
     foreach ($fields as $field_name => $value) {
       if (is_array($value) && array_key_exists('value', $value)) {
-        $this->field(
-          $field_name,
-          $value['value'],
-          $value['type'] ?? '',
-          $value['settings'] ?? [],
-        );
+        $type = array_key_exists('type', $value) && is_string($value['type']) ? $value['type'] : '';
+        /** @var array<string, mixed> $settings */
+        $settings = array_key_exists('settings', $value) && is_array($value['settings']) ? $value['settings'] : [];
+        $this->field($field_name, $value['value'], $type, $settings);
       }
       else {
         $this->field($field_name, $value);

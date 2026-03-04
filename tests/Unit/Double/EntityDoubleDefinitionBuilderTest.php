@@ -525,7 +525,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
   }
 
   /**
-   * Tests fields() array spec with only "value" key uses type/settings defaults.
+   * Tests fields() array spec with only "value" key uses defaults.
    */
   public function testFieldsBulkArraySpecWithValueOnly(): void {
     $definition = EntityDoubleDefinitionBuilder::create('node')

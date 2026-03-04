@@ -59,6 +59,8 @@ interface FieldDefinitionInterface {
 
   public function getType();
 
+  public function getSetting($setting_name);
+
 }
 
 interface FieldItemListInterface extends \IteratorAggregate, \Countable, \ArrayAccess {

@@ -84,4 +84,40 @@ class FieldDoubleDefinitionTest extends TestCase {
     $this->assertSame('metatag', $definition->getType());
   }
 
+  /**
+   * Tests that the default settings is an empty array.
+   */
+  public function testDefaultSettingsIsEmpty(): void {
+    $definition = new FieldDoubleDefinition('val');
+    $this->assertNull($definition->getSetting('any_key'));
+  }
+
+  /**
+   * Tests that a setting value is stored and returned by key.
+   */
+  public function testGetSettingReturnsValue(): void {
+    $definition = new FieldDoubleDefinition('val', '', ['max_length' => 255]);
+    $this->assertSame(255, $definition->getSetting('max_length'));
+  }
+
+  /**
+   * Tests that ::getSetting returns NULL for an unknown key.
+   */
+  public function testGetSettingReturnsNullForMissingKey(): void {
+    $definition = new FieldDoubleDefinition('val', '', ['max_length' => 255]);
+    $this->assertNull($definition->getSetting('missing_key'));
+  }
+
+  /**
+   * Tests that multiple settings are stored independently.
+   */
+  public function testMultipleSettings(): void {
+    $definition = new FieldDoubleDefinition('val', 'string', [
+      'max_length' => 128,
+      'is_ascii' => TRUE,
+    ]);
+    $this->assertSame(128, $definition->getSetting('max_length'));
+    $this->assertTrue($definition->getSetting('is_ascii'));
+  }
+
 }

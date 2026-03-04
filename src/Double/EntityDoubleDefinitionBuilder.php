@@ -279,19 +279,23 @@ final class EntityDoubleDefinitionBuilder {
    *   The field name.
    * @param mixed $value
    *   The field value (scalar, array, or callable). If this is already a
-   *   "FieldDoubleDefinition", it is used as-is and "$type" is ignored.
+   *   "FieldDoubleDefinition", it is used as-is and "$type"/"$settings"
+   *   are ignored.
    * @param string $type
    *   Optional field type (e.g., "text", "metatag"). When non-empty, the
    *   factory wires "getFieldDefinition()" on the field list double to return
    *   a "FieldDefinitionInterface" mock with "getName()" and "getType()"
    *   populated.
+   * @param array<string, mixed> $settings
+   *   Optional field settings keyed by setting name. Accessible via
+   *   "FieldDoubleDefinition::getSetting()".
    *
    * @return $this
    */
-  public function field(string $fieldName, mixed $value, string $type = ''): self {
+  public function field(string $fieldName, mixed $value, string $type = '', array $settings = []): self {
     $this->fields[$fieldName] = $value instanceof FieldDoubleDefinition
       ? $value
-      : new FieldDoubleDefinition($value, $type);
+      : new FieldDoubleDefinition($value, $type, $settings);
     return $this;
   }
 
@@ -300,14 +304,29 @@ final class EntityDoubleDefinitionBuilder {
    *
    * Automatically adds FieldableEntityInterface if not already present.
    *
+   * Each entry in $fields may be:
+   * - A plain value (scalar, array, callable)
+   * - An associative array with a "value" key, and optional "type" and
+   *   "settings" keys to pass type and settings alongside the value
+   *
    * @param array<string, mixed> $fields
-   *   Field values keyed by field name.
+   *   Field values keyed by field name. Each entry may be a plain value or
+   *   an associative array with "value", optional "type", and optional
+   *   "settings" keys.
    *
    * @return $this
    */
   public function fields(array $fields): self {
-    foreach ($fields as $fieldName => $value) {
-      $this->field($fieldName, $value);
+    foreach ($fields as $field_name => $value) {
+      if (is_array($value) && array_key_exists('value', $value)) {
+        $type = array_key_exists('type', $value) && is_string($value['type']) ? $value['type'] : '';
+        /** @var array<string, mixed> $settings */
+        $settings = array_key_exists('settings', $value) && is_array($value['settings']) ? $value['settings'] : [];
+        $this->field($field_name, $value['value'], $type, $settings);
+      }
+      else {
+        $this->field($field_name, $value);
+      }
     }
     return $this;
   }

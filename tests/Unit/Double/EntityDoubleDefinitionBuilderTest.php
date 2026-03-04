@@ -477,4 +477,66 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertSame('bar', $definition->fields['field_foo']->getValue());
   }
 
+  /**
+   * Tests that field() stores settings in the "FieldDoubleDefinition".
+   */
+  public function testFieldWithSettings(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_foo', 'bar', settings: ['max_length' => 255])
+      ->build();
+
+    $this->assertSame(255, $definition->fields['field_foo']->getSetting('max_length'));
+  }
+
+  /**
+   * Tests that field() stores both type and settings together.
+   */
+  public function testFieldWithTypeAndSettings(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_foo', 'bar', 'string', ['max_length' => 128])
+      ->build();
+
+    $this->assertSame('string', $definition->fields['field_foo']->getType());
+    $this->assertSame(128, $definition->fields['field_foo']->getSetting('max_length'));
+  }
+
+  /**
+   * Tests that fields() bulk method supports type and settings via array spec.
+   */
+  public function testFieldsBulkWithTypeAndSettings(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->fields([
+        'field_plain' => 'plain value',
+        'field_typed' => [
+          'value' => 'typed value',
+          'type' => 'string',
+          'settings' => ['max_length' => 64],
+        ],
+      ])
+      ->build();
+
+    $this->assertSame('plain value', $definition->fields['field_plain']->getValue());
+    $this->assertSame('', $definition->fields['field_plain']->getType());
+    $this->assertNull($definition->fields['field_plain']->getSetting('max_length'));
+
+    $this->assertSame('typed value', $definition->fields['field_typed']->getValue());
+    $this->assertSame('string', $definition->fields['field_typed']->getType());
+    $this->assertSame(64, $definition->fields['field_typed']->getSetting('max_length'));
+  }
+
+  /**
+   * Tests fields() array spec with only "value" key uses defaults.
+   */
+  public function testFieldsBulkArraySpecWithValueOnly(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->fields([
+        'field_foo' => ['value' => 'test'],
+      ])
+      ->build();
+
+    $this->assertSame('test', $definition->fields['field_foo']->getValue());
+    $this->assertSame('', $definition->fields['field_foo']->getType());
+    $this->assertNull($definition->fields['field_foo']->getSetting('any'));
+  }
+
 }

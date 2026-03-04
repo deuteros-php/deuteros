@@ -353,6 +353,10 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $fieldDefProphecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
       $fieldDefProphecy->getName()->willReturn($builder->getFieldName());
       $fieldDefProphecy->getType()->willReturn($builder->getFieldType());
+      $field_double_definition = $builder->getFieldDefinition();
+      $fieldDefProphecy->getSetting(Argument::type('string'))->will(
+        fn(array $args) => $field_double_definition->getSetting((string) $args[0])
+      );
       $prophecy->getFieldDefinition()->willReturn($fieldDefProphecy->reveal());
     }
   }

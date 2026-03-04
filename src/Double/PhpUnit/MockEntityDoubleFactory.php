@@ -301,6 +301,10 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       /** @var \PHPUnit\Framework\MockObject\MockObject $fieldDef */
       $fieldDef->method('getName')->willReturn($builder->getFieldName());
       $fieldDef->method('getType')->willReturn($builder->getFieldType());
+      $field_double_definition = $builder->getFieldDefinition();
+      $fieldDef->method('getSetting')->willReturnCallback(
+        fn(string $setting) => $field_double_definition->getSetting($setting)
+      );
       $mock->method('getFieldDefinition')->willReturn($fieldDef);
     }
   }

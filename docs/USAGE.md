@@ -116,8 +116,8 @@ The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring 
 
 | Method | Description                    |
 |--------|--------------------------------|
-| `field(string $name, mixed $value, string $type = '')` | Adds a single field with value and optional Drupal field type |
-| `fields(array $fields)` | Adds multiple fields at once   |
+| `field(string $name, mixed $value, string $type = '', array $settings = [])` | Adds a single field with value, optional Drupal field type, and optional settings |
+| `fields(array $fields)` | Adds multiple fields at once; each entry may be a plain value or an array with `value`, optional `type`, and optional `settings` keys |
 
 ### Interface Methods
 
@@ -340,6 +340,61 @@ $entity->get('field_meta')->getFieldDefinition()->getType(); // 'metatag'
 When no type is declared, calling `getFieldDefinition()` throws a
 `LogicException` (it appears in the guardrail list as an unsupported operation
 that requires the entity field manager).
+
+### Field Settings
+
+You can attach arbitrary settings to a field double so that code under test
+that calls `getSetting()` on the field definition can receive realistic values.
+Settings are accessible via `FieldDoubleDefinition::getSetting()`.
+
+**Via the builder** — use the `settings:` named parameter on `field()`:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_body', 'Hello', 'text_long', settings: ['max_length' => 512])
+    ->build()
+);
+
+// Retrieve a setting from the field definition.
+$definition = $entity->get('field_body')->getFieldDefinition();
+// Access the underlying FieldDoubleDefinition via the factory if needed,
+// or use ::getSetting() in your own resolver callbacks:
+//   $context[EntityDoubleDefinition::CONTEXT_KEY]
+//     ->getField('field_body')->getSetting('max_length'); // 512
+```
+
+**Via the `fields()` bulk method** — use the array spec with a `settings` key:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->fields([
+      'field_plain' => 'plain value',
+      'field_body'  => [
+        'value'    => 'Hello',
+        'type'     => 'text_long',
+        'settings' => ['max_length' => 512],
+      ],
+    ])
+    ->build()
+);
+```
+
+**Via direct construction** — pass settings as the third argument to
+`FieldDoubleDefinition`:
+
+```php
+use Deuteros\Double\FieldDoubleDefinition;
+
+$field_def = new FieldDoubleDefinition('Hello', 'text_long', ['max_length' => 512]);
+$field_def->getSetting('max_length'); // 512
+$field_def->getSetting('missing');    // NULL
+```
+
+`getSetting()` returns `NULL` for keys that were not provided.
 
 ---
 

@@ -198,6 +198,50 @@ class FieldItemListDoubleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests ::__isset resolver proxies to first item's ::__isset.
+   */
+  public function testMagicIssetProxiesToFirst(): void {
+    $definition = new FieldDoubleDefinition('test value');
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_test');
+
+    // Create a mock that implements __get and __isset.
+    $mockItem = new class () {
+
+      /**
+       * Magic get.
+       */
+      public function __get(string $property): ?string {
+        return $property === 'value' ? 'resolved value' : NULL;
+      }
+
+      /**
+       * Magic isset.
+       */
+      public function __isset(string $property): bool {
+        return $property === 'value';
+      }
+
+    };
+    $builder->setFieldItemFactory(fn() => $mockItem);
+    $resolvers = $builder->getResolvers();
+
+    $this->assertTrue($resolvers['__isset']([], 'value'));
+    $this->assertFalse($resolvers['__isset']([], 'nonexistent'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns false when field is empty.
+   */
+  public function testMagicIssetReturnsFalseForEmpty(): void {
+    $definition = new FieldDoubleDefinition([]);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_test');
+    $builder->setFieldItemFactory(fn() => new \stdClass());
+    $resolvers = $builder->getResolvers();
+
+    $this->assertFalse($resolvers['__isset']([], 'value'));
+  }
+
+  /**
    * Tests ::setValue resolver throws on immutable field list.
    */
   public function testSetValueThrowsOnImmutable(): void {

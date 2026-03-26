@@ -14,7 +14,8 @@ use PHPUnit\Framework\TestCase;
  * Tests the FieldItemDoubleBuilder resolver factory.
  *
  * These tests verify that the builder creates correct resolvers for field
- * item methods (__get, __set, getValue, setValue, isEmpty) without requiring
+ * item methods (__get, __isset, __set, getValue, setValue, isEmpty) without
+ * requiring
  * full factory integration.
  */
 #[CoversClass(FieldItemDoubleBuilder::class)]
@@ -75,6 +76,83 @@ class FieldItemDoubleBuilderTest extends TestCase {
 
     $this->assertSame($entity, $resolvers['__get']([], 'entity'));
     $this->assertSame(42, $resolvers['__get']([], 'target_id'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns true for scalar "value" property.
+   */
+  public function testMagicIssetValueForScalar(): void {
+    $builder = new FieldItemDoubleBuilder('test', 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertTrue($resolvers['__isset']([], 'value'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns false for null scalar value.
+   */
+  public function testMagicIssetValueForNullScalar(): void {
+    $builder = new FieldItemDoubleBuilder(NULL, 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertFalse($resolvers['__isset']([], 'value'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns false for unknown property on scalar.
+   */
+  public function testMagicIssetUnknownPropertyForScalar(): void {
+    $builder = new FieldItemDoubleBuilder('test', 0, 'field_text');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertFalse($resolvers['__isset']([], 'target_id'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns true for existing array property.
+   */
+  public function testMagicIssetPropertyForArray(): void {
+    $value = ['target_id' => 42, 'target_type' => 'node'];
+    $builder = new FieldItemDoubleBuilder($value, 0, 'field_ref');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertTrue($resolvers['__isset']([], 'target_id'));
+    $this->assertTrue($resolvers['__isset']([], 'target_type'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns false for missing array property.
+   */
+  public function testMagicIssetMissingArrayProperty(): void {
+    $value = ['target_id' => 42];
+    $builder = new FieldItemDoubleBuilder($value, 0, 'field_ref');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertFalse($resolvers['__isset']([], 'nonexistent'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns false for null array property.
+   */
+  public function testMagicIssetNullArrayProperty(): void {
+    $value = ['target_id' => NULL];
+    $builder = new FieldItemDoubleBuilder($value, 0, 'field_ref');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertFalse($resolvers['__isset']([], 'target_id'));
+  }
+
+  /**
+   * Tests ::__isset resolver returns true for entity property.
+   */
+  public function testMagicIssetEntityProperty(): void {
+    $entity = $this->createMock(EntityInterface::class);
+    $value = ['entity' => $entity, 'target_id' => 42];
+    $builder = new FieldItemDoubleBuilder($value, 0, 'field_author');
+    $resolvers = $builder->getResolvers();
+
+    $this->assertTrue($resolvers['__isset']([], 'entity'));
+    $this->assertTrue($resolvers['__isset']([], 'target_id'));
   }
 
   /**

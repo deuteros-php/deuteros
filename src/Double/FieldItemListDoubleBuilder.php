@@ -96,6 +96,7 @@ final class FieldItemListDoubleBuilder {
       'getString' => $this->buildGetStringResolver(),
       'get' => $this->buildGetResolver(),
       '__get' => $this->buildMagicGetResolver(),
+      '__isset' => $this->buildMagicIssetResolver(),
       'setValue' => $this->buildSetValueResolver(),
       '__set' => $this->buildMagicSetResolver(),
       'referencedEntities' => $this->buildReferencedEntitiesResolver(),
@@ -257,6 +258,33 @@ final class FieldItemListDoubleBuilder {
       // We'll call it directly since we control the double.
       assert(is_object($firstItem) && method_exists($firstItem, '__get'));
       return $firstItem->__get($property);
+    };
+  }
+
+  /**
+   * Builds the ::__isset resolver.
+   *
+   * Delegates to the first field item's ::__isset, mirroring Drupal's
+   * "FieldItemList::__isset" behavior. Returns FALSE if the field list
+   * is empty (no first item).
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildMagicIssetResolver(): callable {
+    return function (array $context, string $property): bool {
+      /** @var array<string, mixed> $context */
+      $firstItem = ($this->buildFirstResolver())($context);
+
+      if ($firstItem === NULL) {
+        return FALSE;
+      }
+
+      assert(
+        is_object($firstItem)
+          && method_exists($firstItem, '__isset')
+      );
+      return (bool) $firstItem->__isset($property);
     };
   }
 

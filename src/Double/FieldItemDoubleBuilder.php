@@ -47,6 +47,7 @@ final class FieldItemDoubleBuilder {
   public function getResolvers(): array {
     return [
       '__get' => $this->buildMagicGetResolver(),
+      '__isset' => $this->buildMagicIssetResolver(),
       'getValue' => $this->buildGetValueResolver(),
       'getString' => $this->buildGetStringResolver(),
       'setValue' => $this->buildSetValueResolver(),
@@ -84,6 +85,34 @@ final class FieldItemDoubleBuilder {
       }
 
       return NULL;
+    };
+  }
+
+  /**
+   * Builds the ::__isset resolver.
+   *
+   * Determines whether a property is set, mirroring Drupal's
+   * "FieldItemBase::__isset" behavior: returns TRUE if the property
+   * exists and its value is not NULL.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildMagicIssetResolver(): callable {
+    return function (array $context, string $property): bool {
+      // If value is an array, check if property key exists and is
+      // not NULL.
+      if (is_array($this->value)) {
+        return isset($this->value[$property]);
+      }
+
+      // For scalar values, "value" property is set if the value
+      // itself is not NULL.
+      if ($property === 'value') {
+        return $this->value !== NULL;
+      }
+
+      return FALSE;
     };
   }
 

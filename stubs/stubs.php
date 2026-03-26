@@ -43,6 +43,8 @@ interface FieldItemInterface {
 
   public function __set($property_name, $value);
 
+  public function __isset($property_name);
+
   public function getValue();
 
   public function setValue($values, $notify = TRUE);
@@ -76,6 +78,8 @@ interface FieldItemListInterface extends \IteratorAggregate, \Countable, \ArrayA
   public function __get($property_name);
 
   public function __set($property_name, $value);
+
+  public function __isset($property_name);
 
   public function setValue($values, $notify = TRUE);
 

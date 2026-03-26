@@ -50,7 +50,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    // Use runtime interface for ::__get/::__set support.
+    // Use runtime interface for ::__get/::__set/::__isset support.
     $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
     $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', $runtimeInterface);
     assert(is_object($mock));
@@ -235,6 +235,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $mock->method('getString')->willReturnCallback(fn() => $resolvers['getString']($context));
     $mock->method('get')->willReturnCallback(fn(int $delta) => $resolvers['get']($context, $delta));
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
+    $mock->method('__isset')->willReturnCallback(fn(string $property) => $resolvers['__isset']($context, $property));
 
     // Wire getIterator if the mock implements IteratorAggregate.
     if (method_exists($mock, 'getIterator')) {
@@ -327,6 +328,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $resolvers = $builder->getResolvers();
 
     $mock->method('__get')->willReturnCallback(fn(string $property) => $resolvers['__get']($context, $property));
+    $mock->method('__isset')->willReturnCallback(fn(string $property) => $resolvers['__isset']($context, $property));
     $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
     $mock->method('getString')->willReturnCallback(fn() => $resolvers['getString']($context));
     $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));

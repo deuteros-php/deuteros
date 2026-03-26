@@ -93,8 +93,8 @@ Workflow file: `.github/workflows/ci.yml`
 
 2. **Core Resolution Layer** (`Deuteros\Double\*DoubleBuilder`)
    - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, getIterator, etc.)
-   - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getString, getIterator, count)
-   - `FieldItemDoubleBuilder` - Resolvers for field items (__get, getValue, getString, setValue, __set, isEmpty)
+   - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getString, __get, __isset, getIterator, count)
+   - `FieldItemDoubleBuilder` - Resolvers for field items (__get, __isset, getValue, getString, setValue, __set, isEmpty)
    - `UrlDoubleBuilder` - Resolvers for Url doubles (toString)
    - Framework-agnostic: no PHPUnit/Prophecy references
 
@@ -186,6 +186,19 @@ be used by user-provided context.
 - `$field[0] = $value` and `unset($field[0])` throw exceptions (not supported)
 - Adapters conditionally wire these methods only when the interface implements
   `\ArrayAccess`
+
+**Property Isset Support (__isset):**
+- Field item lists and field items support `isset($field->property)` via
+  `::__isset`, mirroring Drupal's "FieldItemList::__isset" and
+  "FieldItemBase::__isset" behavior
+- Field item list `__isset` delegates to the first item's `__isset`; returns
+  FALSE if the list is empty (no first item)
+- Field item `__isset` checks if the property exists and is not NULL: for
+  array values uses `isset($value[$property])`, for scalars returns
+  `$value !== NULL` when property is "value"
+- No mutable/immutable distinction — `__isset` is a read-only operation
+- Both adapters wire `__isset` using the same pattern as `__get`
+- The runtime generated interface declares `__isset(string $name): bool`
 
 **Field Type Declaration:**
 - `FieldDoubleDefinition` accepts an optional second `string $type` parameter

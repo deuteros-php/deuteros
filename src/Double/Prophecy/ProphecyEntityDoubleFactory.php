@@ -98,7 +98,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createDoubleForInterfaces(array $interfaces): object {
-    // Use runtime interface for ::__get/::__set support.
+    // Use runtime interface for ::__get/::__set/::__isset support.
     $runtimeInterface = $this->getOrCreateRuntimeInterface($interfaces);
     return $this->prophet->prophesize($runtimeInterface);
   }
@@ -309,6 +309,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
 
+    // Manually add "MethodProphecy" for ::__isset.
+    $issetMethodProphecy = new MethodProphecy($prophecy, '__isset', [Argument::type('string')]);
+    $issetMethodProphecy->will(fn(array $args) => $resolvers['__isset']($context, (string) $args[0]));
+    $prophecy->addMethodProphecy($issetMethodProphecy);
+
     if ($definition->mutable) {
       $revealed = NULL;
       $prophecy->setValue(Argument::any(), Argument::any())->will(
@@ -382,6 +387,11 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
     $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
     $prophecy->addMethodProphecy($getMethodProphecy);
+
+    // Manually add "MethodProphecy" for ::__isset.
+    $issetMethodProphecy = new MethodProphecy($prophecy, '__isset', [Argument::type('string')]);
+    $issetMethodProphecy->will(fn(array $args) => $resolvers['__isset']($context, (string) $args[0]));
+    $prophecy->addMethodProphecy($issetMethodProphecy);
 
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
     $prophecy->getString()->will(fn() => $resolvers['getString']($context));

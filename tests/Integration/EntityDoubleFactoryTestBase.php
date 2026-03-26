@@ -567,6 +567,88 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests ::__isset returns true for scalar field "value" property.
+   */
+  public function testIssetOnScalarFieldValue(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertTrue(isset($entity->get('field_title')->value));
+  }
+
+  /**
+   * Tests ::__isset returns false for null/empty field.
+   */
+  public function testIssetOnNullFieldValue(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_empty', NULL)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // NULL field normalizes to empty list, so __isset returns
+    // FALSE.
+    $this->assertFalse(isset($entity->get('field_empty')->value));
+  }
+
+  /**
+   * Tests ::__isset returns true for entity reference "target_id".
+   */
+  public function testIssetOnEntityReferenceTargetId(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_ref', ['target_id' => 42])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertTrue(isset($entity->get('field_ref')->target_id));
+  }
+
+  /**
+   * Tests ::__isset returns false for missing property.
+   */
+  public function testIssetReturnsFalseForMissingProperty(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    // Scalar field should not have "target_id".
+    $this->assertFalse(isset($entity->get('field_title')->target_id));
+  }
+
+  /**
+   * Tests ::__isset on field item directly.
+   */
+  public function testIssetOnFieldItemDirectly(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $item = $entity->get('field_title')->first();
+    assert($item !== NULL);
+
+    $this->assertTrue(isset($item->value));
+    $this->assertFalse(isset($item->target_id));
+  }
+
+  /**
    * Tests entity reference field with single entity via shorthand syntax.
    */
   public function testEntityReferenceShorthand(): void {

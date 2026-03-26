@@ -501,7 +501,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    * Gets or creates a runtime interface with magic accessor support.
    *
    * Generates a single interface that extends all requested interfaces and
-   * declares ::__get/::__set methods for magic property access.
+   * declares ::__get/::__set/::__isset methods for magic property access.
    *
    * @param list<class-string> $interfaces
    *   The interfaces to extend.
@@ -561,6 +561,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
       'namespace %s { interface %s extends %s { '
       . 'public function __get(string $name): mixed; '
       . 'public function __set(string $name, mixed $value): void; '
+      . 'public function __isset(string $name): bool; '
       . '} }',
       $namespace,
       $shortName,

@@ -196,6 +196,22 @@ $string = $entity->get('field_name')->getString();
 $itemString = $entity->get('field_name')->first()->getString();
 ```
 
+**Property Isset**
+
+```php
+// Check if a field property is set (delegates to first item)
+isset($entity->get('field_name')->value);    // TRUE if non-null
+isset($entity->get('field_ref')->target_id); // TRUE if present
+
+// Empty fields return FALSE
+isset($entity->get('field_empty')->value);   // FALSE
+
+// Works on field items directly
+$item = $entity->get('field_name')->first();
+isset($item->value);     // TRUE if value is not NULL
+isset($item->target_id); // FALSE for scalar fields
+```
+
 **Magic Property Access**
 
 ```php

@@ -46,11 +46,12 @@ Deuteros is built around these core principles:
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │             FieldItemListDoubleBuilder               │  │
-│  │  (first, get, isEmpty, getValue, referencedEntities) │  │
+│  │  (first, get, isEmpty, getValue, __get, __isset,    │  │
+│  │   referencedEntities)                               │  │
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │               FieldItemDoubleBuilder                 │  │
-│  │            (getValue, __get, setValue, __set)        │  │
+│  │       (getValue, __get, __isset, setValue, __set)    │  │
 │  └──────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────┘
                               │

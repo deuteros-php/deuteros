@@ -1171,6 +1171,35 @@ public function testWithEntityReference(): void {
 }
 ```
 
+### Bundle Keys Holding a Reference
+
+On several entity types the bundle key is itself an entity reference rather
+than a plain name: the `type` of a node points at a `node_type`, and the
+`type` of a block content entity points at a `block_content_type`. Pass the
+bundle entity the way you would any other reference. `::bundle` resolves it
+to the referenced ID, so it keeps returning the bundle name.
+
+```php
+public function testBundleFromReference(): void {
+  $nodeType = $this->factory->create(NodeType::class, ['type' => 'article']);
+
+  $node = $this->factory->create(Node::class, [
+    'nid' => 1,
+    'type' => ['entity' => $nodeType],
+    'title' => 'Test',
+  ]);
+
+  $this->assertSame('article', $node->bundle());
+  $this->assertSame($nodeType, $node->get('type')->entity);
+}
+```
+
+A bare entity (`'type' => $nodeType`) and a target ID on its own
+(`'type' => ['target_id' => 'article']`) work the same way. An empty
+reference (`'type' => ['entity' => NULL]`) falls back to the entity type ID,
+matching the behavior of an absent bundle key. A scalar bundle value is
+passed through untouched.
+
 ### Multi-Value Fields
 
 ```php

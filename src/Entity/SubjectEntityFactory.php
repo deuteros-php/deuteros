@@ -7,6 +7,7 @@ namespace Deuteros\Entity;
 use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Double\EntityDoubleFactory;
 use Deuteros\Double\EntityDoubleFactoryInterface;
+use Deuteros\Double\EntityReferenceNormalizer;
 use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
 use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
@@ -328,7 +329,7 @@ final class SubjectEntityFactory {
 
     // Set bundle via entityKeys.
     $bundleKey = $config['keys']['bundle'] ?? 'type';
-    $bundleValue = $values[$bundleKey] ?? $config['id'];
+    $bundleValue = self::resolveBundleValue($values[$bundleKey] ?? $config['id'], $config['id']);
     $entityKeysProperty = $baseReflection->getProperty('entityKeys');
     $entityKeys = ['bundle' => $bundleValue];
 
@@ -371,6 +372,30 @@ final class SubjectEntityFactory {
     // Initialize languages.
     $languagesProperty = $baseReflection->getProperty('languages');
     $languagesProperty->setValue($entity, []);
+  }
+
+  /**
+   * Resolves the bundle name from the value of a bundle key.
+   *
+   * A bundle key can hold an entity reference to the bundle entity rather
+   * than its name, for instance the "type" of a block content entity. The
+   * reference resolves to its target ID, so that "::bundle" keeps returning
+   * the bundle name instead of the raw reference value.
+   *
+   * @param mixed $value
+   *   The raw bundle key value.
+   * @param string $entityTypeId
+   *   The entity type ID, used when the reference is empty.
+   *
+   * @return mixed
+   *   The bundle name.
+   */
+  private static function resolveBundleValue(mixed $value, string $entityTypeId): mixed {
+    if (!EntityReferenceNormalizer::containsEntityReferences($value)) {
+      return $value;
+    }
+    $items = EntityReferenceNormalizer::normalize($value);
+    return $items[0]['target_id'] ?? $entityTypeId;
   }
 
   /**

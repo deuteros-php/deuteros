@@ -18,6 +18,18 @@ final class FieldItemDoubleBuilder {
   private mixed $value;
 
   /**
+   * The URI schemes Drupal resolves internally rather than externally.
+   */
+  private const array INTERNAL_SCHEMES = ['internal', 'entity', 'base', 'route'];
+
+  /**
+   * Factory for creating Url doubles.
+   *
+   * @var callable|null
+   */
+  private mixed $urlFactory = NULL;
+
+  /**
    * Constructs a FieldItemDoubleBuilder.
    *
    * @param mixed $value
@@ -53,7 +65,20 @@ final class FieldItemDoubleBuilder {
       'setValue' => $this->buildSetValueResolver(),
       '__set' => $this->buildMagicSetResolver(),
       'isEmpty' => $this->buildIsEmptyResolver(),
+      'getUrl' => $this->buildGetUrlResolver(),
+      'getTitle' => $this->buildGetTitleResolver(),
+      'isExternal' => $this->buildIsExternalResolver(),
     ];
+  }
+
+  /**
+   * Sets the factory for creating Url doubles.
+   *
+   * @param callable $factory
+   *   A callable that accepts (string $uri) and returns a Url double.
+   */
+  public function setUrlFactory(callable $factory): void {
+    $this->urlFactory = $factory;
   }
 
   /**
@@ -273,6 +298,74 @@ final class FieldItemDoubleBuilder {
    */
   private function buildIsEmptyResolver(): callable {
     return fn(array $context): bool => $this->value === NULL || $this->value === '';
+  }
+
+  /**
+   * Builds the ::getUrl resolver.
+   *
+   * Returns a Url double built from the item's "uri" property. The double
+   * reports the URI verbatim from ::toString: a double does not resolve
+   * Drupal's internal URI schemes the way \Drupal\Core\Url does.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildGetUrlResolver(): callable {
+    return function (array $context): mixed {
+      if ($this->urlFactory === NULL) {
+        throw new \LogicException('Url factory not set. Cannot create Url double.');
+      }
+      return ($this->urlFactory)($this->readProperty('uri') ?? '');
+    };
+  }
+
+  /**
+   * Builds the ::getTitle resolver.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildGetTitleResolver(): callable {
+    return function (array $context): ?string {
+      $title = $this->readProperty('title');
+      return $title === NULL ? NULL : (string) $title;
+    };
+  }
+
+  /**
+   * Builds the ::isExternal resolver.
+   *
+   * A URI counts as external unless it carries one of the schemes Drupal
+   * resolves internally.
+   *
+   * @return callable
+   *   The resolver callable.
+   */
+  private function buildIsExternalResolver(): callable {
+    return function (array $context): bool {
+      $uri = (string) ($this->readProperty('uri') ?? '');
+      $scheme = parse_url($uri, PHP_URL_SCHEME);
+      if (!is_string($scheme) || $scheme === '') {
+        return FALSE;
+      }
+      return !in_array($scheme, self::INTERNAL_SCHEMES, TRUE);
+    };
+  }
+
+  /**
+   * Reads a single property from the item value.
+   *
+   * @param string $property
+   *   The property name.
+   *
+   * @return mixed
+   *   The property value, or NULL when the value carries no such property.
+   */
+  private function readProperty(string $property): mixed {
+    if (is_array($this->value)) {
+      return $this->value[$property] ?? NULL;
+    }
+    return NULL;
   }
 
   /**

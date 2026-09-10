@@ -14,6 +14,8 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\FieldItemInterface;
+use Drupal\link\LinkItemInterface;
 use Deuteros\Tests\Fixtures\SecondTestTrait;
 use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
@@ -1970,6 +1972,75 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $fieldDef = $entity->get('field_meta')->getFieldDefinition();
     $this->assertSame('metatag', $fieldDef->getType());
     $this->assertSame('field_meta', $fieldDef->getName());
+  }
+
+  /**
+   * Tests that a link field yields items implementing "LinkItemInterface".
+   */
+  public function testLinkFieldItemInterface(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_link', ['uri' => 'https://example.com/book', 'title' => 'Book'])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $item = $entity->get('field_link')->first();
+    $this->assertInstanceOf(LinkItemInterface::class, $item);
+    $this->assertSame('https://example.com/book', $item->getUrl()->toString());
+    $this->assertSame('Book', $item->getTitle());
+    $this->assertTrue($item->isExternal());
+  }
+
+  /**
+   * Tests that an internal URI reports itself as not external.
+   */
+  public function testLinkFieldInternalUri(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_link', ['uri' => 'internal:/about'])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $item = $entity->get('field_link')->first();
+    $this->assertInstanceOf(LinkItemInterface::class, $item);
+    $this->assertFalse($item->isExternal());
+    $this->assertNull($item->getTitle());
+  }
+
+  /**
+   * Tests that a declared link type applies even without a value.
+   */
+  public function testLinkFieldFromDeclaredType(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_link', ['uri' => ''], type: 'link')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertInstanceOf(LinkItemInterface::class, $entity->get('field_link')->first());
+  }
+
+  /**
+   * Tests that a non-link field keeps the plain field item interface.
+   */
+  public function testNonLinkFieldKeepsPlainInterface(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('title', 'Plain')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $item = $entity->get('title')->first();
+    $this->assertInstanceOf(FieldItemInterface::class, $item);
+    $this->assertNotInstanceOf(LinkItemInterface::class, $item);
   }
 
 }

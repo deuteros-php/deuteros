@@ -181,3 +181,24 @@ class GeneratedUrl {
     return '';
   }
 }
+
+// Link field item interface.
+namespace Drupal\link;
+
+use Drupal\Core\Field\FieldItemInterface;
+
+interface LinkItemInterface extends FieldItemInterface {
+
+  const LINK_INTERNAL = 0x01;
+
+  const LINK_EXTERNAL = 0x10;
+
+  const LINK_GENERIC = 0x11;
+
+  public function isExternal();
+
+  public function getUrl();
+
+  public function getTitle(): ?string;
+
+}

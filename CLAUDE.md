@@ -223,6 +223,22 @@ be used by user-provided context.
 - Both adapters wire `__isset` using the same pattern as `__get`
 - The runtime generated interface declares `__isset(string $name): bool`
 
+**Link Field Items:**
+- A field item whose value carries a `uri` property, or whose declared type
+  is `link`, is doubled against "LinkItemInterface" instead of
+  "FieldItemInterface"
+- `EntityDoubleFactory::detectLinkItems()` performs the detection on the
+  value shape, mirroring `::detectEntityReferences`, and returns FALSE when
+  the link module is absent so the interface is never prophesized blindly
+- `FieldItemDoubleBuilder` resolves `::getUrl` through a Url factory set by
+  the adapter, reusing `UrlDoubleBuilder`, plus `::getTitle` and
+  `::isExternal`
+- `::getUrl` reports the URI verbatim: a double does not resolve Drupal's
+  internal URI schemes
+- Adapters wire the three methods conditionally via `method_exists`, the same
+  idiom used for `getIterator` and `count`
+- `stubs/stubs.php` carries a "LinkItemInterface" stub for production mode
+
 **Field Type Declaration:**
 - `FieldDoubleDefinition` accepts an optional second `string $type` parameter
   (e.g. `new FieldDoubleDefinition($value, 'metatag')`)

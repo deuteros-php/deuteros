@@ -9,6 +9,7 @@ use Deuteros\Double\Prophecy\ProphecyEntityDoubleFactory;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldItemInterface;
+use Drupal\link\LinkItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Url;
 use PHPUnit\Framework\TestCase;
@@ -417,10 +418,13 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $builder = new FieldItemListDoubleBuilder($fieldDoubleDefinition, $fieldName, $entityDoubleDefinition->mutable);
 
     // Set up field item factory.
+    // Detect link items to determine the field item interface.
+    $hasLinkItems = $this->detectLinkItems($fieldDoubleDefinition, $context);
+
     $builder->setFieldItemFactory(
-      function (int $delta, mixed $value, array $context) use ($fieldName, $entityDoubleDefinition) {
+      function (int $delta, mixed $value, array $context) use ($fieldName, $entityDoubleDefinition, $hasLinkItems) {
         /** @var array<string, mixed> $context */
-        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context);
+        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context, $hasLinkItems);
       }
     );
 
@@ -443,6 +447,52 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $this->wireFieldListResolvers($double, $builder, $entityDoubleDefinition, $context, $hasEntityReferences);
 
     return $this->instantiateFieldListDouble($double);
+  }
+
+  /**
+   * Detects if a field contains link items.
+   *
+   * Detection works on the value shape, the way entity reference detection
+   * does: an item carrying a "uri" property is a link item. A declared
+   * field type of "link" also counts, so a link field with no value still
+   * gets the link interface.
+   *
+   * @param \Deuteros\Double\FieldDoubleDefinition $definition
+   *   The field definition.
+   * @param array<string, mixed> $context
+   *   The context.
+   *
+   * @return bool
+   *   TRUE if the field holds link items.
+   */
+  private function detectLinkItems(FieldDoubleDefinition $definition, array $context): bool {
+    // A site without the link module cannot double the interface.
+    if (!interface_exists(LinkItemInterface::class)) {
+      return FALSE;
+    }
+
+    if ($definition->getType() === 'link') {
+      return TRUE;
+    }
+
+    $value = $definition->getValue();
+    if ($definition->isCallable()) {
+      assert(is_callable($value));
+      $value = $value($context);
+    }
+
+    if (!is_array($value)) {
+      return FALSE;
+    }
+    if (array_key_exists('uri', $value)) {
+      return TRUE;
+    }
+    foreach ($value as $item) {
+      if (is_array($item) && array_key_exists('uri', $item)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**
@@ -481,15 +531,20 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   Whether the entity is mutable.
    * @param array<string, mixed> $context
    *   The context.
+   * @param bool $isLink
+   *   Whether the item is a link item.
    *
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context): FieldItemInterface {
+  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context, bool $isLink = FALSE): FieldItemInterface {
     $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable);
+    $builder->setUrlFactory(fn(string $uri) => $this->createUrlDouble($uri, $context));
 
-    // Create the double.
-    $double = $this->createFieldItemDoubleObject();
+    // Create the double, using the link interface when the item is a link.
+    $double = $isLink
+      ? $this->createLinkFieldItemDoubleObject()
+      : $this->createFieldItemDoubleObject();
 
     // Wire up resolvers.
     $this->wireFieldItemResolvers($double, $builder, $mutable, $delta, $fieldName, $context);
@@ -813,6 +868,14 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   The mock/prophecy object (not revealed).
    */
   abstract protected function createFieldItemDoubleObject(): object;
+
+  /**
+   * Creates a raw field item double object for a link item.
+   *
+   * @return object
+   *   The framework-specific double object.
+   */
+  abstract protected function createLinkFieldItemDoubleObject(): object;
 
   /**
    * Wires field item method resolvers to the double.

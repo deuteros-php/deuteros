@@ -573,6 +573,56 @@ $entities = $entity->get('field_tags')->referencedEntities();
 // Returns [$tag1, $tag2, $tag3]
 ```
 
+### Link Fields
+
+An item whose value carries a `uri` property is doubled as a
+`LinkItemInterface`, so code that resolves a URL from a link field works
+against the double. Detection follows the value shape, the way entity
+reference detection does, so no type declaration is needed:
+
+```php
+public function testLinkField(): void {
+  $entity = $this->factory->create(
+    EntityDoubleDefinitionBuilder::create('node')
+      ->bundle('article')
+      ->field('field_link', [
+        'uri' => 'https://example.com/book',
+        'title' => 'Book',
+      ])
+      ->build()
+  );
+
+  $item = $entity->get('field_link')->first();
+
+  $this->assertInstanceOf(LinkItemInterface::class, $item);
+  $this->assertSame('https://example.com/book', $item->getUrl()->toString());
+  $this->assertSame('Book', $item->getTitle());
+  $this->assertTrue($item->isExternal());
+}
+```
+
+Declaring `type: 'link'` has the same effect, which is how a link field with
+no URI still gets the interface:
+
+```php
+->field('field_link', [], type: 'link')
+```
+
+Three methods are wired:
+
+| Method | Behavior |
+|--------|----------|
+| `::getUrl` | A Url double reporting the `uri` property verbatim from `::toString` |
+| `::getTitle` | The `title` property, or NULL when absent |
+| `::isExternal` | FALSE for the `internal`, `entity`, `base` and `route` schemes and for a URI with no scheme, TRUE otherwise |
+
+`::getUrl` returns the URI as written. A double does not resolve Drupal's
+internal URI schemes the way \Drupal\Core\Url does, so
+`internal:/about` stays `internal:/about` rather than becoming `/about`.
+
+Doubling the interface needs the link module to be present. Without it the
+field keeps the plain field item interface.
+
 ### Mutable Doubles
 
 By default, entity doubles are immutable. Use `createMutable()` for doubles that can be modified:

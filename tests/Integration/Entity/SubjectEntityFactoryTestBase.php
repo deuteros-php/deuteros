@@ -9,6 +9,7 @@ use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
+use Drupal\link\LinkItemInterface;
 use Drupal\node\Entity\Node;
 
 /**
@@ -404,6 +405,26 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('Container not installed. Call installContainer() before getContainer().');
     $factory->getContainer();
+  }
+
+  /**
+   * Tests that a link field on a real entity yields a "LinkItemInterface".
+   *
+   * Code that resolves a URL from a link field asks the item for its Url,
+   * so the injected field double has to satisfy that interface.
+   */
+  public function testLinkFieldOnSubjectEntity(): void {
+    $node = $this->createEntity(Node::class, [
+      'nid' => 1,
+      'type' => 'article',
+      'field_link' => ['uri' => 'https://example.com/appointments', 'title' => 'Book'],
+    ]);
+    assert($node instanceof Node);
+
+    $item = $node->get('field_link')->first();
+    $this->assertInstanceOf(LinkItemInterface::class, $item);
+    $this->assertSame('https://example.com/appointments', $item->getUrl()->toString());
+    $this->assertSame('Book', $item->getTitle());
   }
 
 }

@@ -17,6 +17,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
+use Drupal\link\LinkItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Url;
@@ -322,6 +323,15 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
+  protected function createLinkFieldItemDoubleObject(): object {
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', LinkItemInterface::class);
+    assert(is_object($mock));
+    return $mock;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void {
     /** @var \PHPUnit\Framework\MockObject\MockObject $mock */
     $mock = $double;
@@ -332,6 +342,13 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $mock->method('getValue')->willReturnCallback(fn() => $resolvers['getValue']($context));
     $mock->method('getString')->willReturnCallback(fn() => $resolvers['getString']($context));
     $mock->method('isEmpty')->willReturnCallback(fn() => $resolvers['isEmpty']($context));
+
+    // Wire the link methods if the mock implements "LinkItemInterface".
+    if (method_exists($mock, 'getUrl')) {
+      $mock->method('getUrl')->willReturnCallback(fn() => $resolvers['getUrl']($context));
+      $mock->method('getTitle')->willReturnCallback(fn() => $resolvers['getTitle']($context));
+      $mock->method('isExternal')->willReturnCallback(fn() => $resolvers['isExternal']($context));
+    }
 
     if ($mutable) {
       $self = $mock;

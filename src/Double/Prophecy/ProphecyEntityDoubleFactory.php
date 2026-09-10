@@ -17,6 +17,7 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
+use Drupal\link\LinkItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Url;
@@ -376,6 +377,13 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
   /**
    * {@inheritdoc}
    */
+  protected function createLinkFieldItemDoubleObject(): object {
+    return $this->prophet->prophesize(LinkItemInterface::class);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function wireFieldItemResolvers(object $double, FieldItemDoubleBuilder $builder, bool $mutable, int $delta, string $fieldName, array $context): void {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Core\Field\FieldItemInterface> $prophecy */
     $prophecy = $double;
@@ -396,6 +404,13 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $prophecy->getValue()->will(fn() => $resolvers['getValue']($context));
     $prophecy->getString()->will(fn() => $resolvers['getString']($context));
     $prophecy->isEmpty()->will(fn() => $resolvers['isEmpty']($context));
+
+    // Wire the link methods if the prophecy implements "LinkItemInterface".
+    if (method_exists($prophecy->reveal(), 'getUrl')) {
+      $prophecy->getUrl()->will(fn() => $resolvers['getUrl']($context));
+      $prophecy->getTitle()->will(fn() => $resolvers['getTitle']($context));
+      $prophecy->isExternal()->will(fn() => $resolvers['isExternal']($context));
+    }
 
     if ($mutable) {
       $revealed = NULL;

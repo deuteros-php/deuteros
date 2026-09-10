@@ -376,4 +376,94 @@ class FieldItemDoubleBuilderTest extends TestCase {
     $this->assertSame($value, $resolvers['getValue']([]));
   }
 
+  /**
+   * Tests ::getUrl resolver builds a Url double from the "uri" property.
+   */
+  public function testGetUrlResolverUsesUriProperty(): void {
+    $builder = new FieldItemDoubleBuilder(
+      ['uri' => 'https://example.com/appointments', 'title' => 'Book'],
+      0,
+      'field_link'
+    );
+    $builder->setUrlFactory(static fn(string $uri): string => "url:$uri");
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('url:https://example.com/appointments', $resolvers['getUrl']([]));
+  }
+
+  /**
+   * Tests ::getUrl resolver passes an empty URI when the property is absent.
+   */
+  public function testGetUrlResolverWithoutUriProperty(): void {
+    $builder = new FieldItemDoubleBuilder(['title' => 'Book'], 0, 'field_link');
+    $builder->setUrlFactory(static fn(string $uri): string => "url:$uri");
+    $resolvers = $builder->getResolvers();
+
+    $this->assertSame('url:', $resolvers['getUrl']([]));
+  }
+
+  /**
+   * Tests ::getUrl resolver throws when no Url factory is set.
+   */
+  public function testGetUrlResolverThrowsWithoutFactory(): void {
+    $builder = new FieldItemDoubleBuilder(['uri' => 'https://example.com'], 0, 'field_link');
+    $resolvers = $builder->getResolvers();
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('Url factory not set');
+
+    $resolvers['getUrl']([]);
+  }
+
+  /**
+   * Tests ::getTitle resolver returns the "title" property.
+   */
+  public function testGetTitleResolver(): void {
+    $builder = new FieldItemDoubleBuilder(
+      ['uri' => 'https://example.com', 'title' => 'Example'],
+      0,
+      'field_link'
+    );
+
+    $this->assertSame('Example', $builder->getResolvers()['getTitle']([]));
+  }
+
+  /**
+   * Tests ::getTitle resolver returns NULL when the property is absent.
+   */
+  public function testGetTitleResolverWithoutTitle(): void {
+    $builder = new FieldItemDoubleBuilder(['uri' => 'https://example.com'], 0, 'field_link');
+
+    $this->assertNull($builder->getResolvers()['getTitle']([]));
+  }
+
+  /**
+   * Tests ::isExternal resolver for an external URI.
+   */
+  public function testIsExternalResolverForExternalUri(): void {
+    $builder = new FieldItemDoubleBuilder(['uri' => 'https://example.com'], 0, 'field_link');
+
+    $this->assertTrue($builder->getResolvers()['isExternal']([]));
+  }
+
+  /**
+   * Tests ::isExternal resolver for Drupal's internal URI schemes.
+   */
+  public function testIsExternalResolverForInternalSchemes(): void {
+    foreach (['internal:/about', 'entity:node/1', 'base:admin', 'route:<front>'] as $uri) {
+      $builder = new FieldItemDoubleBuilder(['uri' => $uri], 0, 'field_link');
+
+      $this->assertFalse($builder->getResolvers()['isExternal']([]), $uri);
+    }
+  }
+
+  /**
+   * Tests ::isExternal resolver for a URI carrying no scheme.
+   */
+  public function testIsExternalResolverWithoutScheme(): void {
+    $builder = new FieldItemDoubleBuilder(['uri' => '/about'], 0, 'field_link');
+
+    $this->assertFalse($builder->getResolvers()['isExternal']([]));
+  }
+
 }

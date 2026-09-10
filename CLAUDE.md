@@ -170,6 +170,16 @@ be used by user-provided context.
 - Field definition mocks are created by `ServiceDoublerInterface::createFieldDefinitionMock()`
 - Only fields passed to `create()` are defined; undefined fields return false/null
 
+**Subject Entity Bundle Keys:**
+- A bundle key can hold an entity reference instead of the bundle name, for
+  instance the `type` of a node or block content entity
+- `SubjectEntityFactory::initializeContentEntity()` routes the value through
+  `::resolveBundleValue`, which normalizes it with
+  `EntityReferenceNormalizer` and takes the target ID, so `::bundle` returns
+  the bundle name rather than the raw reference
+- An empty reference falls back to the entity type ID, matching an absent
+  bundle key; scalar values pass through untouched
+
 **Container Reuse:**
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
 - When new entity types are registered via `create()`, the existing container is

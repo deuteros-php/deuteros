@@ -6,7 +6,9 @@ namespace Deuteros\Tests\Unit\Entity;
 
 use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Tests\Fixtures\EntityWithoutAttribute;
+use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestConfigEntityChild;
+use Deuteros\Tests\Fixtures\TestContentEntity;
 use Deuteros\Tests\Fixtures\TestContentEntityChild;
 use Deuteros\Tests\Fixtures\TestContentEntityGrandchild;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
@@ -241,6 +243,78 @@ class SubjectEntityFactoryTest extends TestCase {
     // TestContentEntityChild should have its own sequence: 1, 2.
     $this->assertSame(1, $testEntity1->id());
     $this->assertSame(2, $testEntity2->id());
+  }
+
+  /**
+   * Tests that a bundle key holding a reference resolves to the bundle name.
+   */
+  public function testCreateResolvesBundleFromEntityReference(): void {
+    $this->factory()->installContainer();
+
+    $bundle = $this->factory()->create(TestConfigEntity::class, ['id' => 'article']);
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'type' => ['entity' => $bundle],
+    ]);
+
+    $this->assertSame('article', $entity->bundle());
+  }
+
+  /**
+   * Tests that a bundle key holding a bare entity resolves the same way.
+   */
+  public function testCreateResolvesBundleFromBareEntity(): void {
+    $this->factory()->installContainer();
+
+    $bundle = $this->factory()->create(TestConfigEntity::class, ['id' => 'article']);
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'type' => $bundle,
+    ]);
+
+    $this->assertSame('article', $entity->bundle());
+  }
+
+  /**
+   * Tests that a bundle key holding only a target ID resolves to it.
+   */
+  public function testCreateResolvesBundleFromTargetId(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'type' => ['target_id' => 'article'],
+    ]);
+
+    $this->assertSame('article', $entity->bundle());
+  }
+
+  /**
+   * Tests that an empty bundle reference falls back to the entity type ID.
+   */
+  public function testCreateFallsBackWhenBundleReferenceIsEmpty(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'type' => ['entity' => NULL],
+    ]);
+
+    $this->assertSame('test_entity', $entity->bundle());
+  }
+
+  /**
+   * Tests that a scalar bundle key keeps working unchanged.
+   */
+  public function testCreateKeepsScalarBundle(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'type' => 'article',
+    ]);
+
+    $this->assertSame('article', $entity->bundle());
   }
 
 }

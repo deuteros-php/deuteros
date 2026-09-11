@@ -1628,6 +1628,73 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests iterating over the items of a multi-value field with foreach.
+   */
+  public function testFieldItemIteration(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [
+          ['target_id' => 1],
+          ['target_id' => 2],
+          ['target_id' => 3],
+        ])
+        ->build()
+    );
+
+    $targetIds = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity->get('field_tags') as $delta => $item) {
+      assert(is_int($delta));
+      // @phpstan-ignore property.nonObject
+      $targetIds[$delta] = $item->target_id;
+    }
+
+    $this->assertSame([1, 2, 3], $targetIds);
+  }
+
+  /**
+   * Tests iterating over the single item of a scalar field.
+   */
+  public function testSingleFieldItemIteration(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', 'Test Title')
+        ->build()
+    );
+
+    $values = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity->get('field_title') as $item) {
+      // @phpstan-ignore property.nonObject
+      $values[] = $item->value;
+    }
+
+    $this->assertSame(['Test Title'], $values);
+  }
+
+  /**
+   * Tests that iterating over an empty field yields no items.
+   */
+  public function testEmptyFieldItemIteration(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_title', NULL)
+        ->build()
+    );
+
+    $items = [];
+    // @phpstan-ignore foreach.nonIterable
+    foreach ($entity->get('field_title') as $item) {
+      $items[] = $item;
+    }
+
+    $this->assertSame([], $items);
+  }
+
+  /**
    * Tests iterating over entity fields with foreach.
    */
   public function testEntityFieldIteration(): void {

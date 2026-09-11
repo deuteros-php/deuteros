@@ -250,14 +250,16 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldListDoubleObject(): object {
-    return $this->prophet->prophesize(FieldItemListInterface::class);
+    return $this->prophet->prophesize(FieldItemListInterface::class)
+      ->willImplement(\IteratorAggregate::class);
   }
 
   /**
    * {@inheritdoc}
    */
   protected function createEntityReferenceFieldListDoubleObject(): object {
-    return $this->prophet->prophesize(EntityReferenceFieldItemListInterface::class);
+    return $this->prophet->prophesize(EntityReferenceFieldItemListInterface::class)
+      ->willImplement(\IteratorAggregate::class);
   }
 
   /**

@@ -125,6 +125,15 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   private static array $runtimeInterfaceCache = [];
 
   /**
+   * Cache of generated iterable interfaces.
+   *
+   * Maps a field list interface name to the generated interface name.
+   *
+   * @var array<class-string, class-string>
+   */
+  private static array $iterableInterfaceCache = [];
+
+  /**
    * Cache of generated trait stub classes.
    *
    * Maps base class + sorted trait list (as cache key) to stub class name.
@@ -495,6 +504,55 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $this->wireFieldItemResolvers($double, $builder, $mutable, $delta, $fieldName, $context);
 
     return $this->instantiateFieldItemDouble($double);
+  }
+
+  /**
+   * Gets or creates an iterable variant of a field list interface.
+   *
+   * "ItemList" implements "\IteratorAggregate", but "FieldItemListInterface"
+   * only extends "\Traversable". A double of the interface alone therefore
+   * becomes an "\Iterator" whose methods nothing wires, so a "foreach" over
+   * the double yields nothing or fails. The generated interface adds
+   * "\IteratorAggregate", which makes the doubler wire ::getIterator instead.
+   *
+   * The interface adds no method of its own, because
+   * "FieldItemListInterface" already declares the magic accessors.
+   *
+   * @param class-string $interface
+   *   The field list interface to extend.
+   *
+   * @return class-string
+   *   The generated interface name.
+   */
+  protected function getOrCreateIterableInterface(string $interface): string {
+    // The stubs used without Drupal core already extend "\IteratorAggregate".
+    if (is_a($interface, \IteratorAggregate::class, TRUE)) {
+      return $interface;
+    }
+
+    if (isset(self::$iterableInterfaceCache[$interface])) {
+      return self::$iterableInterfaceCache[$interface];
+    }
+
+    $hash = substr(md5($interface), 0, 12);
+    /** @var class-string $interfaceName */
+    $interfaceName = "Deuteros\\Generated\\IterableInterface_{$hash}";
+
+    if (!interface_exists($interfaceName, FALSE)) {
+      $parts = explode('\\', $interfaceName);
+      $shortName = array_pop($parts);
+      $code = sprintf(
+        'namespace %s { interface %s extends \\%s, \\IteratorAggregate {} }',
+        implode('\\', $parts),
+        $shortName,
+        $interface
+      );
+      // phpcs:ignore Drupal.Functions.DiscouragedFunctions.Discouraged
+      eval($code);
+    }
+
+    self::$iterableInterfaceCache[$interface] = $interfaceName;
+    return $interfaceName;
   }
 
   /**

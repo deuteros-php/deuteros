@@ -206,7 +206,8 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createFieldListDoubleObject(): object {
-    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldItemListInterface::class);
+    $interface = $this->getOrCreateIterableInterface(FieldItemListInterface::class);
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', $interface);
     assert(is_object($mock));
     return $mock;
   }
@@ -215,7 +216,8 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
    * {@inheritdoc}
    */
   protected function createEntityReferenceFieldListDoubleObject(): object {
-    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', EntityReferenceFieldItemListInterface::class);
+    $interface = $this->getOrCreateIterableInterface(EntityReferenceFieldItemListInterface::class);
+    $mock = static::invokeNonPublicMethod($this->testCase, 'createMock', $interface);
     assert(is_object($mock));
     return $mock;
   }

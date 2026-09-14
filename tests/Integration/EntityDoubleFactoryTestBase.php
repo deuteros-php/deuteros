@@ -15,6 +15,7 @@ use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Deuteros\Tests\Fixtures\SecondTestTrait;
+use Deuteros\Tests\Fixtures\TestFieldItemClass;
 use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
@@ -2080,6 +2081,43 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $storageDef = $entity->get('field_tags')->getFieldDefinition()->getFieldStorageDefinition();
     $this->assertSame('entity_reference', $storageDef->getType());
     $this->assertSame('target_id', $storageDef->getMainPropertyName());
+  }
+
+  /**
+   * Tests that a field item class names the main property.
+   */
+  public function testFieldStorageDefinitionMainPropertyFromItemClass(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_link', ['uri' => 'https://example.com'], 'link', itemClass: TestFieldItemClass::class)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $storageDef = $entity->get('field_link')->getFieldDefinition()->getFieldStorageDefinition();
+    $this->assertSame('link', $storageDef->getType());
+    $this->assertSame('uri', $storageDef->getMainPropertyName());
+  }
+
+  /**
+   * Tests that settings and item class survive a mutation of the field.
+   */
+  public function testFieldSettingsAndItemClassSurviveMutation(): void {
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_link', ['uri' => 'https://example.com'], 'link', ['link_type' => 16], TestFieldItemClass::class)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $entity->set('field_link', ['uri' => 'https://example.org']);
+
+    $fieldDef = $entity->get('field_link')->getFieldDefinition();
+    $this->assertSame('link', $fieldDef->getType());
+    $this->assertSame(16, $fieldDef->getSetting('link_type'));
+    $this->assertSame('uri', $fieldDef->getFieldStorageDefinition()->getMainPropertyName());
   }
 
 }

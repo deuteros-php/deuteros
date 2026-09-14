@@ -311,7 +311,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       $storageDef->method('getName')->willReturn($builder->getFieldName());
       $storageDef->method('getType')->willReturn($builder->getFieldType());
       $storageDef->method('getSetting')->willReturnCallback($getSetting);
-      $storageDef->method('getMainPropertyName')->willReturn(static::getMainPropertyName($hasEntityReferences));
+      $storageDef->method('getMainPropertyName')->willReturn($field_double_definition->getMainPropertyName($hasEntityReferences));
 
       $fieldDef = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldDefinitionInterface::class);
       assert(is_object($fieldDef));

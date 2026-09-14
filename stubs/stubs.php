@@ -53,6 +53,8 @@ interface FieldItemInterface {
 
   public function getString();
 
+  public static function mainPropertyName();
+
 }
 
 interface FieldStorageDefinitionInterface {

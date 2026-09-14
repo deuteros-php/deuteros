@@ -6,6 +6,7 @@ namespace Deuteros\Tests\Unit\Double;
 
 use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Double\FieldDoubleDefinition;
+use Deuteros\Tests\Fixtures\TestFieldItemClass;
 use Deuteros\Tests\Fixtures\SecondTestTrait;
 use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -501,6 +502,18 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
   }
 
   /**
+   * Tests that field() stores the field item class.
+   */
+  public function testFieldWithItemClass(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_link', ['uri' => 'https://example.com'], 'link', itemClass: TestFieldItemClass::class)
+      ->build();
+
+    $this->assertSame(TestFieldItemClass::class, $definition->fields['field_link']->getItemClass());
+    $this->assertSame('uri', $definition->fields['field_link']->getMainPropertyName());
+  }
+
+  /**
    * Tests that fields() bulk method supports type and settings via array spec.
    */
   public function testFieldsBulkWithTypeAndSettings(): void {
@@ -511,6 +524,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
           'value' => 'typed value',
           'type' => 'string',
           'settings' => ['max_length' => 64],
+          'item_class' => TestFieldItemClass::class,
         ],
       ])
       ->build();
@@ -522,6 +536,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertSame('typed value', $definition->fields['field_typed']->getValue());
     $this->assertSame('string', $definition->fields['field_typed']->getType());
     $this->assertSame(64, $definition->fields['field_typed']->getSetting('max_length'));
+    $this->assertSame(TestFieldItemClass::class, $definition->fields['field_typed']->getItemClass());
   }
 
   /**

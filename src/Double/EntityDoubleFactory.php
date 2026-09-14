@@ -865,24 +865,6 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   abstract protected function wireFieldListResolvers(object $double, FieldItemListDoubleBuilder $builder, EntityDoubleDefinition $definition, array $context, bool $hasEntityReferences = FALSE): void;
 
   /**
-   * Returns the name of the main property of a field's items.
-   *
-   * Field item doubles hold a scalar under "value", and entity reference
-   * items hold their target under "target_id". The field storage definition
-   * double reports the same name, so code that reads a field through its
-   * definition gets the property the item doubles answer to.
-   *
-   * @param bool $hasEntityReferences
-   *   Whether the field holds entity references.
-   *
-   * @return string
-   *   The main property name.
-   */
-  protected static function getMainPropertyName(bool $hasEntityReferences): string {
-    return $hasEntityReferences ? 'target_id' : 'value';
-  }
-
-  /**
    * Creates a field item double object.
    *
    * @return object

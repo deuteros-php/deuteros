@@ -435,6 +435,28 @@ $storage->getMainPropertyName(); // 'value'
 $storage->getSetting('max_length'); // 512
 ```
 
+To get the real main property of a field type, pass its field item class with
+the `itemClass:` named parameter (or the `item_class` key of the `fields()`
+array spec). Deuteros calls the static `::mainPropertyName()` of that class
+and nothing else, so any `FieldItemInterface` implementation from Drupal core
+or a module works, without loading a plugin manager:
+
+```php
+use Drupal\link\Plugin\Field\FieldType\LinkItem;
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_link', ['uri' => 'https://example.com'], 'link', itemClass: LinkItem::class)
+    ->build()
+);
+
+$entity->get('field_link')->getFieldDefinition()->getFieldStorageDefinition()->getMainPropertyName(); // 'uri'
+```
+
+A class without a static `::mainPropertyName()` is rejected with an
+`InvalidArgumentException` when the definition is built.
+
 ---
 
 ## Advanced Use Cases

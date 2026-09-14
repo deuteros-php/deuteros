@@ -367,7 +367,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $storageDefProphecy->getName()->willReturn($builder->getFieldName());
       $storageDefProphecy->getType()->willReturn($builder->getFieldType());
       $storageDefProphecy->getSetting(Argument::type('string'))->will($getSetting);
-      $storageDefProphecy->getMainPropertyName()->willReturn(static::getMainPropertyName($hasEntityReferences));
+      $storageDefProphecy->getMainPropertyName()->willReturn($field_double_definition->getMainPropertyName($hasEntityReferences));
 
       $fieldDefProphecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
       $fieldDefProphecy->getName()->willReturn($builder->getFieldName());

@@ -412,6 +412,29 @@ $field_def->getSetting('missing');    // NULL
 
 `getSetting()` returns `NULL` for keys that were not provided.
 
+### Field Storage Definition
+
+The field definition of a typed field also answers `getFieldStorageDefinition()`.
+The storage definition double reports the same name, type and settings as the
+field definition, and names the main property of the field items: `value`, or
+`target_id` for an entity reference field. Code that reads a field through its
+storage definition, the way Drupal reads entity keys, works without further
+setup:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_body', 'Hello', 'text_long', settings: ['max_length' => 512])
+    ->build()
+);
+
+$storage = $entity->get('field_body')->getFieldDefinition()->getFieldStorageDefinition();
+$storage->getType();             // 'text_long'
+$storage->getMainPropertyName(); // 'value'
+$storage->getSetting('max_length'); // 512
+```
+
 ---
 
 ## Advanced Use Cases

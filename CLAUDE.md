@@ -230,7 +230,13 @@ be used by user-provided context.
   parameter: `->field('field_meta', $value, type: 'metatag')`
 - When a non-empty type is set, the PHPUnit and Prophecy adapters wire
   `getFieldDefinition()` on the field list double to return a
-  `FieldDefinitionInterface` mock with `getName()` and `getType()` populated
+  `FieldDefinitionInterface` mock with `getName()`, `getType()` and
+  `getSetting()` populated
+- That mock answers `getFieldStorageDefinition()` with a
+  `FieldStorageDefinitionInterface` mock carrying the same name, type and
+  settings, plus `getMainPropertyName()`: `"value"`, or `"target_id"` for an
+  entity reference field, as `EntityDoubleFactory::getMainPropertyName()`
+  decides from the entity reference detection
 - `EntityDoubleBuilder::getFieldDefinitionForAccess()` preserves the type from
   the original `FieldDoubleDefinition` when rebuilding from mutable state after
   `$entity->set()`; the type is read from `$this->definition->getField($fieldName)`

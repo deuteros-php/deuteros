@@ -18,6 +18,7 @@ use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Url;
 use PHPUnit\Framework\TestCase;
@@ -355,15 +356,24 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $prophecy->referencedEntities()->will(fn() => $resolvers['referencedEntities']($context));
     }
 
-    // Wire getFieldDefinition if a field type is configured.
+    // Wire getFieldDefinition if a field type is configured. The field
+    // definition carries a field storage definition with the same name, type
+    // and settings, plus the main property name of the items.
     if ($builder->getFieldType() !== '') {
+      $field_double_definition = $builder->getFieldDefinition();
+      $getSetting = fn(array $args) => $field_double_definition->getSetting((string) $args[0]);
+
+      $storageDefProphecy = $this->prophet->prophesize(FieldStorageDefinitionInterface::class);
+      $storageDefProphecy->getName()->willReturn($builder->getFieldName());
+      $storageDefProphecy->getType()->willReturn($builder->getFieldType());
+      $storageDefProphecy->getSetting(Argument::type('string'))->will($getSetting);
+      $storageDefProphecy->getMainPropertyName()->willReturn(static::getMainPropertyName($hasEntityReferences));
+
       $fieldDefProphecy = $this->prophet->prophesize(FieldDefinitionInterface::class);
       $fieldDefProphecy->getName()->willReturn($builder->getFieldName());
       $fieldDefProphecy->getType()->willReturn($builder->getFieldType());
-      $field_double_definition = $builder->getFieldDefinition();
-      $fieldDefProphecy->getSetting(Argument::type('string'))->will(
-        fn(array $args) => $field_double_definition->getSetting((string) $args[0])
-      );
+      $fieldDefProphecy->getSetting(Argument::type('string'))->will($getSetting);
+      $fieldDefProphecy->getFieldStorageDefinition()->willReturn($storageDefProphecy->reveal());
       $prophecy->getFieldDefinition()->willReturn($fieldDefProphecy->reveal());
     }
   }

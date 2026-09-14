@@ -2039,4 +2039,47 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     $this->assertSame('field_meta', $fieldDef->getName());
   }
 
+  /**
+   * Tests that a field with a type exposes its field storage definition.
+   */
+  public function testFieldWithTypeReturnsFieldStorageDefinition(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_body', 'Hello', 'text_long', ['max_length' => 512])
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $storageDef = $entity->get('field_body')->getFieldDefinition()->getFieldStorageDefinition();
+    $this->assertSame('field_body', $storageDef->getName());
+    $this->assertSame('text_long', $storageDef->getType());
+    $this->assertSame('value', $storageDef->getMainPropertyName());
+    $this->assertSame(512, $storageDef->getSetting('max_length'));
+    $this->assertNull($storageDef->getSetting('missing'));
+  }
+
+  /**
+   * Tests that an entity reference field names "target_id" as main property.
+   */
+  public function testEntityReferenceFieldStorageDefinitionMainProperty(): void {
+    $tag = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('taxonomy_term')
+        ->bundle('tags')
+        ->id(1)
+        ->build()
+    );
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_tags', [$tag], 'entity_reference')
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $storageDef = $entity->get('field_tags')->getFieldDefinition()->getFieldStorageDefinition();
+    $this->assertSame('entity_reference', $storageDef->getType());
+    $this->assertSame('target_id', $storageDef->getMainPropertyName());
+  }
+
 }

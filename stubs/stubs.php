@@ -55,6 +55,18 @@ interface FieldItemInterface {
 
 }
 
+interface FieldStorageDefinitionInterface {
+
+  public function getName();
+
+  public function getType();
+
+  public function getSetting($setting_name);
+
+  public function getMainPropertyName();
+
+}
+
 interface FieldDefinitionInterface {
 
   public function getName();
@@ -62,6 +74,8 @@ interface FieldDefinitionInterface {
   public function getType();
 
   public function getSetting($setting_name);
+
+  public function getFieldStorageDefinition();
 
 }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Deuteros\Tests\Unit\Double;
 
 use Deuteros\Double\FieldDoubleDefinition;
+use Deuteros\Tests\Fixtures\TestFieldItemClass;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -118,6 +119,44 @@ class FieldDoubleDefinitionTest extends TestCase {
     ]);
     $this->assertSame(128, $definition->getSetting('max_length'));
     $this->assertTrue($definition->getSetting('is_ascii'));
+    $this->assertSame(['max_length' => 128, 'is_ascii' => TRUE], $definition->getSettings());
+  }
+
+  /**
+   * Tests that the default item class is empty.
+   */
+  public function testDefaultItemClassIsEmpty(): void {
+    $definition = new FieldDoubleDefinition('val');
+    $this->assertSame('', $definition->getItemClass());
+  }
+
+  /**
+   * Tests that the main property name is inferred without an item class.
+   */
+  public function testMainPropertyNameIsInferredWithoutItemClass(): void {
+    $definition = new FieldDoubleDefinition('val', 'string');
+    $this->assertSame('value', $definition->getMainPropertyName());
+    $this->assertSame('target_id', $definition->getMainPropertyName(hasEntityReferences: TRUE));
+  }
+
+  /**
+   * Tests that the item class names the main property.
+   */
+  public function testMainPropertyNameComesFromItemClass(): void {
+    $definition = new FieldDoubleDefinition(['uri' => 'https://example.com'], 'link', [], TestFieldItemClass::class);
+    $this->assertSame(TestFieldItemClass::class, $definition->getItemClass());
+    $this->assertSame('uri', $definition->getMainPropertyName());
+    // The class wins over the inference.
+    $this->assertSame('uri', $definition->getMainPropertyName(hasEntityReferences: TRUE));
+  }
+
+  /**
+   * Tests that an item class without ::mainPropertyName is rejected.
+   */
+  public function testItemClassWithoutMainPropertyNameIsRejected(): void {
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('The field item class "stdClass" must exist and declare a static ::mainPropertyName() method.');
+    new FieldDoubleDefinition('val', 'string', [], \stdClass::class);
   }
 
 }

@@ -230,10 +230,21 @@ be used by user-provided context.
   parameter: `->field('field_meta', $value, type: 'metatag')`
 - When a non-empty type is set, the PHPUnit and Prophecy adapters wire
   `getFieldDefinition()` on the field list double to return a
-  `FieldDefinitionInterface` mock with `getName()` and `getType()` populated
-- `EntityDoubleBuilder::getFieldDefinitionForAccess()` preserves the type from
-  the original `FieldDoubleDefinition` when rebuilding from mutable state after
-  `$entity->set()`; the type is read from `$this->definition->getField($fieldName)`
+  `FieldDefinitionInterface` mock with `getName()`, `getType()` and
+  `getSetting()` populated
+- That mock answers `getFieldStorageDefinition()` with a
+  `FieldStorageDefinitionInterface` mock carrying the same name, type and
+  settings, plus `getMainPropertyName()` from
+  `FieldDoubleDefinition::getMainPropertyName()`: the static
+  `::mainPropertyName()` of the optional field item class (`itemClass:` on
+  `field()`, `item_class` in the `fields()` spec), or else `"value"`, or
+  `"target_id"` for an entity reference field
+- `FieldDoubleDefinition` rejects an item class without a static
+  `::mainPropertyName()`; Deuteros never names a concrete Drupal item class
+  itself, the test passes one in
+- `EntityDoubleBuilder::getFieldDefinitionForAccess()` rebuilds the
+  definition from mutable state with the original type, settings and item
+  class
 - Both the builder path and direct `EntityDoubleDefinition` construction with
   manually-created `FieldDoubleDefinition` objects are supported
 

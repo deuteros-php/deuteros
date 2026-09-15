@@ -289,13 +289,16 @@ final class EntityDoubleDefinitionBuilder {
    * @param array<string, mixed> $settings
    *   Optional field settings keyed by setting name. Accessible via
    *   "FieldDoubleDefinition::getSetting()".
+   * @param string $itemClass
+   *   Optional field item class whose static "::mainPropertyName" names the
+   *   main property of the field storage definition double.
    *
    * @return $this
    */
-  public function field(string $fieldName, mixed $value, string $type = '', array $settings = []): self {
+  public function field(string $fieldName, mixed $value, string $type = '', array $settings = [], string $itemClass = ''): self {
     $this->fields[$fieldName] = $value instanceof FieldDoubleDefinition
       ? $value
-      : new FieldDoubleDefinition($value, $type, $settings);
+      : new FieldDoubleDefinition($value, $type, $settings, $itemClass);
     return $this;
   }
 
@@ -306,13 +309,14 @@ final class EntityDoubleDefinitionBuilder {
    *
    * Each entry in $fields may be:
    * - A plain value (scalar, array, callable)
-   * - An associative array with a "value" key, and optional "type" and
-   *   "settings" keys to pass type and settings alongside the value
+   * - An associative array with a "value" key, and optional "type",
+   *   "settings" and "item_class" keys to pass type, settings and field item
+   *   class alongside the value
    *
    * @param array<string, mixed> $fields
    *   Field values keyed by field name. Each entry may be a plain value or
-   *   an associative array with "value", optional "type", and optional
-   *   "settings" keys.
+   *   an associative array with "value", optional "type", optional
+   *   "settings" and optional "item_class" keys.
    *
    * @return $this
    */
@@ -322,7 +326,8 @@ final class EntityDoubleDefinitionBuilder {
         $type = array_key_exists('type', $value) && is_string($value['type']) ? $value['type'] : '';
         /** @var array<string, mixed> $settings */
         $settings = array_key_exists('settings', $value) && is_array($value['settings']) ? $value['settings'] : [];
-        $this->field($field_name, $value['value'], $type, $settings);
+        $itemClass = array_key_exists('item_class', $value) && is_string($value['item_class']) ? $value['item_class'] : '';
+        $this->field($field_name, $value['value'], $type, $settings, $itemClass);
       }
       else {
         $this->field($field_name, $value);

@@ -412,6 +412,51 @@ $field_def->getSetting('missing');    // NULL
 
 `getSetting()` returns `NULL` for keys that were not provided.
 
+### Field Storage Definition
+
+The field definition of a typed field also answers `getFieldStorageDefinition()`.
+The storage definition double reports the same name, type and settings as the
+field definition, and names the main property of the field items: `value`, or
+`target_id` for an entity reference field. Code that reads a field through its
+storage definition, the way Drupal reads entity keys, works without further
+setup:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_body', 'Hello', 'text_long', settings: ['max_length' => 512])
+    ->build()
+);
+
+$storage = $entity->get('field_body')->getFieldDefinition()->getFieldStorageDefinition();
+$storage->getType();             // 'text_long'
+$storage->getMainPropertyName(); // 'value'
+$storage->getSetting('max_length'); // 512
+```
+
+To get the real main property of a field type, pass its field item class with
+the `itemClass:` named parameter (or the `item_class` key of the `fields()`
+array spec). Deuteros calls the static `::mainPropertyName()` of that class
+and nothing else, so any `FieldItemInterface` implementation from Drupal core
+or a module works, without loading a plugin manager:
+
+```php
+use Drupal\link\Plugin\Field\FieldType\LinkItem;
+
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->bundle('article')
+    ->field('field_link', ['uri' => 'https://example.com'], 'link', itemClass: LinkItem::class)
+    ->build()
+);
+
+$entity->get('field_link')->getFieldDefinition()->getFieldStorageDefinition()->getMainPropertyName(); // 'uri'
+```
+
+A class without a static `::mainPropertyName()` is rejected with an
+`InvalidArgumentException` when the definition is built.
+
 ---
 
 ## Advanced Use Cases

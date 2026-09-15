@@ -18,6 +18,7 @@ use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Url;
 use PHPUnit\Framework\TestCase;
@@ -297,17 +298,28 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       );
     }
 
-    // Wire getFieldDefinition if a field type is configured.
+    // Wire getFieldDefinition if a field type is configured. The field
+    // definition carries a field storage definition with the same name, type
+    // and settings, plus the main property name of the items.
     if ($builder->getFieldType() !== '') {
+      $field_double_definition = $builder->getFieldDefinition();
+      $getSetting = fn(string $setting) => $field_double_definition->getSetting($setting);
+
+      $storageDef = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldStorageDefinitionInterface::class);
+      assert(is_object($storageDef));
+      /** @var \PHPUnit\Framework\MockObject\MockObject $storageDef */
+      $storageDef->method('getName')->willReturn($builder->getFieldName());
+      $storageDef->method('getType')->willReturn($builder->getFieldType());
+      $storageDef->method('getSetting')->willReturnCallback($getSetting);
+      $storageDef->method('getMainPropertyName')->willReturn($field_double_definition->getMainPropertyName($hasEntityReferences));
+
       $fieldDef = static::invokeNonPublicMethod($this->testCase, 'createMock', FieldDefinitionInterface::class);
       assert(is_object($fieldDef));
       /** @var \PHPUnit\Framework\MockObject\MockObject $fieldDef */
       $fieldDef->method('getName')->willReturn($builder->getFieldName());
       $fieldDef->method('getType')->willReturn($builder->getFieldType());
-      $field_double_definition = $builder->getFieldDefinition();
-      $fieldDef->method('getSetting')->willReturnCallback(
-        fn(string $setting) => $field_double_definition->getSetting($setting)
-      );
+      $fieldDef->method('getSetting')->willReturnCallback($getSetting);
+      $fieldDef->method('getFieldStorageDefinition')->willReturn($storageDef);
       $mock->method('getFieldDefinition')->willReturn($fieldDef);
     }
   }

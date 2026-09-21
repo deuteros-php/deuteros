@@ -71,6 +71,21 @@ abstract class ServiceDoublerTestBase extends TestCase {
   }
 
   /**
+   * Tests that the "uuid" service hands out a different UUID on each call.
+   *
+   * The service is created anew on every container build, so the UUIDs of
+   * two builds must not repeat either.
+   */
+  public function testUuidServiceGeneratesUniqueUuids(): void {
+    $first = $this->serviceDoubler->buildContainer([])->get('uuid');
+    $second = $this->serviceDoubler->buildContainer([])->get('uuid');
+
+    $uuids = [$first->generate(), $first->generate(), $second->generate()];
+
+    $this->assertCount(3, array_unique($uuids));
+  }
+
+  /**
    * Tests that field definition mock is not translatable.
    */
   public function testFieldDefinitionMockIsNotTranslatable(): void {

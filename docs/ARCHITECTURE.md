@@ -127,6 +127,7 @@ fn(array $context, ...$args): mixed
 |-------|------|----------------|
 | `GuardrailEnforcer` | `src/Double/GuardrailEnforcer.php` | Centralized exception generation with differentiated messages |
 | `MutableStateContainer` | `src/Double/MutableStateContainer.php` | Tracks field mutations for mutable doubles |
+| `UuidGenerator` | `src/Double/UuidGenerator.php` | Numbered UUIDs for definitions and subject entities given none |
 | `EntityReferenceNormalizer` | `src/Double/EntityReferenceNormalizer.php` | Normalizes entity reference field values |
 
 ### Factory Layer
@@ -475,7 +476,9 @@ double the many services that `ContentEntityBase`'s constructor requires. After
 instantiation, required internal properties are set via reflection:
 
 - `entityTypeId` - From the `#[ContentEntityType]` attribute
-- `entityKeys` - Entity keys (id, bundle, uuid) from provided values
+- `entityKeys` - Entity keys (id, bundle, uuid) from provided values; the
+  UUID comes from `UuidGenerator` when not provided, as it would from real
+  storage
 - `fields` - DEUTEROS field doubles are injected directly
 - Internal state (`translations`, `defaultLangcode`, etc.)
 
@@ -488,7 +491,7 @@ The helper installs a container with doubled services via `\Drupal::setContainer
 | `entity_type.manager` | Returns entity type definitions |
 | `entity_type.bundle.info` | Bundle information |
 | `language_manager` | Default language handling |
-| `uuid` | UUID generation (stubbed) |
+| `uuid` | UUID generation, delegating to `UuidGenerator` |
 | `module_handler` | No-op hook invocations |
 | `entity_field.manager` | Returns empty field definitions |
 

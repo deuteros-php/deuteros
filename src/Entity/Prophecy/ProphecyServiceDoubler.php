@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity\Prophecy;
 
+use Deuteros\Double\UuidGenerator;
 use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
@@ -261,19 +262,7 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(UuidInterface::class);
 
-    $prophecy->generate()->will(function (): string {
-      /** @var int $counter */
-      static $counter = 0;
-      $counter++;
-      return sprintf(
-        '%08x-%04x-%04x-%04x-%012x',
-        $counter,
-        0,
-        0,
-        0,
-        0
-      );
-    });
+    $prophecy->generate()->will(static fn (): string => UuidGenerator::generate());
 
     /** @var \Drupal\Component\Uuid\UuidInterface */
     return $prophecy->reveal();

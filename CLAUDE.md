@@ -115,6 +115,7 @@ Workflow file: `.github/workflows/ci.yml`
    - `MutableStateContainer` - Stateful storage for mutable field values
    - `GuardrailEnforcer` - Centralized exception throwing for unsupported methods
    - `EntityReferenceNormalizer` - Normalizes entity reference field values
+   - `UuidGenerator` - Numbered UUIDs for entities that are not given one
 
 4. **Factory Classes**
    - `Deuteros\Double\EntityDoubleFactory` - Abstract base with `fromTest()` factory
@@ -179,6 +180,25 @@ be used by user-provided context.
   the bundle name rather than the raw reference
 - An empty reference falls back to the entity type ID, matching an absent
   bundle key; scalar values pass through untouched
+
+**Entity UUIDs:**
+- Every entity Deuteros creates has a UUID, as it would coming out of real
+  storage: a UUID the test passes is honored, otherwise one is generated
+- `EntityDoubleDefinition` fills in its `uuid` from `UuidGenerator` when
+  constructed with NULL, so `::uuid` on a double and the `_definition` context
+  agree; a callable returning NULL is the way to double an entity without one
+- `SubjectEntityFactory` honors the value under the entity type's `uuid` key
+  and otherwise calls `UuidGenerator` too, so a subject entity and a double
+  never share a UUID; the doubled `uuid` service delegates to the same
+  generator for entity code that asks the container
+- Without it, `::uuid` on a content subject entity would go through
+  `::getEntityKey` and look for a `uuid` field definition that a subject entity
+  does not have, so it would fatal rather than return NULL
+- A generated UUID is only set as an entity key on a subject entity; it does
+  not define a `uuid` field, so `hasField('uuid')` still follows the values
+  passed to `create()`
+- Generated UUIDs are numbered across the whole test process, so they are
+  unique but not predictable: a test must not hard-code one
 
 **Container Reuse:**
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
@@ -319,7 +339,7 @@ While working on any code change:
   - Core resolution layer: `EntityDoubleBuilderTest`, `FieldItemListDoubleBuilderTest`,
     `FieldItemDoubleBuilderTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
-    `EntityReferenceNormalizerTest`
+    `EntityReferenceNormalizerTest`, `UuidGeneratorTest`
 - `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory and service doublers
   - `ServiceDoublerTestBase.php` - Shared tests for service doubler adapter parity
   - `PhpUnit/` - PhpUnitServiceDoubler unit tests

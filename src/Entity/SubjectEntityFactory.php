@@ -8,6 +8,7 @@ use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Double\EntityDoubleFactory;
 use Deuteros\Double\EntityDoubleFactoryInterface;
 use Deuteros\Double\EntityReferenceNormalizer;
+use Deuteros\Double\UuidGenerator;
 use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
 use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
@@ -338,9 +339,11 @@ final class SubjectEntityFactory {
       $entityKeys['id'] = $values[$config['keys']['id']];
     }
 
-    // Set uuid if provided.
-    if (isset($config['keys']['uuid']) && isset($values[$config['keys']['uuid']])) {
-      $entityKeys['uuid'] = $values[$config['keys']['uuid']];
+    // Set uuid, generating one when none is provided, as real storage does.
+    // Without it "::uuid" would look for a "uuid" field definition that a
+    // subject entity does not have.
+    if (isset($config['keys']['uuid'])) {
+      $entityKeys['uuid'] = $values[$config['keys']['uuid']] ?? UuidGenerator::generate();
     }
 
     $entityKeysProperty->setValue($entity, $entityKeys);
@@ -429,11 +432,9 @@ final class SubjectEntityFactory {
       $entity->{$idKey} = $values[$idKey];
     }
 
-    // Set uuid if provided.
+    // Set uuid, generating one when none is provided, as real storage does.
     $uuidKey = $config['keys']['uuid'] ?? 'uuid';
-    if (isset($values[$uuidKey])) {
-      $entity->{$uuidKey} = $values[$uuidKey];
-    }
+    $entity->{$uuidKey} = $values[$uuidKey] ?? UuidGenerator::generate();
 
     // Set label if provided.
     $labelKey = $config['keys']['label'] ?? 'label';

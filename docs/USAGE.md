@@ -109,8 +109,14 @@ The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring 
 |--------|------------------------|
 | `bundle(string\|callable $bundle)` | Sets the entity bundle |
 | `id(int\|string\|null\|callable $id)` | Sets the entity ID     |
-| `uuid(string\|null\|callable $uuid)` | Sets the entity UUID   |
+| `uuid(string\|null\|callable $uuid)` | Sets the entity UUID; generated when not set |
 | `label(string\|null\|callable $label)` | Sets the entity label  |
+
+A double always has a UUID, as a real entity does. When `uuid()` is not called
+the definition generates one, unique within the test process but not
+predictable, so assert against `$entity->uuid()` rather than a literal. To
+double an entity without a UUID, pass a callable returning NULL:
+`->uuid(fn() => NULL)`.
 
 ### Field Methods
 
@@ -1437,6 +1443,29 @@ This is useful when emulating loading existing entities and you don't need
 specific ID values. The counters reset automatically via `uninstallContainer()`,
 so each test method starts fresh.
 
+### UUIDs
+
+Every subject entity has a UUID, as it would after being created by real
+storage. Pass one under the entity type's `uuid` key to control it, otherwise
+the factory generates one:
+
+```php
+$node = $this->createEntity(Node::class, [
+  'nid' => 1,
+  'type' => 'article',
+  'uuid' => '550e8400-e29b-41d4-a716-446655440000',
+]);
+$this->assertSame('550e8400-e29b-41d4-a716-446655440000', $node->uuid());
+
+$other = $this->createEntity(Node::class, ['nid' => 2, 'type' => 'article']);
+$this->assertNotNull($other->uuid());
+```
+
+Generated UUIDs come from the same generator as those of entity doubles, so
+a subject entity and a double never share one. They are unique within the test
+process but not predictable. Only a UUID passed to `create()` becomes a field, so
+`hasField('uuid')` returns FALSE for a generated one.
+
 ### Config Entities
 
 `SubjectEntityFactory` also supports config entities. Config entities do not
@@ -1501,6 +1530,7 @@ Entity objects created by `SubjectEntityFactory` have these limitations:
 | Operation | Status | Notes |
 |-----------|--------|-------|
 | `id()`, `bundle()`, `getEntityTypeId()` | Works | Set via entity keys |
+| `uuid()` | Works | Provided or generated |
 | `get($field)`, `$entity->field` | Works | Returns DEUTEROS field doubles (content entities only) |
 | `save()`, `delete()` | Throws | No storage backend |
 | Entity queries | Not supported | No database |

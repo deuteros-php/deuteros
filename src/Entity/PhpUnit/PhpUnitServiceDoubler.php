@@ -50,36 +50,23 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
   ): ContainerInterface {
     $container ??= new ContainerBuilder();
 
-    // Create and register service doubles.
-    $container->set(
-      'entity_type.manager',
-      $this->createEntityTypeManagerDouble($entityTypeConfigs)
-    );
-
-    $container->set(
-      'entity_type.bundle.info',
-      $this->createBundleInfoDouble($entityTypeConfigs)
-    );
-
-    $container->set(
-      'language_manager',
-      $this->createLanguageManagerDouble()
-    );
-
-    $container->set(
-      'uuid',
-      $this->createUuidDouble()
-    );
-
-    $container->set(
-      'module_handler',
-      $this->createModuleHandlerDouble()
-    );
-
-    $container->set(
-      'entity_field.manager',
-      $this->createEntityFieldManagerDouble()
-    );
+    // These two describe the registered entity types, so a rebuild replaces
+    // them. The others do not change, and a test may have replaced one with
+    // its own double through the container, so they are only set when
+    // missing.
+    $container->set('entity_type.manager', $this->createEntityTypeManagerDouble($entityTypeConfigs));
+    $container->set('entity_type.bundle.info', $this->createBundleInfoDouble($entityTypeConfigs));
+    $defaults = [
+      'language_manager' => fn (): LanguageManagerInterface => $this->createLanguageManagerDouble(),
+      'uuid' => fn (): UuidInterface => $this->createUuidDouble(),
+      'module_handler' => fn (): ModuleHandlerInterface => $this->createModuleHandlerDouble(),
+      'entity_field.manager' => fn (): EntityFieldManagerInterface => $this->createEntityFieldManagerDouble(),
+    ];
+    foreach ($defaults as $id => $create) {
+      if (!$container->has($id)) {
+        $container->set($id, $create());
+      }
+    }
 
     return $container;
   }

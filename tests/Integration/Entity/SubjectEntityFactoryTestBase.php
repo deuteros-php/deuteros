@@ -9,6 +9,7 @@ use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\node\Entity\Node;
 
 /**
@@ -317,6 +318,22 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
     // Undefined fields should return null.
     $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
+  }
+
+  /**
+   * Tests that a default service the test replaced survives a rebuild.
+   *
+   * Creating an entity of a new type rebuilds the container. A test that
+   * replaced one of the default doubles, here the field manager, must find
+   * its own double still in place afterwards.
+   */
+  public function testReplacedDefaultServicePreservedAcrossEntityTypeRegistration(): void {
+    $fieldManager = $this->createMock(EntityFieldManagerInterface::class);
+    $this->getContainer()->set('entity_field.manager', $fieldManager);
+
+    $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);
+
+    $this->assertSame($fieldManager, $this->getContainer()->get('entity_field.manager'));
   }
 
   /**

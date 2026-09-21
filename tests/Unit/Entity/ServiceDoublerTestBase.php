@@ -8,6 +8,7 @@ use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\node\Entity\Node;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -68,6 +69,36 @@ abstract class ServiceDoublerTestBase extends TestCase {
     // @phpstan-ignore method.alreadyNarrowedType
     $this->assertInstanceOf(FieldStorageDefinitionInterface::class, $storage);
     $this->assertSame('value', $storage->getMainPropertyName());
+  }
+
+  /**
+   * Tests that a rebuild keeps a default service the test replaced.
+   */
+  public function testBuildContainerKeepsReplacedDefaultService(): void {
+    $container = $this->serviceDoubler->buildContainer([]);
+    $fieldManager = $this->createMock(EntityFieldManagerInterface::class);
+    $container->set('entity_field.manager', $fieldManager);
+
+    $rebuilt = $this->serviceDoubler->buildContainer([], $container);
+
+    $this->assertSame($fieldManager, $rebuilt->get('entity_field.manager'));
+  }
+
+  /**
+   * Tests that a rebuild replaces the services describing the entity types.
+   */
+  public function testBuildContainerReplacesEntityTypeServices(): void {
+    $container = $this->serviceDoubler->buildContainer([]);
+    $entityTypeManager = $container->get('entity_type.manager');
+    $bundleInfo = $container->get('entity_type.bundle.info');
+
+    $rebuilt = $this->serviceDoubler->buildContainer([
+      'node' => ['class' => Node::class, 'keys' => ['id' => 'nid', 'bundle' => 'type']],
+    ], $container);
+
+    $this->assertNotSame($entityTypeManager, $rebuilt->get('entity_type.manager'));
+    $this->assertNotSame($bundleInfo, $rebuilt->get('entity_type.bundle.info'));
+    $this->assertSame('node', $rebuilt->get('entity_type.manager')->getDefinition('node')->id());
   }
 
   /**

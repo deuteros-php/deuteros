@@ -19,8 +19,11 @@ interface ServiceDoublerInterface {
    *
    * If a container is provided, it will be configured with the doubled
    * services; otherwise a new container is created. Passing an existing
-   * container allows preserving user-added services when the container needs
-   * to be rebuilt (e.g., when new entity types are registered).
+   * container keeps the services a test has set on it, its own and the
+   * defaults it replaced alike, when the container needs to be rebuilt
+   * (e.g., when new entity types are registered). Only the services that
+   * describe the registered entity types, "entity_type.manager" and
+   * "entity_type.bundle.info", are replaced on a rebuild.
    *
    * @param array<string, array{class: class-string, keys: array<string, string>}> $entityTypeConfigs
    *   Entity type configurations keyed by entity type ID.

@@ -204,7 +204,11 @@ be used by user-provided context.
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
 - When new entity types are registered via `create()`, the existing container is
   passed to `buildContainer()` for reconfiguration rather than creating a new one
-- This preserves custom services added by tests via `getContainer()->set()`
+- This preserves the services a test set via `getContainer()->set()`, both
+  its own and any default double it replaced, such as `entity_field.manager`
+- A rebuild replaces only `entity_type.manager` and `entity_type.bundle.info`,
+  which describe the registered entity types; the other defaults are set only
+  when the container lacks them
 - `ServiceDoublerInterface::buildContainer()` accepts an optional container parameter;
   if NULL, a new container is created; if provided, the existing container is reused
 

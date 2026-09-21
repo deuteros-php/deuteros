@@ -102,6 +102,41 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests that an entity double given no UUID has one generated.
+   */
+  public function testEntityWithoutUuidGetsOne(): void {
+    $first = $this->factory->create(EntityDoubleDefinitionBuilder::create('node')->build());
+    $second = $this->factory->create(EntityDoubleDefinitionBuilder::create('node')->build());
+
+    $this->assertIsString($first->uuid());
+    $this->assertIsString($second->uuid());
+    $this->assertNotSame($first->uuid(), $second->uuid());
+  }
+
+  /**
+   * Tests that a generated UUID is the one callbacks see in the definition.
+   */
+  public function testGeneratedUuidMatchesDefinition(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')->build();
+    $entity = $this->factory->create($definition);
+
+    $this->assertSame($definition->uuid, $entity->uuid());
+  }
+
+  /**
+   * Tests that a callable UUID resolving to NULL gives an entity without one.
+   */
+  public function testEntityWithNullUuidCallback(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->uuid(fn() => NULL)
+        ->build()
+    );
+
+    $this->assertNull($entity->uuid());
+  }
+
+  /**
    * Tests accessing scalar field values via get() method.
    */
   public function testScalarFieldAccess(): void {

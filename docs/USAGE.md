@@ -109,8 +109,14 @@ The `EntityDoubleDefinitionBuilder` provides a fluent interface for configuring 
 |--------|------------------------|
 | `bundle(string\|callable $bundle)` | Sets the entity bundle |
 | `id(int\|string\|null\|callable $id)` | Sets the entity ID     |
-| `uuid(string\|null\|callable $uuid)` | Sets the entity UUID   |
+| `uuid(string\|null\|callable $uuid)` | Sets the entity UUID; generated when not set |
 | `label(string\|null\|callable $label)` | Sets the entity label  |
+
+A double always has a UUID, as a real entity does. When `uuid()` is not called
+the definition generates one, unique within the test process but not
+predictable, so assert against `$entity->uuid()` rather than a literal. To
+double an entity without a UUID, pass a callable returning NULL:
+`->uuid(fn() => NULL)`.
 
 ### Field Methods
 
@@ -1441,7 +1447,7 @@ so each test method starts fresh.
 
 Every subject entity has a UUID, as it would after being created by real
 storage. Pass one under the entity type's `uuid` key to control it, otherwise
-the factory generates one:
+the doubled `uuid` service generates one:
 
 ```php
 $node = $this->createEntity(Node::class, [
@@ -1455,8 +1461,9 @@ $other = $this->createEntity(Node::class, ['nid' => 2, 'type' => 'article']);
 $this->assertNotNull($other->uuid());
 ```
 
-Generated UUIDs are unique within a test method and come from the doubled
-`uuid` service. Only a UUID passed to `create()` becomes a field, so
+Generated UUIDs come from the same generator as those of entity doubles, so
+a subject entity and a double never share one. They are unique within the test
+process but not predictable. Only a UUID passed to `create()` becomes a field, so
 `hasField('uuid')` returns FALSE for a generated one.
 
 ### Config Entities

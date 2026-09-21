@@ -248,7 +248,8 @@ final class EntityDoubleDefinitionBuilder {
    * Sets the entity UUID.
    *
    * @param mixed $uuid
-   *   The entity UUID (scalar or callable).
+   *   The entity UUID (scalar or callable). NULL, the default, has one
+   *   generated; a callable returning NULL gives an entity without one.
    *
    * @return $this
    */

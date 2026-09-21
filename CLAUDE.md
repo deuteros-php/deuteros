@@ -115,6 +115,7 @@ Workflow file: `.github/workflows/ci.yml`
    - `MutableStateContainer` - Stateful storage for mutable field values
    - `GuardrailEnforcer` - Centralized exception throwing for unsupported methods
    - `EntityReferenceNormalizer` - Normalizes entity reference field values
+   - `UuidGenerator` - Numbered UUIDs for entities that are not given one
 
 4. **Factory Classes**
    - `Deuteros\Double\EntityDoubleFactory` - Abstract base with `fromTest()` factory
@@ -180,15 +181,23 @@ be used by user-provided context.
 - An empty reference falls back to the entity type ID, matching an absent
   bundle key; scalar values pass through untouched
 
-**Subject Entity UUIDs:**
-- A subject entity always has a UUID, as it would coming out of real storage:
-  `SubjectEntityFactory` honours the one passed under the entity type's `uuid`
-  key and otherwise generates one with the doubled `uuid` service
-- Without it, `::uuid` on a content entity would go through `::getEntityKey`
-  and look for a `uuid` field definition that a subject entity does not have,
-  so it would fatal rather than return NULL
-- The generated UUID is only set as an entity key; it does not define a `uuid`
-  field, so `hasField('uuid')` still follows the values passed to `create()`
+**Entity UUIDs:**
+- Every entity Deuteros creates has a UUID, as it would coming out of real
+  storage: a UUID the test passes is honored, otherwise one is generated
+- `EntityDoubleDefinition` fills in its `uuid` from `UuidGenerator` when
+  constructed with NULL, so `::uuid` on a double and the `_definition` context
+  agree; a callable returning NULL is the way to double an entity without one
+- `SubjectEntityFactory` honours the value under the entity type's `uuid` key
+  and otherwise asks the doubled `uuid` service, which delegates to
+  `UuidGenerator` too, so a subject entity and a double never share a UUID
+- Without it, `::uuid` on a content subject entity would go through
+  `::getEntityKey` and look for a `uuid` field definition that a subject entity
+  does not have, so it would fatal rather than return NULL
+- A generated UUID is only set as an entity key on a subject entity; it does
+  not define a `uuid` field, so `hasField('uuid')` still follows the values
+  passed to `create()`
+- Generated UUIDs are numbered across the whole test process, so they are
+  unique but not predictable: a test must not hard-code one
 
 **Container Reuse:**
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
@@ -197,9 +206,6 @@ be used by user-provided context.
 - This preserves custom services added by tests via `getContainer()->set()`
 - `ServiceDoublerInterface::buildContainer()` accepts an optional container parameter;
   if NULL, a new container is created; if provided, the existing container is reused
-- The doubled `uuid` service numbers the UUIDs it generates, so a reused
-  container keeps the one it already has rather than getting a fresh generator
-  that would repeat them
 
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
@@ -332,7 +338,7 @@ While working on any code change:
   - Core resolution layer: `EntityDoubleBuilderTest`, `FieldItemListDoubleBuilderTest`,
     `FieldItemDoubleBuilderTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
-    `EntityReferenceNormalizerTest`
+    `EntityReferenceNormalizerTest`, `UuidGeneratorTest`
 - `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory and service doublers
   - `ServiceDoublerTestBase.php` - Shared tests for service doubler adapter parity
   - `PhpUnit/` - PhpUnitServiceDoubler unit tests

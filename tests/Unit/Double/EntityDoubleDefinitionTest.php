@@ -33,13 +33,34 @@ class EntityDoubleDefinitionTest extends TestCase {
     $this->assertSame('node', $definition->entityType);
     $this->assertSame('node', $definition->bundle);
     $this->assertNull($definition->id);
-    $this->assertNull($definition->uuid);
     $this->assertNull($definition->label);
     $this->assertSame([], $definition->fields);
     $this->assertSame([], $definition->interfaces);
     $this->assertSame([], $definition->methods);
     $this->assertSame([], $definition->context);
     $this->assertFalse($definition->mutable);
+  }
+
+  /**
+   * Tests that a definition given no UUID generates one.
+   */
+  public function testUuidIsGeneratedWhenNotProvided(): void {
+    $first = new EntityDoubleDefinition(entityType: 'node');
+    $second = new EntityDoubleDefinition(entityType: 'node');
+
+    $this->assertIsString($first->uuid);
+    $this->assertIsString($second->uuid);
+    $this->assertNotSame($first->uuid, $second->uuid);
+  }
+
+  /**
+   * Tests that a callable UUID is kept as is, so it can resolve to NULL.
+   */
+  public function testCallableUuidIsKept(): void {
+    $uuid = fn() => NULL;
+    $definition = new EntityDoubleDefinition(entityType: 'node', uuid: $uuid);
+
+    $this->assertSame($uuid, $definition->uuid);
   }
 
   /**

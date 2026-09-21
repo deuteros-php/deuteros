@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity\Prophecy;
 
+use Deuteros\Double\UuidGenerator;
 use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
@@ -76,14 +77,10 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
       $this->createLanguageManagerDouble()
     );
 
-    // The UUID generator numbers the UUIDs it hands out, so a rebuilt
-    // container keeps the one it has to keep them unique.
-    if (!$container->has('uuid')) {
-      $container->set(
-        'uuid',
-        $this->createUuidDouble()
-      );
-    }
+    $container->set(
+      'uuid',
+      $this->createUuidDouble()
+    );
 
     $container->set(
       'module_handler',
@@ -265,20 +262,7 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(UuidInterface::class);
 
-    // Prophecy rebinds a callback that has a bound $this on every call, and
-    // the copy starts over with the counter, so the callback is static.
-    $counter = 0;
-    $prophecy->generate()->will(static function () use (&$counter): string {
-      $counter++;
-      return sprintf(
-        '%08x-%04x-%04x-%04x-%012x',
-        $counter,
-        0,
-        0,
-        0,
-        0
-      );
-    });
+    $prophecy->generate()->will(static fn (): string => UuidGenerator::generate());
 
     /** @var \Drupal\Component\Uuid\UuidInterface */
     return $prophecy->reveal();

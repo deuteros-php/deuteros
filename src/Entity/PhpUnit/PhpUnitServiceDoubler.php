@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deuteros\Entity\PhpUnit;
 
+use Deuteros\Double\UuidGenerator;
 use Deuteros\Entity\ServiceDoublerInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\ContentEntityTypeInterface;
@@ -65,14 +66,10 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
       $this->createLanguageManagerDouble()
     );
 
-    // The UUID generator numbers the UUIDs it hands out, so a rebuilt container
-    // keeps the one it has to keep them unique.
-    if (!$container->has('uuid')) {
-      $container->set(
-        'uuid',
-        $this->createUuidDouble()
-      );
-    }
+    $container->set(
+      'uuid',
+      $this->createUuidDouble()
+    );
 
     $container->set(
       'module_handler',
@@ -237,19 +234,8 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
   private function createUuidDouble(): UuidInterface {
     $mock = $this->createMock(UuidInterface::class);
 
-    $counter = 0;
     $mock->method('generate')
-      ->willReturnCallback(function () use (&$counter) {
-        $counter++;
-        return sprintf(
-          '%08x-%04x-%04x-%04x-%012x',
-          $counter,
-          0,
-          0,
-          0,
-          0
-        );
-      });
+      ->willReturnCallback(static fn (): string => UuidGenerator::generate());
 
     /** @var \Drupal\Component\Uuid\UuidInterface $mock */
     return $mock;

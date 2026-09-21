@@ -33,7 +33,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertSame('node', $definition->entityType);
     $this->assertSame('node', $definition->bundle);
     $this->assertNull($definition->id);
-    $this->assertNull($definition->uuid);
+    $this->assertIsString($definition->uuid);
     $this->assertNull($definition->label);
     $this->assertSame([], $definition->fields);
     $this->assertSame([], $definition->interfaces);

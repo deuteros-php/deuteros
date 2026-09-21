@@ -34,6 +34,14 @@ final readonly class EntityDoubleDefinition {
   public string $bundle;
 
   /**
+   * The entity UUID.
+   *
+   * A real entity always has one, so a definition given none generates it.
+   * A callable returning NULL is the way to double an entity without one.
+   */
+  public mixed $uuid;
+
+  /**
    * Constructs an EntityDoubleDefinition.
    *
    * @param string $entityType
@@ -43,7 +51,7 @@ final readonly class EntityDoubleDefinition {
    * @param mixed $id
    *   The entity ID.
    * @param mixed $uuid
-   *   The entity UUID.
+   *   The entity UUID. Generated when NULL.
    * @param mixed $label
    *   The entity label.
    * @param array<string, \Deuteros\Double\FieldDoubleDefinition> $fields
@@ -72,7 +80,7 @@ final readonly class EntityDoubleDefinition {
     public string $entityType,
     string $bundle = '',
     public mixed $id = NULL,
-    public mixed $uuid = NULL,
+    mixed $uuid = NULL,
     public mixed $label = NULL,
     public array $fields = [],
     public array $interfaces = [],
@@ -84,6 +92,8 @@ final readonly class EntityDoubleDefinition {
     public array $traits = [],
     public mixed $url = NULL,
   ) {
+    $this->uuid = $uuid ?? UuidGenerator::generate();
+
     // Validate that fields are only used with "FieldableEntityInterface".
     if ($fields !== [] && !in_array(FieldableEntityInterface::class, $interfaces, TRUE)) {
       throw new \InvalidArgumentException(

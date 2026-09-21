@@ -11,6 +11,7 @@ use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\node\Entity\Node;
+use Prophecy\Prophet;
 
 /**
  * Base test class for SubjectEntityFactory integration tests.
@@ -328,7 +329,9 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
    * its own double still in place afterwards.
    */
   public function testReplacedDefaultServicePreservedAcrossEntityTypeRegistration(): void {
-    $fieldManager = $this->createMock(EntityFieldManagerInterface::class);
+    // A standalone Prophet, because "ProphecyTrait" on this base would make
+    // the factory pick the Prophecy doubler for the PHPUnit adapter test too.
+    $fieldManager = (new Prophet())->prophesize(EntityFieldManagerInterface::class)->reveal();
     $this->getContainer()->set('entity_field.manager', $fieldManager);
 
     $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);

@@ -477,8 +477,8 @@ instantiation, required internal properties are set via reflection:
 
 - `entityTypeId` - From the `#[ContentEntityType]` attribute
 - `entityKeys` - Entity keys (id, bundle, uuid) from provided values; the
-  UUID comes from the doubled `uuid` service when not provided, as it would
-  from real storage
+  UUID comes from `UuidGenerator` when not provided, as it would from real
+  storage
 - `fields` - DEUTEROS field doubles are injected directly
 - Internal state (`translations`, `defaultLangcode`, etc.)
 

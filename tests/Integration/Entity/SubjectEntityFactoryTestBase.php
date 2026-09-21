@@ -256,9 +256,6 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
   /**
    * Tests that generated UUIDs stay unique across entity types.
-   *
-   * Registering a new entity type rebuilds the container with a fresh
-   * "uuid" service, which must not start the numbering over.
    */
   public function testGeneratedUuidsAreUniqueAcrossEntityTypes(): void {
     $node = $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);
@@ -271,9 +268,6 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
   /**
    * Tests that a subject entity and an entity double never share a UUID.
-   *
-   * The subject entity gets its UUID from the doubled "uuid" service and the
-   * entity double from its definition, so both must draw from one generator.
    */
   public function testGeneratedUuidsAreUniqueAcrossSubjectEntitiesAndDoubles(): void {
     $subject = $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);

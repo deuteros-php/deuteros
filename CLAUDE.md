@@ -187,9 +187,10 @@ be used by user-provided context.
 - `EntityDoubleDefinition` fills in its `uuid` from `UuidGenerator` when
   constructed with NULL, so `::uuid` on a double and the `_definition` context
   agree; a callable returning NULL is the way to double an entity without one
-- `SubjectEntityFactory` honours the value under the entity type's `uuid` key
-  and otherwise asks the doubled `uuid` service, which delegates to
-  `UuidGenerator` too, so a subject entity and a double never share a UUID
+- `SubjectEntityFactory` honors the value under the entity type's `uuid` key
+  and otherwise calls `UuidGenerator` too, so a subject entity and a double
+  never share a UUID; the doubled `uuid` service delegates to the same
+  generator for entity code that asks the container
 - Without it, `::uuid` on a content subject entity would go through
   `::getEntityKey` and look for a `uuid` field definition that a subject entity
   does not have, so it would fatal rather than return NULL

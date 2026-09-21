@@ -8,6 +8,7 @@ use Deuteros\Double\EntityDoubleDefinitionBuilder;
 use Deuteros\Double\EntityDoubleFactory;
 use Deuteros\Double\EntityDoubleFactoryInterface;
 use Deuteros\Double\EntityReferenceNormalizer;
+use Deuteros\Double\UuidGenerator;
 use Deuteros\Entity\PhpUnit\PhpUnitServiceDoubler;
 use Deuteros\Entity\Prophecy\ProphecyServiceDoubler;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
@@ -338,9 +339,11 @@ final class SubjectEntityFactory {
       $entityKeys['id'] = $values[$config['keys']['id']];
     }
 
-    // Set uuid, generating one when none is provided.
+    // Set uuid, generating one when none is provided, as real storage does.
+    // Without it "::uuid" would look for a "uuid" field definition that a
+    // subject entity does not have.
     if (isset($config['keys']['uuid'])) {
-      $entityKeys['uuid'] = $values[$config['keys']['uuid']] ?? $this->generateUuid();
+      $entityKeys['uuid'] = $values[$config['keys']['uuid']] ?? UuidGenerator::generate();
     }
 
     $entityKeysProperty->setValue($entity, $entityKeys);
@@ -429,9 +432,9 @@ final class SubjectEntityFactory {
       $entity->{$idKey} = $values[$idKey];
     }
 
-    // Set uuid, generating one when none is provided.
+    // Set uuid, generating one when none is provided, as real storage does.
     $uuidKey = $config['keys']['uuid'] ?? 'uuid';
-    $entity->{$uuidKey} = $values[$uuidKey] ?? $this->generateUuid();
+    $entity->{$uuidKey} = $values[$uuidKey] ?? UuidGenerator::generate();
 
     // Set label if provided.
     $labelKey = $config['keys']['label'] ?? 'label';
@@ -455,21 +458,6 @@ final class SubjectEntityFactory {
         $entity->{$key} = $value;
       }
     }
-  }
-
-  /**
-   * Generates a UUID with the doubled "uuid" service.
-   *
-   * Real storage assigns a UUID to every entity it creates, so a subject
-   * entity gets one too when none is provided. Without it, "::uuid" on a
-   * content entity would look for a "uuid" field definition that a subject
-   * entity does not have.
-   *
-   * @return string
-   *   The generated UUID.
-   */
-  private function generateUuid(): string {
-    return $this->getContainer()->get('uuid')->generate();
   }
 
   /**

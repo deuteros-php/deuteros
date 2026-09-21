@@ -1447,7 +1447,7 @@ so each test method starts fresh.
 
 Every subject entity has a UUID, as it would after being created by real
 storage. Pass one under the entity type's `uuid` key to control it, otherwise
-the doubled `uuid` service generates one:
+the factory generates one:
 
 ```php
 $node = $this->createEntity(Node::class, [

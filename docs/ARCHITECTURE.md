@@ -495,6 +495,10 @@ The helper installs a container with doubled services via `\Drupal::setContainer
 | `module_handler` | No-op hook invocations |
 | `entity_field.manager` | Returns empty field definitions |
 
+The first two are rebuilt whenever a new entity type is registered. The rest
+are set only when the container lacks them, so a test that replaced one keeps
+its own double across rebuilds.
+
 **Entity Type Configuration from Attributes**
 
 Entity keys are read from PHP 8 attributes (`#[ContentEntityType]` or

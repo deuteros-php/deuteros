@@ -1356,9 +1356,12 @@ class MyNodeTest extends SubjectEntityTestBase {
 ### Adding Custom Services
 
 You can add custom service doubles to the container for testing code that
-depends on services beyond the defaults provided by `SubjectEntityFactory`.
-Custom services are preserved when the container is rebuilt (e.g., when
-creating entities of different types):
+depends on services beyond the defaults provided by `SubjectEntityFactory`,
+and you can replace a default double, say `entity_field.manager`, with one
+of your own. Both are preserved when the container is rebuilt (e.g., when
+creating entities of different types). Only `entity_type.manager` and
+`entity_type.bundle.info` are replaced then, since they describe the entity
+types registered so far:
 
 ```php
 use Prophecy\PhpUnit\ProphecyTrait;

@@ -9,7 +9,9 @@ use Deuteros\Entity\SubjectEntityFactory;
 use Deuteros\Entity\SubjectEntityTestBase;
 use Deuteros\Tests\Fixtures\TestConfigEntity;
 use Deuteros\Tests\Fixtures\TestContentEntity;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\node\Entity\Node;
+use Prophecy\Prophet;
 
 /**
  * Base test class for SubjectEntityFactory integration tests.
@@ -317,6 +319,24 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
     // Undefined fields should return null.
     $this->assertNull($entity->getFieldDefinition('nonexistent_field'));
+  }
+
+  /**
+   * Tests that a default service the test replaced survives a rebuild.
+   *
+   * Creating an entity of a new type rebuilds the container. A test that
+   * replaced one of the default doubles, here the field manager, must find
+   * its own double still in place afterwards.
+   */
+  public function testReplacedDefaultServicePreservedAcrossEntityTypeRegistration(): void {
+    // A standalone Prophet, because "ProphecyTrait" on this base would make
+    // the factory pick the Prophecy doubler for the PHPUnit adapter test too.
+    $fieldManager = (new Prophet())->prophesize(EntityFieldManagerInterface::class)->reveal();
+    $this->getContainer()->set('entity_field.manager', $fieldManager);
+
+    $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);
+
+    $this->assertSame($fieldManager, $this->getContainer()->get('entity_field.manager'));
   }
 
   /**

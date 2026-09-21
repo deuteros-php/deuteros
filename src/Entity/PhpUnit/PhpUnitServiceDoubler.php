@@ -65,10 +65,14 @@ final class PhpUnitServiceDoubler implements ServiceDoublerInterface {
       $this->createLanguageManagerDouble()
     );
 
-    $container->set(
-      'uuid',
-      $this->createUuidDouble()
-    );
+    // The UUID generator numbers the UUIDs it hands out, so a rebuilt container
+    // keeps the one it has to keep them unique.
+    if (!$container->has('uuid')) {
+      $container->set(
+        'uuid',
+        $this->createUuidDouble()
+      );
+    }
 
     $container->set(
       'module_handler',

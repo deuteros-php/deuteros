@@ -11,6 +11,7 @@ use Deuteros\Tests\Fixtures\TestConfigEntityChild;
 use Deuteros\Tests\Fixtures\TestContentEntity;
 use Deuteros\Tests\Fixtures\TestContentEntityChild;
 use Deuteros\Tests\Fixtures\TestContentEntityGrandchild;
+use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityBase;
 use Drupal\node\Entity\Node;
@@ -315,6 +316,56 @@ class SubjectEntityFactoryTest extends TestCase {
     ]);
 
     $this->assertSame('article', $entity->bundle());
+  }
+
+  /**
+   * Tests that a content entity gets a UUID when none is provided.
+   */
+  public function testCreateGeneratesContentEntityUuid(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntity::class, ['id' => 1]);
+
+    $this->assertTrue(Uuid::isValid((string) $entity->uuid()));
+  }
+
+  /**
+   * Tests that a content entity keeps the UUID it is given.
+   */
+  public function testCreateKeepsContentEntityUuid(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestContentEntity::class, [
+      'id' => 1,
+      'uuid' => 'a3a2f7c6-1a5e-4a1e-9c3b-7d2a2e6f4b10',
+    ]);
+
+    $this->assertSame('a3a2f7c6-1a5e-4a1e-9c3b-7d2a2e6f4b10', $entity->uuid());
+  }
+
+  /**
+   * Tests that a config entity gets a UUID when none is provided.
+   */
+  public function testCreateGeneratesConfigEntityUuid(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestConfigEntity::class, ['id' => 'config']);
+
+    $this->assertTrue(Uuid::isValid((string) $entity->uuid()));
+  }
+
+  /**
+   * Tests that a config entity keeps the UUID it is given.
+   */
+  public function testCreateKeepsConfigEntityUuid(): void {
+    $this->factory()->installContainer();
+
+    $entity = $this->factory()->create(TestConfigEntity::class, [
+      'id' => 'config',
+      'uuid' => 'a3a2f7c6-1a5e-4a1e-9c3b-7d2a2e6f4b10',
+    ]);
+
+    $this->assertSame('a3a2f7c6-1a5e-4a1e-9c3b-7d2a2e6f4b10', $entity->uuid());
   }
 
 }

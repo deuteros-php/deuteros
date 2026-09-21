@@ -338,9 +338,9 @@ final class SubjectEntityFactory {
       $entityKeys['id'] = $values[$config['keys']['id']];
     }
 
-    // Set uuid if provided.
-    if (isset($config['keys']['uuid']) && isset($values[$config['keys']['uuid']])) {
-      $entityKeys['uuid'] = $values[$config['keys']['uuid']];
+    // Set uuid, generating one when none is provided.
+    if (isset($config['keys']['uuid'])) {
+      $entityKeys['uuid'] = $values[$config['keys']['uuid']] ?? $this->generateUuid();
     }
 
     $entityKeysProperty->setValue($entity, $entityKeys);
@@ -429,11 +429,9 @@ final class SubjectEntityFactory {
       $entity->{$idKey} = $values[$idKey];
     }
 
-    // Set uuid if provided.
+    // Set uuid, generating one when none is provided.
     $uuidKey = $config['keys']['uuid'] ?? 'uuid';
-    if (isset($values[$uuidKey])) {
-      $entity->{$uuidKey} = $values[$uuidKey];
-    }
+    $entity->{$uuidKey} = $values[$uuidKey] ?? $this->generateUuid();
 
     // Set label if provided.
     $labelKey = $config['keys']['label'] ?? 'label';
@@ -457,6 +455,21 @@ final class SubjectEntityFactory {
         $entity->{$key} = $value;
       }
     }
+  }
+
+  /**
+   * Generates a UUID with the doubled "uuid" service.
+   *
+   * Real storage assigns a UUID to every entity it creates, so a subject
+   * entity gets one too when none is provided. Without it, "::uuid" on a
+   * content entity would look for a "uuid" field definition that a subject
+   * entity does not have.
+   *
+   * @return string
+   *   The generated UUID.
+   */
+  private function generateUuid(): string {
+    return $this->getContainer()->get('uuid')->generate();
   }
 
   /**

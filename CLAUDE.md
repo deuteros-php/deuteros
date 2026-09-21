@@ -180,6 +180,16 @@ be used by user-provided context.
 - An empty reference falls back to the entity type ID, matching an absent
   bundle key; scalar values pass through untouched
 
+**Subject Entity UUIDs:**
+- A subject entity always has a UUID, as it would coming out of real storage:
+  `SubjectEntityFactory` honours the one passed under the entity type's `uuid`
+  key and otherwise generates one with the doubled `uuid` service
+- Without it, `::uuid` on a content entity would go through `::getEntityKey`
+  and look for a `uuid` field definition that a subject entity does not have,
+  so it would fatal rather than return NULL
+- The generated UUID is only set as an entity key; it does not define a `uuid`
+  field, so `hasField('uuid')` still follows the values passed to `create()`
+
 **Container Reuse:**
 - `SubjectEntityFactory` maintains a reference to its container (`$this->container`)
 - When new entity types are registered via `create()`, the existing container is
@@ -187,6 +197,9 @@ be used by user-provided context.
 - This preserves custom services added by tests via `getContainer()->set()`
 - `ServiceDoublerInterface::buildContainer()` accepts an optional container parameter;
   if NULL, a new container is created; if provided, the existing container is reused
+- The doubled `uuid` service numbers the UUIDs it generates, so a reused
+  container keeps the one it already has rather than getting a fresh generator
+  that would repeat them
 
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends

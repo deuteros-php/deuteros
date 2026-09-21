@@ -76,10 +76,14 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
       $this->createLanguageManagerDouble()
     );
 
-    $container->set(
-      'uuid',
-      $this->createUuidDouble()
-    );
+    // The UUID generator numbers the UUIDs it hands out, so a rebuilt
+    // container keeps the one it has to keep them unique.
+    if (!$container->has('uuid')) {
+      $container->set(
+        'uuid',
+        $this->createUuidDouble()
+      );
+    }
 
     $container->set(
       'module_handler',
@@ -261,9 +265,10 @@ final class ProphecyServiceDoubler implements ServiceDoublerInterface {
     /** @var \Prophecy\Prophecy\ObjectProphecy<\Drupal\Component\Uuid\UuidInterface> $prophecy */
     $prophecy = $this->prophet->prophesize(UuidInterface::class);
 
-    $prophecy->generate()->will(function (): string {
-      /** @var int $counter */
-      static $counter = 0;
+    // Prophecy rebinds a callback that has a bound $this on every call, and
+    // the copy starts over with the counter, so the callback is static.
+    $counter = 0;
+    $prophecy->generate()->will(static function () use (&$counter): string {
       $counter++;
       return sprintf(
         '%08x-%04x-%04x-%04x-%012x',

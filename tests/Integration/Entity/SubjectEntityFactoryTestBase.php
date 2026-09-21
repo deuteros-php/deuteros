@@ -189,6 +189,7 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
 
     $this->assertSame('my_config', $entity->id());
     $this->assertSame('My Configuration', $entity->label());
+    $this->assertSame('test-uuid-1234', $entity->uuid());
     $this->assertTrue($entity->status());
     $this->assertSame('A test description', $entity->description);
     $this->assertSame(5, $entity->weight);
@@ -251,6 +252,21 @@ abstract class SubjectEntityFactoryTestBase extends SubjectEntityTestBase {
     $this->assertSame('test_config', $configEntity->getEntityTypeId());
     $this->assertSame('Test Node', $contentEntity->get('title')->value);
     $this->assertSame('Test Config', $configEntity->label());
+  }
+
+  /**
+   * Tests that generated UUIDs stay unique across entity types.
+   *
+   * Registering a new entity type rebuilds the container, which must keep
+   * the UUID generator rather than start a new one.
+   */
+  public function testGeneratedUuidsAreUniqueAcrossEntityTypes(): void {
+    $node = $this->createEntity(Node::class, ['nid' => 1, 'type' => 'article']);
+    $testEntity = $this->createEntity(TestContentEntity::class, ['id' => 1]);
+    $config = $this->createEntity(TestConfigEntity::class, ['id' => 'config']);
+
+    $uuids = [$node->uuid(), $testEntity->uuid(), $config->uuid()];
+    $this->assertCount(3, array_unique($uuids));
   }
 
   /**

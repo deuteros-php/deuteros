@@ -7,6 +7,7 @@ namespace Deuteros\Tests\Unit\Double;
 use Deuteros\Double\FieldItemDoubleBuilder;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -295,6 +296,61 @@ class FieldItemDoubleBuilderTest extends TestCase {
     $resolvers = $builder->getResolvers();
 
     $this->assertFalse($resolvers['isEmpty']([]));
+  }
+
+  /**
+   * Tests that the ::isEmpty resolver checks the given main property.
+   */
+  public function testIsEmptyResolverUsesMainProperty(): void {
+    $empty = new FieldItemDoubleBuilder(['uri' => '', 'title' => 'Example'], 0, 'field_link', mainProperty: 'uri');
+    $filled = new FieldItemDoubleBuilder(['uri' => 'https://example.com', 'title' => ''], 0, 'field_link', mainProperty: 'uri');
+
+    $this->assertTrue($empty->getResolvers()['isEmpty']([]));
+    $this->assertFalse($filled->getResolvers()['isEmpty']([]));
+  }
+
+  /**
+   * Tests ::isEmptyValue against the emptiness of real field items.
+   *
+   * @param mixed $value
+   *   The item value.
+   * @param string|null $mainProperty
+   *   The main property of the field item.
+   * @param bool $expected
+   *   Whether the item is expected to be empty.
+   */
+  #[DataProvider('providerIsEmptyValue')]
+  public function testIsEmptyValue(mixed $value, ?string $mainProperty, bool $expected): void {
+    $this->assertSame($expected, FieldItemDoubleBuilder::isEmptyValue($value, $mainProperty));
+  }
+
+  /**
+   * Data provider for ::testIsEmptyValue.
+   *
+   * @return array<string, array{mixed, string|null, bool}>
+   *   Item value, main property and expected result, keyed by case name.
+   */
+  public static function providerIsEmptyValue(): array {
+    return [
+      'null' => [NULL, 'value', TRUE],
+      'empty string' => ['', 'value', TRUE],
+      'empty array' => [[], 'value', TRUE],
+      'zero' => [0, 'value', FALSE],
+      'false' => [FALSE, 'value', FALSE],
+      'scalar' => ['text', 'value', FALSE],
+      'null main property' => [['value' => NULL], 'value', TRUE],
+      'empty main property' => [['value' => '', 'format' => 'basic_html'], 'value', TRUE],
+      'filled main property' => [['value' => 'text', 'format' => NULL], 'value', FALSE],
+      'missing main property' => [['title' => 'Example'], 'uri', TRUE],
+      'item class main property' => [['uri' => 'https://example.com'], 'uri', FALSE],
+      'no main property, all empty' => [['a' => NULL, 'b' => ''], NULL, TRUE],
+      'no main property, one filled' => [['a' => NULL, 'b' => 'x'], NULL, FALSE],
+      'reference with target ID' => [['target_id' => 1], 'target_id', FALSE],
+      'reference with empty string target ID' => [['target_id' => ''], 'target_id', FALSE],
+      'reference with null target ID' => [['target_id' => NULL], 'target_id', TRUE],
+      'reference with null entity' => [['entity' => NULL], 'value', TRUE],
+      'reference with entity' => [['entity' => new \stdClass(), 'target_id' => NULL], 'value', FALSE],
+    ];
   }
 
   /**

@@ -28,6 +28,11 @@ composer test                 # Run all tests (alias for phpunit)
 ./vendor/bin/phpunit tests/Unit        # Unit tests only
 ./vendor/bin/phpunit tests/Integration # Integration tests only
 ./vendor/bin/phpunit --filter TestName # Run specific test by name
+./vendor/bin/phpunit --testsuite Contract # Contract tests, double side
+
+# Contract tests, Kernel side (dev setup only; in-memory SQLite by default,
+# override with the SIMPLETEST_DB environment variable)
+COMPOSER=composer.dev.json composer test-kernel
 
 # Production setup (for testing stub compatibility)
 composer install              # Uses stubs instead of Drupal core
@@ -43,6 +48,9 @@ composer install              # Uses stubs instead of Drupal core
 - `config.allow-plugins` must list `symfony/runtime`. Drupal core 11.4 added it
   as a direct dependency, and it ships a Composer plugin that Composer refuses
   to run unless it is explicitly allowed.
+- `autoload-dev` maps the `node`, `user` and `link` core module namespaces,
+  so unit and integration tests can use their classes without core's test
+  bootstrap. The contract tests need `LinkItem`.
 - The lock files (`composer.lock`, `composer.dev.lock`) are not tracked in git,
   so CI resolves dependencies fresh on every run.
 
@@ -91,7 +99,8 @@ Configuration files:
 
 GitHub Actions runs quality checks on every PR and push to main:
 
-- **Dev Quality Checks**: Installs dev dependencies, runs phpcs, phpstan, and tests
+- **Dev Quality Checks**: Installs dev dependencies, runs phpcs, phpstan, tests,
+  and the Kernel contract tests
 - **Production Test**: Installs production dependencies (with stubs), runs tests
 
 Workflow file: `.github/workflows/ci.yml`
@@ -211,6 +220,35 @@ be used by user-provided context.
   when the container lacks them
 - `ServiceDoublerInterface::buildContainer()` accepts an optional container parameter;
   if NULL, a new container is created; if provided, the existing container is reused
+
+**Field Emptiness:**
+- `FieldItemDoubleBuilder::isEmptyValue()` decides whether an item value is
+  empty, as Drupal field items do: an entity reference item (keys `target_id`
+  or `entity`) is empty unless `target_id` is not NULL or it holds an entity;
+  any other item is empty when its main property is NULL or `''`, or, with no
+  main property, when every property is
+- Item doubles get the main property from
+  `FieldDoubleDefinition::getMainPropertyName()` through
+  `EntityDoubleFactory::createFieldItemDouble()`
+- A field item list double is empty when all of its items are, like
+  `FieldItemList::isEmpty`, so a list holding `''` is empty and counts 1
+
+**Contract Tests:**
+- `tests/Contract/EntityContractTestTrait.php` holds assertions shared by
+  entity doubles and real entities; it is the check that doubles behave as
+  Drupal does, where the integration tests only check the adapters agree
+- The Kernel side (`tests/Contract/Kernel/EntityKernelContractTest.php`,
+  run by `phpunit.kernel.xml`) creates real `entity_test` entities and a
+  configurable field per `ContractField`; the double side
+  (`tests/Contract/Double/`) runs in the main `phpunit.xml` suite
+- Subtests are `doTest*` methods run by a single `::test` method, because
+  Drupal runs each Kernel test method in a separate process;
+  `::resetContractState` isolates subtests
+- Assert only behavior both sides share; leave Deuteros-only features and
+  known differences (base fields in iteration, entities reloaded by
+  `::referencedEntities`, string IDs of saved entities, property defaults,
+  exception messages) out, and document them in `docs/ARCHITECTURE.md`
+- When adding a supported feature that Drupal also has, add a subtest
 
 **Iterator/Countable Support:**
 - Field item lists support `foreach` via `::getIterator` (if interface extends
@@ -356,6 +394,12 @@ While working on any code change:
   - `SubjectEntityFactoryTestBase.php` - Shared tests for adapter parity
   - `PhpUnit/` - PHPUnit adapter tests
   - `Prophecy/` - Prophecy adapter tests
+- `tests/Contract/` - Contract tests run against doubles and real entities
+  - `EntityContractTestTrait.php` - The contract: `doTest*` subtests and hooks
+  - `ContractField.php` - Implementation-independent field description
+  - `Double/` - Double side (`EntityDoubleContractTestBase`, `PhpUnit/`,
+    `Prophecy/`)
+  - `Kernel/` - Kernel side, the reference implementation
 - `tests/Fixtures/` - Test fixtures including test traits (`TestBundleTrait`,
   `SecondTestTrait`) for trait support tests, and test entity classes
   (`TestContentEntity`, `TestConfigEntity`, `EntityWithoutAttribute`,

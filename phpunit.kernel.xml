@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Runs the Kernel implementation of the entity contract tests.
+
+  It needs the development setup, since it boots Drupal core, and a database.
+  An in-memory SQLite database is used unless SIMPLETEST_DB is set in the
+  environment.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+         bootstrap="web/core/tests/bootstrap.php"
+         colors="true"
+         cacheResult="false"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         beStrictAboutOutputDuringTests="true"
+         failOnWarning="true">
+  <php>
+    <ini name="error_reporting" value="32767"/>
+    <ini name="memory_limit" value="-1"/>
+    <env name="SIMPLETEST_DB" value="sqlite://localhost/:memory:"/>
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+  </php>
+  <testsuites>
+    <testsuite name="Contract Kernel">
+      <directory suffix="Test.php">tests/Contract/Kernel</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

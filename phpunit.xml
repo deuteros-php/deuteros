@@ -15,6 +15,10 @@
         <testsuite name="Integration">
             <directory suffix="Test.php">tests/Integration</directory>
         </testsuite>
+        <!-- The Kernel side of the contract runs with phpunit.kernel.xml. -->
+        <testsuite name="Contract">
+            <directory suffix="Test.php">tests/Contract/Double</directory>
+        </testsuite>
     </testsuites>
 
     <source>

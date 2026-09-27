@@ -371,6 +371,10 @@ While working on any code change:
 - quality checks should always be run
 - documentation should be updated including CLAUDE.MD (this file)
 - test coverage should follow the test pyramid paradigm
+- when a change adds or alters behavior that real Drupal entities also have,
+  add or update a `doTest*` subtest in `tests/Contract/EntityContractTestTrait.php`
+  and run `COMPOSER=composer.dev.json composer test-kernel`, so the contract
+  confirms doubles behave as real entities
 - @composer.dev.json should be used when running quality checks: always prefer unit tests over integration tests, when possible 
 
 ## Test Structure

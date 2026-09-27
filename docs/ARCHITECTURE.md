@@ -358,8 +358,10 @@ These constraints must never be violated:
    ```
 
 3. **Add tests**:
-   - Unit test in `tests/Unit/Common/EntityDoubleBuilderTest.php`
+   - Unit test in `tests/Unit/Double/EntityDoubleBuilderTest.php`
    - Integration test in `tests/Integration/EntityDoubleFactoryTestBase.php`
+   - Contract subtest in `tests/Contract/EntityContractTestTrait.php`, when
+     real entities have the method too
 
 ### Adding a New Guardrail
 
@@ -378,6 +380,8 @@ These constraints must never be violated:
 1. **Add resolver to `FieldItemListDoubleBuilder`**
 2. **Wire in factory's `wireFieldListResolvers()`**
 3. **Add unit test and integration test**
+4. **Add a contract subtest** in `tests/Contract/EntityContractTestTrait.php`,
+   when real field item lists have the method too
 
 ---
 

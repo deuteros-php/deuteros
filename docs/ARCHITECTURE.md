@@ -358,8 +358,10 @@ These constraints must never be violated:
    ```
 
 3. **Add tests**:
-   - Unit test in `tests/Unit/Common/EntityDoubleBuilderTest.php`
+   - Unit test in `tests/Unit/Double/EntityDoubleBuilderTest.php`
    - Integration test in `tests/Integration/EntityDoubleFactoryTestBase.php`
+   - Contract subtest in `tests/Contract/EntityContractTestTrait.php`, when
+     real entities have the method too
 
 ### Adding a New Guardrail
 
@@ -378,6 +380,8 @@ These constraints must never be violated:
 1. **Add resolver to `FieldItemListDoubleBuilder`**
 2. **Wire in factory's `wireFieldListResolvers()`**
 3. **Add unit test and integration test**
+4. **Add a contract subtest** in `tests/Contract/EntityContractTestTrait.php`,
+   when real field item lists have the method too
 
 ---
 
@@ -386,6 +390,9 @@ These constraints must never be violated:
 ```
          ┌──────────────────┐
          │   Performance    │     ◄── Benchmark comparisons
+         └──────────────────┘
+         ┌──────────────────┐
+         │     Contract     │     ◄── Doubles behave as real entities
          └──────────────────┘
          ┌──────────────────┐
          │   Integration    │     ◄── Factory behavior, adapter parity
@@ -406,6 +413,7 @@ These constraints must never be violated:
 | `tests/Integration/Double/PhpUnit/` | PHPUnit factory integration tests |
 | `tests/Integration/Double/Prophecy/` | Prophecy factory integration tests |
 | `tests/Integration/Entity/` | SubjectEntityFactory integration tests |
+| `tests/Contract/` | Contract tests shared by entity doubles and real entities |
 | `tests/Performance/` | Benchmark tests |
 
 ### Adapter Parity
@@ -424,6 +432,49 @@ class ProphecyEntityDoubleFactoryTest extends EntityDoubleFactoryTestBase {
 ```
 
 This inheritance pattern guarantees identical behavior across adapters.
+
+### Contract Tests
+
+Adapter parity shows that both adapters agree, not that they agree with
+Drupal. The contract tests close that gap: `EntityContractTestTrait` holds
+assertions that run both against entity doubles and against a real
+`EntityTest` entity with real field items, in a Kernel test.
+
+```
+                    EntityContractTestTrait
+                (doTest* subtests, run by ::test)
+                 │                            │
+ EntityDoubleContractTestBase       EntityKernelContractTest
+  (TestCase, phpunit.xml)      (EntityKernelTestBase, phpunit.kernel.xml)
+   │                    │              real entity, real field items,
+ MockEntity...    ProphecyEntity...    field storages created per subtest
+ ContractTest     ContractTest
+```
+
+- Subtests describe entities through two hooks, `::createContractEntity` and
+  `::createReferencedEntity`. Fields are `ContractField` objects: a Drupal
+  field type, settings, an optional item class, and a raw value that is
+  passed unchanged to both `ContentEntityBase::create` and the double builder
+- Each `doTest*` method is a subtest, and one `::test` method runs them in
+  declaration order. Drupal runs every Kernel test method in its own process,
+  so a single method installs Drupal only once. `::resetContractState` runs
+  before each subtest: the Kernel side deletes saved entities and configurable
+  fields, doubles have nothing to reset
+- Only behavior both sides support belongs in the contract. Features without
+  a Drupal counterpart (guardrails, lenient mode, overrides, callbacks,
+  immutability) stay in the integration tests
+- Known, intended differences are left out of the contract, or asserted in a
+  form both sides meet:
+  - A real entity also iterates over its base fields; the contract checks the
+    configured fields only
+  - Real reference fields load saved entities from storage, so
+    `::referencedEntities` returns equal entities rather than the same
+    instances, and a saved entity has a string ID
+  - Real field items fill in property defaults, such as the `options` of a
+    link item; the contract passes complete property sets
+  - Exception messages differ; the contract checks exception classes only
+- The double side skips without Drupal core, since the contract uses real
+  field item classes to name main properties
 
 ---
 

@@ -1431,9 +1431,11 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
     assert($entity instanceof FieldableEntityInterface);
 
+    // As in Drupal, an item holding an empty string is empty, and so is a
+    // list holding only empty items.
     $fieldList = $entity->get('field_title');
     $this->assertSame('', $fieldList->value);
-    $this->assertFalse($fieldList->isEmpty());
+    $this->assertTrue($fieldList->isEmpty());
     $this->assertSame([['value' => '']], $fieldList->getValue());
   }
 

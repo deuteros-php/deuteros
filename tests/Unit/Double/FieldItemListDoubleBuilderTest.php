@@ -6,6 +6,7 @@ namespace Deuteros\Tests\Unit\Double;
 
 use Deuteros\Double\FieldDoubleDefinition;
 use Deuteros\Double\FieldItemListDoubleBuilder;
+use Deuteros\Tests\Fixtures\TestFieldItemClass;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -78,6 +79,36 @@ class FieldItemListDoubleBuilderTest extends TestCase {
     $resolvers = $builder->getResolvers();
 
     $this->assertFalse($resolvers['isEmpty']([]));
+  }
+
+  /**
+   * Tests that a list is empty when all of its items are.
+   */
+  public function testIsEmptyResolverTrueForEmptyItems(): void {
+    $definition = new FieldDoubleDefinition(['', ['value' => NULL], ['entity' => NULL]]);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_test');
+
+    $this->assertTrue($builder->getResolvers()['isEmpty']([]));
+  }
+
+  /**
+   * Tests that a list is not empty when one of its items is not.
+   */
+  public function testIsEmptyResolverFalseForOneFilledItem(): void {
+    $definition = new FieldDoubleDefinition([['value' => NULL], ['value' => 'text']]);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_test');
+
+    $this->assertFalse($builder->getResolvers()['isEmpty']([]));
+  }
+
+  /**
+   * Tests that the items are checked against the main property.
+   */
+  public function testIsEmptyResolverUsesMainProperty(): void {
+    $definition = new FieldDoubleDefinition(['uri' => '', 'title' => 'Example'], 'link', itemClass: TestFieldItemClass::class);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_link');
+
+    $this->assertTrue($builder->getResolvers()['isEmpty']([]));
   }
 
   /**

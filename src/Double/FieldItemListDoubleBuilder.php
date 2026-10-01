@@ -137,8 +137,13 @@ final class FieldItemListDoubleBuilder {
   private function buildIsEmptyResolver(): callable {
     return function (array $context): bool {
       /** @var array<string, mixed> $context */
-      $values = $this->resolveValues($context);
-      return $values === [];
+      $mainProperty = $this->definition->getMainPropertyName();
+      foreach ($this->resolveValues($context) as $value) {
+        if (!FieldItemDoubleBuilder::isEmptyValue($value, $mainProperty)) {
+          return FALSE;
+        }
+      }
+      return TRUE;
     };
   }
 

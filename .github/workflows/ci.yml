@@ -31,6 +31,8 @@ jobs:
         run: COMPOSER=composer.dev.json composer phpstan
       - name: Run tests
         run: COMPOSER=composer.dev.json composer test
+      - name: Run Kernel contract tests
+        run: COMPOSER=composer.dev.json composer test-kernel
 
   prod-test:
     name: Production Test

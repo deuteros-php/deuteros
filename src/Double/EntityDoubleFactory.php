@@ -427,9 +427,9 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
 
     // Set up field item factory.
     $builder->setFieldItemFactory(
-      function (int $delta, mixed $value, array $context) use ($fieldName, $entityDoubleDefinition) {
+      function (int $delta, mixed $value, array $context) use ($fieldName, $fieldDoubleDefinition, $entityDoubleDefinition) {
         /** @var array<string, mixed> $context */
-        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context);
+        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context, $fieldDoubleDefinition->getMainPropertyName());
       }
     );
 
@@ -490,12 +490,14 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   Whether the entity is mutable.
    * @param array<string, mixed> $context
    *   The context.
+   * @param string|null $mainProperty
+   *   The main property of the field item.
    *
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context): FieldItemInterface {
-    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable);
+  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context, ?string $mainProperty = 'value'): FieldItemInterface {
+    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable, $mainProperty);
 
     // Create the double.
     $double = $this->createFieldItemDoubleObject();

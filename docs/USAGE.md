@@ -187,7 +187,7 @@ $firstItem = $entity->get('field_name')->first();
 // Get item by delta
 $item = $entity->get('field_name')->get(0);
 
-// Check if empty
+// Check if empty: TRUE when every item is empty
 $isEmpty = $entity->get('field_name')->isEmpty();
 
 // Get all values as array of property arrays
@@ -301,6 +301,27 @@ $entity = $factory->create(
 
 $entity->get('field_link')->uri;   // 'https://example.com'
 $entity->get('field_link')->title; // 'Example'
+```
+
+**Empty Items**
+
+`isEmpty()` follows Drupal. An item is empty when its main property is NULL or
+an empty string, so `''`, `NULL` and `['value' => NULL]` are all empty items,
+while `0` is not. An entity reference item is empty unless it holds a target
+ID or an entity. A field item list is empty when all of its items are, even if
+it holds some, so `count()` and `isEmpty()` may both be non-zero and TRUE:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->field('field_title', '')
+    ->field('field_link', ['uri' => '', 'title' => 'Example'], 'link', itemClass: LinkItem::class)
+    ->build()
+);
+
+$entity->get('field_title')->isEmpty();  // TRUE
+count($entity->get('field_title'));      // 1
+$entity->get('field_link')->isEmpty();   // TRUE: "uri" is the main property
 ```
 
 ### Checking Field Existence

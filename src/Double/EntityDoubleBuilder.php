@@ -349,15 +349,10 @@ final class EntityDoubleBuilder {
   private function getFieldDefinitionForAccess(string $fieldName): FieldDoubleDefinition {
     // Check mutable state first.
     if ($this->mutableState !== NULL && $this->mutableState->hasFieldValue($fieldName)) {
-      // Preserve type, settings and item class from the original definition
-      // across mutations.
-      $original = $this->definition->getField($fieldName);
-      return new FieldDoubleDefinition(
-        $this->mutableState->getFieldValue($fieldName),
-        $original?->getType() ?? '',
-        $original?->getSettings() ?? [],
-        $original?->getItemClass() ?? '',
-      );
+      // Preserve everything but the value of the original definition across
+      // mutations.
+      $value = $this->mutableState->getFieldValue($fieldName);
+      return $this->definition->getField($fieldName)?->withValue($value) ?? new FieldDoubleDefinition($value);
     }
 
     $definition = $this->definition->getField($fieldName);

@@ -33,7 +33,7 @@ class EntityKernelContractTest extends EntityKernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['link'];
+  protected static $modules = ['datetime', 'datetime_range', 'filter', 'link', 'text'];
 
   /**
    * {@inheritdoc}

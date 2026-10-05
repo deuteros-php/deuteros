@@ -1666,6 +1666,30 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests that an emptiness callback decides for items and lists.
+   */
+  public function testIsEmptyCallback(): void {
+    $isEmpty = fn(array $properties): bool => ($properties['value'] ?? '') === '';
+    $entity = $this->factory->createMutable(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->field('field_geo', [['lat' => '40.7', 'lon' => '-74.0']], 'geofield', isEmpty: $isEmpty)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertTrue($entity->get('field_geo')->first()?->isEmpty());
+    $this->assertTrue($entity->get('field_geo')->isEmpty());
+
+    // The callback survives a mutation.
+    $entity->set('field_geo', [['value' => 'POINT (-74.0 40.7)']]);
+    $this->assertFalse($entity->get('field_geo')->first()?->isEmpty());
+    $this->assertFalse($entity->get('field_geo')->isEmpty());
+    $entity->get('field_geo')->setValue([['lat' => '1']]);
+    $this->assertTrue($entity->get('field_geo')->isEmpty());
+  }
+
+  /**
    * Tests iterating over the items of a multi-value field with foreach.
    */
   public function testFieldItemIteration(): void {

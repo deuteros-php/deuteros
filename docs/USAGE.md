@@ -305,11 +305,26 @@ $entity->get('field_link')->title; // 'Example'
 
 **Empty Items**
 
-`isEmpty()` follows Drupal. An item is empty when its main property is NULL or
-an empty string, so `''`, `NULL` and `['value' => NULL]` are all empty items,
-while `0` is not. An entity reference item is empty unless it holds a target
-ID or an entity. A field item list is empty when all of its items are, even if
-it holds some, so `count()` and `isEmpty()` may both be non-zero and TRUE:
+`isEmpty()` follows Drupal, whose rule depends on the field type, so pass the
+type when emptiness matters:
+
+- Most core field types, such as `string`, `email` or `datetime`, and fields
+  without a type: an item is empty when its main property is NULL or an empty
+  string. `''`, `NULL` and `['value' => NULL]` are empty items, `0` is not.
+- Some core types check more than one property: `text_with_summary` (`value`
+  and `summary`), `daterange` (`value` and `end_value`), `path` (`alias`,
+  `pid` and `langcode`).
+- Numeric and list types (`integer`, `decimal`, `float`, `list_*`): zero, as
+  `0` or `'0'`, is a value, `FALSE` is not.
+- `boolean`, `timestamp`, `created`, `changed` and `language` keep Drupal's
+  generic rule: an item is empty only when every property is NULL, so `FALSE`
+  and even `''` are values. A field item class that does not override
+  `isEmpty()` (`itemClass:` on `field()`) gets the same rule, which suits
+  compound field types without a `value` property.
+- An entity reference item is empty unless it holds a target ID or an entity.
+
+A field item list is empty when all of its items are, even if it holds some,
+so `count()` and `isEmpty()` may both be non-zero and TRUE:
 
 ```php
 $entity = $factory->create(
@@ -322,6 +337,23 @@ $entity = $factory->create(
 $entity->get('field_title')->isEmpty();  // TRUE
 count($entity->get('field_title'));      // 1
 $entity->get('field_link')->isEmpty();   // TRUE: "uri" is the main property
+```
+
+When a field type decides emptiness its own way, as many contrib types do,
+pass an `isEmpty:` callback to `field()` (or an `is_empty` key in a `fields()`
+spec). It replaces the rules above for that field: it receives each item as
+an array of properties, a scalar item standing for the main property, and
+must return a bool:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->field('field_geo', ['lat' => '40.7', 'lon' => '-74.0'], 'geofield',
+      isEmpty: fn(array $item): bool => ($item['value'] ?? '') === '')
+    ->build()
+);
+
+$entity->get('field_geo')->isEmpty();  // TRUE: geofield items need a "value"
 ```
 
 ### Checking Field Existence

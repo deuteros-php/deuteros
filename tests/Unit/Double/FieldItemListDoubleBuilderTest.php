@@ -7,6 +7,7 @@ namespace Deuteros\Tests\Unit\Double;
 use Deuteros\Double\FieldDoubleDefinition;
 use Deuteros\Double\FieldItemListDoubleBuilder;
 use Deuteros\Tests\Fixtures\TestFieldItemClass;
+use Deuteros\Tests\Fixtures\TestMapFieldItemClass;
 use Drupal\Core\Entity\EntityInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -109,6 +110,19 @@ class FieldItemListDoubleBuilderTest extends TestCase {
     $builder = new FieldItemListDoubleBuilder($definition, 'field_link');
 
     $this->assertTrue($builder->getResolvers()['isEmpty']([]));
+  }
+
+  /**
+   * Tests that ::setValue keeps the item class deciding emptiness.
+   */
+  public function testIsEmptyResolverAfterSetValueKeepsItemClass(): void {
+    $definition = new FieldDoubleDefinition(NULL, 'compound', itemClass: TestMapFieldItemClass::class);
+    $builder = new FieldItemListDoubleBuilder($definition, 'field_compound', TRUE);
+    $resolvers = $builder->getResolvers();
+
+    $resolvers['setValue']([], ['first' => 'a']);
+
+    $this->assertFalse($resolvers['isEmpty']([]));
   }
 
   /**

@@ -28,15 +28,15 @@ final class FieldItemDoubleBuilder {
    *   The field name.
    * @param bool $mutable
    *   Whether the parent entity is mutable.
-   * @param string|null $mainProperty
-   *   The main property of the field item, which decides whether it is empty.
+   * @param \Deuteros\Double\FieldItemEmptiness $emptiness
+   *   The rule deciding whether the item is empty.
    */
   public function __construct(
     mixed $value,
     private readonly int $delta,
     private readonly string $fieldName,
     private readonly bool $mutable = FALSE,
-    private readonly ?string $mainProperty = 'value',
+    private readonly FieldItemEmptiness $emptiness = new FieldItemEmptiness(),
   ) {
     $this->value = $value;
   }
@@ -275,40 +275,7 @@ final class FieldItemDoubleBuilder {
    *   The resolver callable.
    */
   private function buildIsEmptyResolver(): callable {
-    return fn(array $context): bool => self::isEmptyValue($this->value, $this->mainProperty);
-  }
-
-  /**
-   * Determines whether a field item value is empty, as Drupal does.
-   *
-   * An entity reference item is empty unless it holds a target ID or an
-   * entity, like "EntityReferenceItem::isEmpty". Any other item is empty when
-   * its main property is NULL or an empty string, like the field items of
-   * core field types. Without a main property, every property must be.
-   *
-   * @param mixed $value
-   *   The item value: a scalar standing for the main property, an entity, or
-   *   an array of properties.
-   * @param string|null $mainProperty
-   *   The main property of the field item.
-   *
-   * @return bool
-   *   TRUE if the item is empty, FALSE otherwise.
-   */
-  public static function isEmptyValue(mixed $value, ?string $mainProperty = 'value'): bool {
-    if ($value === NULL || $value === '' || $value === []) {
-      return TRUE;
-    }
-    if (!is_array($value) || array_is_list($value)) {
-      return FALSE;
-    }
-
-    if (array_key_exists('target_id', $value) || array_key_exists('entity', $value)) {
-      return ($value['target_id'] ?? NULL) === NULL && !is_object($value['entity'] ?? NULL);
-    }
-
-    $properties = $mainProperty === NULL ? $value : [$value[$mainProperty] ?? NULL];
-    return array_filter($properties, fn(mixed $property): bool => $property !== NULL && $property !== '') === [];
+    return fn(array $context): bool => $this->emptiness->isEmpty($this->value);
   }
 
   /**

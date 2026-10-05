@@ -280,8 +280,8 @@ final class EntityDoubleDefinitionBuilder {
    *   The field name.
    * @param mixed $value
    *   The field value (scalar, array, or callable). If this is already a
-   *   "FieldDoubleDefinition", it is used as-is and "$type"/"$settings"
-   *   are ignored.
+   *   "FieldDoubleDefinition", it is used as-is and the other arguments are
+   *   ignored.
    * @param string $type
    *   Optional field type (e.g., "text", "metatag"). When non-empty, the
    *   factory wires "getFieldDefinition()" on the field list double to return
@@ -293,13 +293,18 @@ final class EntityDoubleDefinitionBuilder {
    * @param string $itemClass
    *   Optional field item class whose static "::mainPropertyName" names the
    *   main property of the field storage definition double.
+   * @param callable|null $isEmpty
+   *   Optional callback deciding whether a field item is empty, in place of
+   *   the rules Deuteros follows. It receives the item properties as an
+   *   array, a scalar item standing for the main property, and returns a
+   *   bool.
    *
    * @return $this
    */
-  public function field(string $fieldName, mixed $value, string $type = '', array $settings = [], string $itemClass = ''): self {
+  public function field(string $fieldName, mixed $value, string $type = '', array $settings = [], string $itemClass = '', ?callable $isEmpty = NULL): self {
     $this->fields[$fieldName] = $value instanceof FieldDoubleDefinition
       ? $value
-      : new FieldDoubleDefinition($value, $type, $settings, $itemClass);
+      : new FieldDoubleDefinition($value, $type, $settings, $itemClass, $isEmpty === NULL ? NULL : $isEmpty(...));
     return $this;
   }
 
@@ -311,13 +316,13 @@ final class EntityDoubleDefinitionBuilder {
    * Each entry in $fields may be:
    * - A plain value (scalar, array, callable)
    * - An associative array with a "value" key, and optional "type",
-   *   "settings" and "item_class" keys to pass type, settings and field item
-   *   class alongside the value
+   *   "settings", "item_class" and "is_empty" keys to pass type, settings,
+   *   field item class and emptiness callback alongside the value
    *
    * @param array<string, mixed> $fields
    *   Field values keyed by field name. Each entry may be a plain value or
    *   an associative array with "value", optional "type", optional
-   *   "settings" and optional "item_class" keys.
+   *   "settings", optional "item_class" and optional "is_empty" keys.
    *
    * @return $this
    */
@@ -328,7 +333,8 @@ final class EntityDoubleDefinitionBuilder {
         /** @var array<string, mixed> $settings */
         $settings = array_key_exists('settings', $value) && is_array($value['settings']) ? $value['settings'] : [];
         $itemClass = array_key_exists('item_class', $value) && is_string($value['item_class']) ? $value['item_class'] : '';
-        $this->field($field_name, $value['value'], $type, $settings, $itemClass);
+        $isEmpty = array_key_exists('is_empty', $value) && is_callable($value['is_empty']) ? $value['is_empty'] : NULL;
+        $this->field($field_name, $value['value'], $type, $settings, $itemClass, $isEmpty);
       }
       else {
         $this->field($field_name, $value);

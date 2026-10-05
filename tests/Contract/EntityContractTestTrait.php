@@ -446,6 +446,11 @@ trait EntityContractTestTrait {
    */
   protected function doTestEmptinessFollowsFieldType(): void {
     $cases = [
+      // A text format alone is not a value. The fix for
+      // https://www.drupal.org/node/1278886 would make it one, unless it is
+      // the default format of the user. When core ships it, this case fails
+      // on the Kernel side, and the text rules of "FieldItemEmptiness" need
+      // to follow.
       'field_text_format' => [new ContractField('text', [['value' => '', 'format' => 'basic_html']]), TRUE],
       'field_text' => [new ContractField('text_long', [['value' => '<p>Text</p>']]), FALSE],
       'field_summary' => [new ContractField('text_with_summary', [['value' => '', 'summary' => 'Summary']]), FALSE],

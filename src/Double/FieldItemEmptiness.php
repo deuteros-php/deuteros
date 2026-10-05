@@ -13,7 +13,8 @@ use Drupal\Core\Field\FieldItemInterface;
  * property is NULL, and most core field types override it. The rules here
  * mirror those overrides, keyed by field type. A field without a type, or
  * with a type core does not define, is empty when its main property is NULL
- * or an empty string, which is what most field types do.
+ * or an empty string, which is what most field types do. A callback given
+ * with the field replaces all of these rules.
  */
 final readonly class FieldItemEmptiness {
 
@@ -66,11 +67,15 @@ final readonly class FieldItemEmptiness {
    *   The main property of the field items.
    * @param bool $usesMapRule
    *   Whether the field item class inherits "Map::isEmpty".
+   * @param \Closure|null $callback
+   *   Optional callback deciding emptiness in place of the rules. It receives
+   *   the item properties as an array and returns a bool.
    */
   public function __construct(
     private string $fieldType = '',
     private ?string $mainProperty = 'value',
     private bool $usesMapRule = FALSE,
+    private ?\Closure $callback = NULL,
   ) {}
 
   /**
@@ -83,7 +88,12 @@ final readonly class FieldItemEmptiness {
    *   The emptiness rule.
    */
   public static function fromDefinition(FieldDoubleDefinition $definition): self {
-    return new self($definition->getType(), $definition->getMainPropertyName(), self::inheritsMapRule($definition->getItemClass()));
+    return new self(
+      $definition->getType(),
+      $definition->getMainPropertyName(),
+      self::inheritsMapRule($definition->getItemClass()),
+      $definition->getIsEmptyCallback(),
+    );
   }
 
   /**
@@ -97,6 +107,9 @@ final readonly class FieldItemEmptiness {
    *   TRUE if the item is empty, FALSE otherwise.
    */
   public function isEmpty(mixed $value): bool {
+    if ($this->callback !== NULL) {
+      return $this->isEmptyByCallback($value);
+    }
     // "CommentItem::isEmpty": a comment field always holds a status.
     if ($this->fieldType === 'comment') {
       return FALSE;
@@ -108,7 +121,7 @@ final readonly class FieldItemEmptiness {
       return FALSE;
     }
 
-    $properties = is_array($value) ? $value : [$this->getScalarProperty() => $value];
+    $properties = $this->toProperties($value);
     return match (TRUE) {
       $this->usesMapRule, in_array($this->fieldType, self::MAP_TYPES, TRUE) => self::hasNoValue($properties),
       isset(self::BLANK_PROPERTIES[$this->fieldType]) => self::areBlank($properties, self::BLANK_PROPERTIES[$this->fieldType]),
@@ -119,6 +132,45 @@ final readonly class FieldItemEmptiness {
       $this->fieldType === 'map' => FALSE,
       $this->fieldType === 'layout_section' => ($properties['section'] ?? NULL) === NULL,
       default => $this->isEmptyByShape($properties),
+    };
+  }
+
+  /**
+   * Determines whether an item is empty by calling the callback.
+   *
+   * @param mixed $value
+   *   The item value.
+   *
+   * @return bool
+   *   What the callback returns.
+   *
+   * @throws \LogicException
+   *   If the callback does not return a bool.
+   */
+  private function isEmptyByCallback(mixed $value): bool {
+    assert($this->callback !== NULL);
+    $isEmpty = ($this->callback)($this->toProperties($value));
+    if (!is_bool($isEmpty)) {
+      throw new \LogicException(sprintf('The "isEmpty" callback of a field must return a bool, %s given.', get_debug_type($isEmpty)));
+    }
+    return $isEmpty;
+  }
+
+  /**
+   * Converts an item value into an array of properties.
+   *
+   * @param mixed $value
+   *   The item value: NULL, a scalar standing for the main property, or an
+   *   array of properties.
+   *
+   * @return array<array-key, mixed>
+   *   The item properties.
+   */
+  private function toProperties(mixed $value): array {
+    return match (TRUE) {
+      $value === NULL => [],
+      is_array($value) => $value,
+      default => [$this->getScalarProperty() => $value],
     };
   }
 

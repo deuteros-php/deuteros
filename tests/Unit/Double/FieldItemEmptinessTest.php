@@ -155,4 +155,43 @@ class FieldItemEmptinessTest extends TestCase {
     $this->assertFalse($emptiness->isEmpty(['uri' => 'https://example.com']));
   }
 
+  /**
+   * Tests that a callback decides emptiness in place of the rules.
+   */
+  public function testCallback(): void {
+    $received = [];
+    $callback = function (array $properties) use (&$received): bool {
+      $received[] = $properties;
+      return ($properties['value'] ?? '') === '' && ($properties['format'] ?? NULL) === NULL;
+    };
+    $emptiness = FieldItemEmptiness::fromDefinition(new FieldDoubleDefinition(NULL, 'text', isEmpty: $callback(...)));
+
+    // The "text" rule holds a format alone empty, the callback does not.
+    $this->assertFalse($emptiness->isEmpty(['value' => '', 'format' => 'basic_html']));
+    $this->assertTrue($emptiness->isEmpty(''));
+    $this->assertTrue($emptiness->isEmpty(NULL));
+    // A scalar stands for the main property, and NULL for no property.
+    $this->assertSame([['value' => '', 'format' => 'basic_html'], ['value' => ''], []], $received);
+  }
+
+  /**
+   * Tests that a callback receives a scalar reference under "target_id".
+   */
+  public function testCallbackReceivesScalarReferenceAsTargetId(): void {
+    $emptiness = new FieldItemEmptiness('entity_reference', callback: fn(array $properties): bool => !isset($properties['target_id']));
+
+    $this->assertFalse($emptiness->isEmpty(5));
+  }
+
+  /**
+   * Tests that a callback not returning a bool fails loudly.
+   */
+  public function testCallbackNotReturningBoolIsRejected(): void {
+    $emptiness = new FieldItemEmptiness(callback: fn(array $properties): mixed => 1);
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('The "isEmpty" callback of a field must return a bool, int given.');
+    $emptiness->isEmpty('value');
+  }
+
 }

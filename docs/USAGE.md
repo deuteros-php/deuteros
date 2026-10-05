@@ -339,6 +339,23 @@ count($entity->get('field_title'));      // 1
 $entity->get('field_link')->isEmpty();   // TRUE: "uri" is the main property
 ```
 
+When a field type decides emptiness its own way, as many contrib types do,
+pass an `isEmpty:` callback to `field()` (or an `is_empty` key in a `fields()`
+spec). It replaces the rules above for that field: it receives each item as
+an array of properties, a scalar item standing for the main property, and
+must return a bool:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->field('field_geo', ['lat' => '40.7', 'lon' => '-74.0'], 'geofield',
+      isEmpty: fn(array $item): bool => ($item['value'] ?? '') === '')
+    ->build()
+);
+
+$entity->get('field_geo')->isEmpty();  // TRUE: geofield items need a "value"
+```
+
 ### Checking Field Existence
 
 ```php

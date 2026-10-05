@@ -514,6 +514,19 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
   }
 
   /**
+   * Tests that field() takes an emptiness callback.
+   */
+  public function testFieldWithIsEmptyCallback(): void {
+    $definition = EntityDoubleDefinitionBuilder::create('node')
+      ->field('field_geo', ['lat' => 1.0], 'geofield', isEmpty: 'is_null')
+      ->build();
+
+    $callback = $definition->fields['field_geo']->getIsEmptyCallback();
+    $this->assertInstanceOf(\Closure::class, $callback);
+    $this->assertTrue($callback(NULL));
+  }
+
+  /**
    * Tests that fields() bulk method supports type and settings via array spec.
    */
   public function testFieldsBulkWithTypeAndSettings(): void {
@@ -525,6 +538,7 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
           'type' => 'string',
           'settings' => ['max_length' => 64],
           'item_class' => TestFieldItemClass::class,
+          'is_empty' => fn(array $properties): bool => TRUE,
         ],
       ])
       ->build();
@@ -537,6 +551,8 @@ class EntityDoubleDefinitionBuilderTest extends TestCase {
     $this->assertSame('string', $definition->fields['field_typed']->getType());
     $this->assertSame(64, $definition->fields['field_typed']->getSetting('max_length'));
     $this->assertSame(TestFieldItemClass::class, $definition->fields['field_typed']->getItemClass());
+    $this->assertNull($definition->fields['field_plain']->getIsEmptyCallback());
+    $this->assertNotNull($definition->fields['field_typed']->getIsEmptyCallback());
   }
 
   /**

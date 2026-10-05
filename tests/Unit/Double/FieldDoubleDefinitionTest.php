@@ -159,4 +159,32 @@ class FieldDoubleDefinitionTest extends TestCase {
     new FieldDoubleDefinition('val', 'string', [], \stdClass::class);
   }
 
+  /**
+   * Tests that the emptiness callback is stored.
+   */
+  public function testIsEmptyCallback(): void {
+    $this->assertNull((new FieldDoubleDefinition('val'))->getIsEmptyCallback());
+
+    $callback = fn(array $properties): bool => TRUE;
+    $definition = new FieldDoubleDefinition('val', isEmpty: $callback);
+    $this->assertSame($callback, $definition->getIsEmptyCallback());
+  }
+
+  /**
+   * Tests that ::withValue keeps everything but the value.
+   */
+  public function testWithValue(): void {
+    $callback = fn(array $properties): bool => TRUE;
+    $definition = new FieldDoubleDefinition('old', 'link', ['max_length' => 64], TestFieldItemClass::class, $callback);
+
+    $copy = $definition->withValue('new');
+
+    $this->assertSame('new', $copy->getValue());
+    $this->assertSame('old', $definition->getValue());
+    $this->assertSame('link', $copy->getType());
+    $this->assertSame(['max_length' => 64], $copy->getSettings());
+    $this->assertSame(TestFieldItemClass::class, $copy->getItemClass());
+    $this->assertSame($callback, $copy->getIsEmptyCallback());
+  }
+
 }

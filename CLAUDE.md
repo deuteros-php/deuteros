@@ -241,6 +241,11 @@ be used by user-provided context.
   NULL or `''`, or, with no main property, when every property is
 - Rules are compared against stock Drupal core; core patches changing
   emptiness (e.g. a text format counting as a value) are not followed
+- An `isEmpty:` callback on `field()` (`is_empty` in a `fields()` spec)
+  replaces every rule for that field; `FieldDoubleDefinition` keeps it as a
+  `\Closure`. It receives the item as a property array (NULL as `[]`, a scalar
+  under the main property, or `target_id` for reference types) and must
+  return a bool, or `FieldItemEmptiness` throws a `\LogicException`
 - `FieldItemEmptiness::fromDefinition()` builds the rule from a
   `FieldDoubleDefinition`; `EntityDoubleFactory::createFieldItemDouble()`
   passes it to `FieldItemDoubleBuilder`, and the field list double builds its
@@ -319,9 +324,10 @@ be used by user-provided context.
 - `FieldDoubleDefinition` rejects an item class without a static
   `::mainPropertyName()`; Deuteros never names a concrete Drupal item class
   itself, the test passes one in
-- `EntityDoubleBuilder::getFieldDefinitionForAccess()` rebuilds the
-  definition from mutable state with the original type, settings and item
-  class
+- `EntityDoubleBuilder::getFieldDefinitionForAccess()` and the field list
+  `::setValue` resolver rebuild the definition from mutable state with
+  `FieldDoubleDefinition::withValue()`, which keeps the original type,
+  settings, item class and emptiness callback
 - Both the builder path and direct `EntityDoubleDefinition` construction with
   manually-created `FieldDoubleDefinition` objects are supported
 

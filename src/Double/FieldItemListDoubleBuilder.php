@@ -330,9 +330,8 @@ final class FieldItemListDoubleBuilder {
       // because: (1) it only occurs on mutable doubles, (2) each field list
       // builder is single-use per entity double instance, and (3) the mutation
       // enables the mutable double to return updated values on subsequent
-      // getter calls. The field type, settings and item class are preserved
-      // across mutations.
-      $this->definition = new FieldDoubleDefinition($values, $this->definition->getType(), $this->definition->getSettings(), $this->definition->getItemClass());
+      // getter calls. Everything but the value is preserved across mutations.
+      $this->definition = $this->definition->withValue($values);
 
       // Return placeholder object - adapters convert this to return $fieldList.
       return new class () {};

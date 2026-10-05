@@ -27,12 +27,17 @@ final readonly class FieldDoubleDefinition {
    *   Optional field item class, e.g. the "FieldItemInterface" implementation
    *   of the field type. Only its static "::mainPropertyName" is read.
    *   Defaults to empty string, meaning the main property name is inferred.
+   * @param \Closure|null $isEmpty
+   *   Optional callback deciding whether a field item is empty, in place of
+   *   the rules of "FieldItemEmptiness". It receives the item properties as
+   *   an array and returns a bool.
    */
   public function __construct(
     private mixed $value,
     private readonly string $type = '',
     private readonly array $settings = [],
     private readonly string $itemClass = '',
+    private readonly ?\Closure $isEmpty = NULL,
   ) {
     if ($itemClass !== '' && !is_callable([$itemClass, 'mainPropertyName'])) {
       throw new \InvalidArgumentException(sprintf('The field item class "%s" must exist and declare a static ::mainPropertyName() method.', $itemClass));
@@ -80,6 +85,29 @@ final readonly class FieldDoubleDefinition {
    */
   public function getItemClass(): string {
     return $this->itemClass;
+  }
+
+  /**
+   * Gets the callback deciding whether a field item is empty.
+   *
+   * @return \Closure|null
+   *   The callback, or NULL if not set.
+   */
+  public function getIsEmptyCallback(): ?\Closure {
+    return $this->isEmpty;
+  }
+
+  /**
+   * Creates a copy of the definition holding another value.
+   *
+   * @param mixed $value
+   *   The new field value.
+   *
+   * @return self
+   *   The copy, with the same type, settings, item class and callback.
+   */
+  public function withValue(mixed $value): self {
+    return new self($value, $this->type, $this->settings, $this->itemClass, $this->isEmpty);
   }
 
   /**

@@ -117,6 +117,7 @@ Workflow file: `.github/workflows/ci.yml`
    - `EntityDoubleBuilder` - Resolvers for entity methods (id, uuid, bundle, toUrl, getIterator, etc.)
    - `FieldItemListDoubleBuilder` - Resolvers for field lists (first, get, getValue, getString, __get, __isset, getIterator, count)
    - `FieldItemDoubleBuilder` - Resolvers for field items (__get, __isset, getValue, getString, setValue, __set, isEmpty)
+   - `FieldItemEmptiness` - Emptiness rules of field items, per field type
    - `UrlDoubleBuilder` - Resolvers for Url doubles (toString)
    - Framework-agnostic: no PHPUnit/Prophecy references
 
@@ -222,14 +223,28 @@ be used by user-provided context.
   if NULL, a new container is created; if provided, the existing container is reused
 
 **Field Emptiness:**
-- `FieldItemDoubleBuilder::isEmptyValue()` decides whether an item value is
-  empty, as Drupal field items do: an entity reference item (keys `target_id`
-  or `entity`) is empty unless `target_id` is not NULL or it holds an entity;
-  any other item is empty when its main property is NULL or `''`, or, with no
-  main property, when every property is
-- Item doubles get the main property from
-  `FieldDoubleDefinition::getMainPropertyName()` through
-  `EntityDoubleFactory::createFieldItemDouble()`
+- `FieldItemEmptiness` decides whether an item value is empty, as Drupal field
+  items do. Drupal has no single rule: `Map::isEmpty` holds an item empty when
+  every property is NULL, and most core field types override it
+- For a core field type, the rule mirrors the `::isEmpty` override of its item
+  class: the properties that must all be NULL or `''` (`BLANK_PROPERTIES`,
+  e.g. `value` and `end_value` for `daterange`), numbers where zero is a value,
+  references, `password`, `map`, `comment` and `layout_section`; core types
+  without an override (`MAP_TYPES`, e.g. `boolean`) use the `Map` rule, where
+  `''` is a value
+- A field item class whose `::isEmpty` is inherited from a class that is not a
+  field item (that is, from `Map`) uses the `Map` rule too, so a compound type
+  storing no `value` is not empty when its main property is missing
+- Any other field, typed or not, is guessed from its shape: an item with
+  `target_id` or `entity` keys is a reference, empty unless `target_id` is not
+  NULL or it holds an entity; any other is empty when its main property is
+  NULL or `''`, or, with no main property, when every property is
+- Rules are compared against stock Drupal core; core patches changing
+  emptiness (e.g. a text format counting as a value) are not followed
+- `FieldItemEmptiness::fromDefinition()` builds the rule from a
+  `FieldDoubleDefinition`; `EntityDoubleFactory::createFieldItemDouble()`
+  passes it to `FieldItemDoubleBuilder`, and the field list double builds its
+  own
 - A field item list double is empty when all of its items are, like
   `FieldItemList::isEmpty`, so a list holding `''` is empty and counts 1
 
@@ -383,7 +398,7 @@ While working on any code change:
   - Definition layer: `EntityDoubleDefinitionTest`, `FieldDoubleDefinitionTest`,
     `EntityDoubleDefinitionBuilderTest`
   - Core resolution layer: `EntityDoubleBuilderTest`, `FieldItemListDoubleBuilderTest`,
-    `FieldItemDoubleBuilderTest`
+    `FieldItemDoubleBuilderTest`, `FieldItemEmptinessTest`
   - Support: `MutableStateContainerTest`, `GuardrailEnforcerTest`,
     `EntityReferenceNormalizerTest`, `UuidGeneratorTest`
 - `tests/Unit/Entity/` - Unit tests for SubjectEntityFactory and service doublers

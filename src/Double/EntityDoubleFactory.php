@@ -429,7 +429,7 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
     $builder->setFieldItemFactory(
       function (int $delta, mixed $value, array $context) use ($fieldName, $fieldDoubleDefinition, $entityDoubleDefinition) {
         /** @var array<string, mixed> $context */
-        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context, $fieldDoubleDefinition->getMainPropertyName());
+        return $this->createFieldItemDouble($delta, $value, $fieldName, $entityDoubleDefinition->mutable, $context, FieldItemEmptiness::fromDefinition($fieldDoubleDefinition));
       }
     );
 
@@ -490,14 +490,14 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
    *   Whether the entity is mutable.
    * @param array<string, mixed> $context
    *   The context.
-   * @param string|null $mainProperty
-   *   The main property of the field item.
+   * @param \Deuteros\Double\FieldItemEmptiness $emptiness
+   *   The rule deciding whether the item is empty.
    *
    * @return \Drupal\Core\Field\FieldItemInterface
    *   The field item double.
    */
-  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context, ?string $mainProperty = 'value'): FieldItemInterface {
-    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable, $mainProperty);
+  protected function createFieldItemDouble(int $delta, mixed $value, string $fieldName, bool $mutable, array $context, FieldItemEmptiness $emptiness = new FieldItemEmptiness()): FieldItemInterface {
+    $builder = new FieldItemDoubleBuilder($value, $delta, $fieldName, $mutable, $emptiness);
 
     // Create the double.
     $double = $this->createFieldItemDoubleObject();

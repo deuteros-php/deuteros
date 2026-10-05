@@ -439,6 +439,32 @@ trait EntityContractTestTrait {
   }
 
   /**
+   * Tests that the emptiness of an item follows its field type.
+   *
+   * Core field types decide emptiness each on their own properties, and the
+   * types that do not override "Map::isEmpty" count any value but NULL.
+   */
+  protected function doTestEmptinessFollowsFieldType(): void {
+    $cases = [
+      'field_text_format' => [new ContractField('text', [['value' => '', 'format' => 'basic_html']]), TRUE],
+      'field_text' => [new ContractField('text_long', [['value' => '<p>Text</p>']]), FALSE],
+      'field_summary' => [new ContractField('text_with_summary', [['value' => '', 'summary' => 'Summary']]), FALSE],
+      'field_range' => [new ContractField('daterange', [['value' => '', 'end_value' => '2026-01-01T00:00:00']]), FALSE],
+      'field_link' => [new ContractField('link', [['uri' => '', 'title' => 'Example']]), TRUE],
+      'field_decimal' => [new ContractField('decimal', '0'), FALSE],
+      'field_flag' => [new ContractField('boolean', FALSE), FALSE],
+      'field_flag_empty_string' => [new ContractField('boolean', ''), FALSE],
+      'field_flag_null' => [new ContractField('boolean', [['value' => NULL]]), TRUE],
+    ];
+    $entity = $this->createContractEntity(array_map(fn(array $case): ContractField => $case[0], $cases));
+
+    foreach ($cases as $fieldName => [, $expected]) {
+      $this->assertSame($expected, $this->getItem($entity, $fieldName)->isEmpty(), $fieldName);
+      $this->assertSame($expected, $entity->get($fieldName)->isEmpty(), $fieldName);
+    }
+  }
+
+  /**
    * Tests that Unicode values are returned unchanged.
    */
   protected function doTestUnicodeFieldValue(): void {

@@ -137,9 +137,9 @@ final class FieldItemListDoubleBuilder {
   private function buildIsEmptyResolver(): callable {
     return function (array $context): bool {
       /** @var array<string, mixed> $context */
-      $mainProperty = $this->definition->getMainPropertyName();
+      $emptiness = FieldItemEmptiness::fromDefinition($this->definition);
       foreach ($this->resolveValues($context) as $value) {
-        if (!FieldItemDoubleBuilder::isEmptyValue($value, $mainProperty)) {
+        if (!$emptiness->isEmpty($value)) {
           return FALSE;
         }
       }
@@ -330,8 +330,9 @@ final class FieldItemListDoubleBuilder {
       // because: (1) it only occurs on mutable doubles, (2) each field list
       // builder is single-use per entity double instance, and (3) the mutation
       // enables the mutable double to return updated values on subsequent
-      // getter calls. The field type is preserved across mutations.
-      $this->definition = new FieldDoubleDefinition($values, $this->definition->getType());
+      // getter calls. The field type, settings and item class are preserved
+      // across mutations.
+      $this->definition = new FieldDoubleDefinition($values, $this->definition->getType(), $this->definition->getSettings(), $this->definition->getItemClass());
 
       // Return placeholder object - adapters convert this to return $fieldList.
       return new class () {};

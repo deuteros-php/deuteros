@@ -113,6 +113,7 @@ Deuteros is built around these core principles:
 | `EntityDoubleBuilder` | `src/Double/EntityDoubleBuilder.php` | Produces resolvers for entity methods |
 | `FieldItemListDoubleBuilder` | `src/Double/FieldItemListDoubleBuilder.php` | Produces resolvers for field list methods |
 | `FieldItemDoubleBuilder` | `src/Double/FieldItemDoubleBuilder.php` | Produces resolvers for field item methods |
+| `FieldItemEmptiness` | `src/Double/FieldItemEmptiness.php` | Decides whether a field item value is empty, per field type |
 
 **Resolver signature**: All builders produce callables with this signature:
 ```php
@@ -473,6 +474,8 @@ assertions that run both against entity doubles and against a real
   - Real field items fill in property defaults, such as the `options` of a
     link item; the contract passes complete property sets
   - Exception messages differ; the contract checks exception classes only
+  - Field types outside core decide emptiness their own way; doubles guess
+    from the main property, unless the item class inherits `Map::isEmpty`
 - The double side skips without Drupal core, since the contract uses real
   field item classes to name main properties
 

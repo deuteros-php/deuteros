@@ -152,6 +152,14 @@ fn(array $context, ...$args): mixed
 2. Core resolvers from builders
 3. Guardrail failure (throws with differentiated message)
 
+Adapters wire an override in place of the core wiring of a method, never next
+to it. Prophecy runs the promise with the most specific argument tokens, so an
+override wired with `Argument::cetera()` next to the core
+`get(Argument::type('string'))` promise would never run. The Prophecy adapter
+adds method prophecies with `MethodProphecy`, as `$prophecy->__get()` would
+call `ObjectProphecy::__get` instead of doubling the method. Both adapters
+track the methods they wired, and wire the remaining overrides after them.
+
 **Field List Caching:** `$entity->field_name` always returns the same `FieldItemListInterface` double per entity instance.
 
 **Immutable vs Mutable:**
@@ -359,7 +367,6 @@ be used by user-provided context.
   - `IMMUTABLE_PROPERTY_ERROR` - for property mutation on immutable doubles
   - `IMMUTABLE_FIELD_ITEM_ERROR` - for field item mutation on immutable doubles
   - `TO_URL_NOT_CONFIGURED_ERROR` - for unconfigured toUrl calls
-- `CORE_ENTITY_METHODS` lists methods with special handling (id, uuid, etc.)
 - Adapters use these constants to ensure consistent error messages
 
 ## PHP 8.3 Features Used

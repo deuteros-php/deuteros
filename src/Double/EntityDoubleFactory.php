@@ -93,29 +93,6 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   protected const TO_URL_NOT_CONFIGURED_ERROR = "Method 'toUrl' requires url() to be configured in the entity double definition. Add ->url('/path/to/entity') to your builder.";
 
   /**
-   * Core entity methods that are wired by adapters.
-   *
-   * These methods receive special handling in wireEntityResolvers and should
-   * not be wired again via method overrides.
-   *
-   * @var list<string>
-   */
-  protected const CORE_ENTITY_METHODS = [
-    'id',
-    'uuid',
-    'label',
-    'bundle',
-    'getEntityTypeId',
-    'hasField',
-    'get',
-    'set',
-    '__get',
-    '__set',
-    'toUrl',
-    'getIterator',
-  ];
-
-  /**
    * Cache of generated runtime interfaces.
    *
    * Maps sorted interface list (as cache key) to generated interface name.

@@ -412,8 +412,9 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
    * Config entities have a ::get method too, which no core resolver handles.
    */
   public function testConfigEntityGetOverride(): void {
-    if (!method_exists(ConfigEntityInterface::class, 'get')) {
-      $this->markTestSkipped('The stub "ConfigEntityInterface" has no ::get method.');
+    // The stub "ConfigEntityInterface" has no ::get method.
+    if (!class_exists('Drupal\Core\Config\Entity\ConfigEntityBase')) {
+      $this->markTestSkipped('Config entity ::get overrides require Drupal core.');
     }
 
     $entity = $this->factory->create(

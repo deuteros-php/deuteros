@@ -66,15 +66,21 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $mock = $double;
     $resolvers = $builder->getResolvers();
     $context = $definition->context;
+    $wiredMethods = [];
 
-    // Helper to wire a method, checking for overrides first.
-    $wireMethod = function (string $method, callable $defaultResolver) use ($mock, $builder, $definition, $context) {
+    // Helpers to wire a method, checking for overrides first.
+    $wireOverride = function (string $method) use ($mock, $builder, $context, &$wiredMethods): void {
+      $resolver = $builder->getMethodResolver($method);
+      $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
+      $wiredMethods[strtolower($method)] = TRUE;
+    };
+    $wireMethod = function (string $method, callable $defaultResolver) use ($mock, $wireOverride, $definition, &$wiredMethods): void {
       if ($definition->hasMethod($method)) {
-        $resolver = $builder->getMethodResolver($method);
-        $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
+        $wireOverride($method);
       }
       else {
         $mock->method($method)->willReturnCallback($defaultResolver);
+        $wiredMethods[strtolower($method)] = TRUE;
       }
     };
 
@@ -90,77 +96,62 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       $wireMethod('hasField', fn(string $fieldName) => $resolvers['hasField']($context, $fieldName));
       $wireMethod('get', fn(string $fieldName) => $resolvers['get']($context, $fieldName));
 
-      if (!$definition->hasMethod('set')) {
-        if ($definition->mutable) {
-          $self = $mock;
-          $mock->method('set')->willReturnCallback(
-            function (string $fieldName, mixed $value, bool $notify = TRUE) use ($resolvers, $context, $self) {
-              $resolvers['set']($context, $fieldName, $value, $notify);
-              return $self;
-            }
-          );
-        }
-        else {
-          $mock->method('set')->willReturnCallback(
-            function (string $fieldName) {
-              throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, $fieldName));
-            }
-          );
-        }
+      if ($definition->mutable) {
+        $self = $mock;
+        $wireMethod('set',
+          function (string $fieldName, mixed $value, bool $notify = TRUE) use ($resolvers, $context, $self) {
+            $resolvers['set']($context, $fieldName, $value, $notify);
+            return $self;
+          }
+        );
       }
       else {
-        $resolver = $builder->getMethodResolver('set');
-        $mock->method('set')->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
+        $wireMethod('set',
+          function (string $fieldName) {
+            throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, $fieldName));
+          }
+        );
       }
     }
 
     // Wire magic accessors for property-style field access.
     $wireMethod('__get', fn(string $name) => $resolvers['__get']($context, $name));
 
-    if (!$definition->hasMethod('__set')) {
-      if ($definition->mutable) {
-        $mock->method('__set')->willReturnCallback(
-          function (string $name, mixed $value) use ($resolvers, $context) {
-            $resolvers['set']($context, $name, $value, TRUE);
-          }
-        );
-      }
-      else {
-        $mock->method('__set')->willReturnCallback(
-          function (string $name) {
-            throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, $name));
-          }
-        );
-      }
+    if ($definition->mutable) {
+      $wireMethod('__set',
+        function (string $name, mixed $value) use ($resolvers, $context) {
+          $resolvers['set']($context, $name, $value, TRUE);
+        }
+      );
+    }
+    else {
+      $wireMethod('__set',
+        function (string $name) {
+          throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, $name));
+        }
+      );
     }
 
     // Wire toUrl - either with resolver if configured, or with exception.
     if ($definition->url !== NULL) {
       $wireMethod('toUrl', fn(?string $rel = NULL, array $options = []) => $resolvers['toUrl']($context, $rel, $options));
     }
-    elseif (!$definition->hasMethod('toUrl')) {
-      $mock->method('toUrl')->willReturnCallback(
-        fn() => throw new \LogicException(self::TO_URL_NOT_CONFIGURED_ERROR)
-      );
+    else {
+      $wireMethod('toUrl', fn() => throw new \LogicException(self::TO_URL_NOT_CONFIGURED_ERROR));
     }
 
     // Wire getIterator if FieldableEntityInterface is present (entity field
     // iteration). IteratorAggregate is automatically added to interfaces when
     // FieldableEntityInterface is present.
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
-      $mock->method('getIterator')->willReturnCallback(
-        fn() => $resolvers['getIterator']($context)
-      );
+      $wireMethod('getIterator', fn() => $resolvers['getIterator']($context));
     }
 
     // Wire remaining method overrides (those not already wired above).
-    foreach ($definition->methods as $method => $override) {
-      if (in_array($method, self::CORE_ENTITY_METHODS, TRUE)) {
-        // Already handled above.
-        continue;
+    foreach (array_keys($definition->methods) as $method) {
+      if (!isset($wiredMethods[strtolower($method)])) {
+        $wireOverride($method);
       }
-      $resolver = $builder->getMethodResolver($method);
-      $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
     }
   }
 

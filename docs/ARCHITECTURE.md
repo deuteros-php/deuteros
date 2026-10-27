@@ -194,6 +194,12 @@ When a method is called on an entity double:
 4. **Lenient default** - If lenient mode, return `null`
 5. **Missing resolver exception** - Throw with interface context
 
+Overrides apply to the core entity methods too, such as `::get`, `::hasField`,
+`::__get` and `::toUrl`. The adapters wire an override in place of the core
+wiring of the method. With Prophecy, an override wired next to a core promise
+with more specific argument tokens would never run, because Prophecy picks the
+promise whose tokens score highest.
+
 ### Template Method (Factory)
 
 `EntityDoubleFactory` defines the skeleton for creating doubles:

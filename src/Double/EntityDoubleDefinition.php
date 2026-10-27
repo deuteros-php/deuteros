@@ -121,6 +121,8 @@ final readonly class EntityDoubleDefinition {
   /**
    * Checks if a method override exists.
    *
+   * Method names are compared case-insensitively, as PHP does.
+   *
    * @param string $method
    *   The method name.
    *
@@ -128,7 +130,7 @@ final readonly class EntityDoubleDefinition {
    *   TRUE if an override exists, FALSE otherwise.
    */
   public function hasMethod(string $method): bool {
-    return array_key_exists($method, $this->methods);
+    return $this->findMethodKey($method) !== NULL;
   }
 
   /**
@@ -138,10 +140,33 @@ final readonly class EntityDoubleDefinition {
    *   The method name.
    *
    * @return callable|mixed|null
-   *   The override value, or NULL if not defined.
+   *   The override value, or NULL if not defined. Method names are compared
+   *   case-insensitively, as PHP does.
    */
   public function getMethod(string $method): mixed {
-    return $this->methods[$method] ?? NULL;
+    $key = $this->findMethodKey($method);
+    return $key !== NULL ? $this->methods[$key] : NULL;
+  }
+
+  /**
+   * Finds the key of a method override.
+   *
+   * @param string $method
+   *   The method name, in any case.
+   *
+   * @return string|null
+   *   The key of the override in "methods", or NULL if not defined.
+   */
+  private function findMethodKey(string $method): ?string {
+    if (array_key_exists($method, $this->methods)) {
+      return $method;
+    }
+    foreach (array_keys($this->methods) as $key) {
+      if (strcasecmp($key, $method) === 0) {
+        return $key;
+      }
+    }
+    return NULL;
   }
 
   /**

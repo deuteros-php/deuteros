@@ -20,6 +20,7 @@ use Deuteros\Tests\Fixtures\TestBundleTrait;
 use Drupal\Core\Field\EntityReferenceFieldItemListInterface;
 use Drupal\Core\GeneratedUrl;
 use Drupal\Core\Url;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -349,6 +350,99 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
     );
 
     $this->assertSame(42, $entity->save());
+  }
+
+  /**
+   * Provides the core entity methods and the arguments to call them with.
+   *
+   * @return array<string, array{string, list<mixed>, mixed}>
+   *   The method name, its arguments and the value the override returns.
+   */
+  public static function providerCoreMethodOverrides(): array {
+    return [
+      'id' => ['id', [], 999],
+      'uuid' => ['uuid', [], 'override-uuid'],
+      'label' => ['label', [], 'Override'],
+      'bundle' => ['bundle', [], 'override'],
+      'getEntityTypeId' => ['getEntityTypeId', [], 'override'],
+      'hasField' => ['hasField', ['field_text'], FALSE],
+      'get' => ['get', ['field_text'], 'override'],
+      'set' => ['set', ['field_text', 'new'], 'override'],
+      '__get' => ['__get', ['field_text'], 'override'],
+      '__set' => ['__set', ['field_text', 'new'], NULL],
+      'toUrl' => ['toUrl', ['canonical'], 'override'],
+      'getIterator' => ['getIterator', [], new \ArrayIterator([])],
+    ];
+  }
+
+  /**
+   * Tests that overrides of core entity methods take precedence.
+   *
+   * @param string $method
+   *   The overridden method.
+   * @param list<mixed> $arguments
+   *   The arguments to call the method with.
+   * @param mixed $return
+   *   The value the override returns.
+   */
+  #[DataProvider('providerCoreMethodOverrides')]
+  public function testCoreMethodOverridesTakePrecedence(string $method, array $arguments, mixed $return): void {
+    $calls = [];
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(FieldableEntityInterface::class)
+        ->field('field_text', 'value')
+        ->method($method, function (array $context, mixed ...$args) use (&$calls, $return): mixed {
+          $calls[] = $args;
+          return $return;
+        })
+        ->build()
+    );
+
+    $this->assertSame($return, $entity->$method(...$arguments));
+    $this->assertCount(1, $calls);
+    // PHPUnit also passes the default values of omitted parameters.
+    $this->assertSame($arguments, array_slice($calls[0], 0, count($arguments)));
+  }
+
+  /**
+   * Tests that an override takes precedence whatever the case of its name.
+   */
+  public function testCoreMethodOverrideIgnoresCase(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(FieldableEntityInterface::class)
+        ->field('field_text', 'value')
+        ->method('hasfield', fn() => FALSE)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertFalse($entity->hasField('field_text'));
+  }
+
+  /**
+   * Tests that a ::get override applies to config entity doubles.
+   *
+   * Config entities have a ::get method too, which no core resolver handles.
+   */
+  public function testConfigEntityGetOverride(): void {
+    // The stub "ConfigEntityInterface" has no ::get method.
+    if (!class_exists('Drupal\Core\Config\Entity\ConfigEntityBase')) {
+      $this->markTestSkipped('Config entity ::get overrides require Drupal core.');
+    }
+
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node_type')
+        ->interface(ConfigEntityInterface::class)
+        ->method('get', fn(array $context, string $property) => "override:$property")
+        ->build()
+    );
+    assert($entity instanceof ConfigEntityInterface);
+
+    $this->assertSame('override:name', $entity->get('name'));
   }
 
   /**

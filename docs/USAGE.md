@@ -836,6 +836,23 @@ $entity = $factory->create(
 $entity->id(); // 999
 ```
 
+Overrides also replace the core entity methods, such as `::get`,
+`::hasField`, `::set`, `::__get` and `::toUrl`. For example, a test can
+return its own field double from `::get`:
+
+```php
+$entity = $factory->create(
+  EntityDoubleDefinitionBuilder::create('node')
+    ->interface(FieldableEntityInterface::class)
+    ->field('body', 'Body text')
+    ->method('get', fn(array $context, string $fieldName) => $fieldName === 'body' ? $bodyDouble : NULL)
+    ->build()
+);
+```
+
+The override handles every call to the method, so it must cover all the
+arguments the code under test passes.
+
 ### URL Support
 
 Configure the entity's `::toUrl()` method to return a Url double:

@@ -146,6 +146,10 @@ class EntityDoubleDefinitionTest extends TestCase {
     $this->assertFalse($definition->hasMethod('nonexistent'));
     $this->assertSame($callable, $definition->getMethod('getOwnerId'));
     $this->assertNull($definition->getMethod('nonexistent'));
+
+    // Method names are case-insensitive, as in PHP.
+    $this->assertTrue($definition->hasMethod('getownerid'));
+    $this->assertSame($callable, $definition->getMethod('GETOWNERID'));
   }
 
   /**

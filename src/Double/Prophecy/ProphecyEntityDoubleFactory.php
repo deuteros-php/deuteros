@@ -112,30 +112,47 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $prophecy = $double;
     $resolvers = $builder->getResolvers();
     $context = $definition->context;
+    $wiredMethods = [];
+
+    // Helpers to wire a method, giving precedence to its override. The override
+    // replaces the default promise, as Prophecy would otherwise prefer a
+    // promise with more specific argument tokens. Method prophecies are added
+    // directly, so that magic methods are doubled as well.
+    $addPromise = function (string $method, array $arguments, callable $promise) use ($prophecy, &$wiredMethods): void {
+      $methodProphecy = new MethodProphecy($prophecy, $method, $arguments);
+      $methodProphecy->will($promise);
+      $prophecy->addMethodProphecy($methodProphecy);
+      $wiredMethods[strtolower($method)] = TRUE;
+    };
+    $wireOverride = function (string $method) use ($addPromise, $builder, $context): void {
+      $resolver = $builder->getMethodResolver($method);
+      $addPromise($method, [Argument::cetera()], fn(array $args) => $resolver($context, ...$args));
+    };
+    $wireMethod = function (string $method, array $arguments, callable $promise) use ($addPromise, $wireOverride, $definition): void {
+      if ($definition->hasMethod($method)) {
+        $wireOverride($method);
+      }
+      else {
+        $addPromise($method, $arguments, $promise);
+      }
+    };
 
     // Wire core entity methods.
-    $prophecy->id()->will(fn() => $resolvers['id']($context));
-    $prophecy->uuid()->will(fn() => $resolvers['uuid']($context));
-    $prophecy->label()->will(fn() => $resolvers['label']($context));
-    $prophecy->bundle()->will(fn() => $resolvers['bundle']($context));
-    $prophecy->getEntityTypeId()->will(fn() => $resolvers['getEntityTypeId']($context));
+    $wireMethod('id', [], fn() => $resolvers['id']($context));
+    $wireMethod('uuid', [], fn() => $resolvers['uuid']($context));
+    $wireMethod('label', [], fn() => $resolvers['label']($context));
+    $wireMethod('bundle', [], fn() => $resolvers['bundle']($context));
+    $wireMethod('getEntityTypeId', [], fn() => $resolvers['getEntityTypeId']($context));
 
     // Wire fieldable entity methods if applicable.
     if ($definition->hasInterface(FieldableEntityInterface::class)) {
-      $prophecy->hasField(Argument::type('string'))->will(
-        function (array $args) use ($resolvers, $context) {
-                return $resolvers['hasField']($context, (string) $args[0]);
-        }
-      );
-      $prophecy->get(Argument::type('string'))->will(
-        function (array $args) use ($resolvers, $context) {
-                return $resolvers['get']($context, (string) $args[0]);
-        }
-      );
+      $wireMethod('hasField', [Argument::type('string')], fn(array $args) => $resolvers['hasField']($context, (string) $args[0]));
+      $wireMethod('get', [Argument::type('string')], fn(array $args) => $resolvers['get']($context, (string) $args[0]));
 
+      $setArguments = [Argument::type('string'), Argument::any(), Argument::any()];
       if ($definition->mutable) {
         $revealed = NULL;
-        $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
+        $wireMethod('set', $setArguments,
           function (array $args) use ($resolvers, $context, &$revealed, $prophecy): mixed {
             $resolvers['set']($context, (string) $args[0], $args[1], $args[2] ?? TRUE);
             if ($revealed === NULL) {
@@ -146,7 +163,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
         );
       }
       else {
-        $prophecy->set(Argument::type('string'), Argument::any(), Argument::any())->will(
+        $wireMethod('set', $setArguments,
           function (array $args): never {
             throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, (string) $args[0]));
           }
@@ -154,38 +171,33 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       }
     }
 
-    // Wire magic accessors using MethodProphecy.
-    $getMethodProphecy = new MethodProphecy($prophecy, '__get', [Argument::type('string')]);
-    $getMethodProphecy->will(fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
-    $prophecy->addMethodProphecy($getMethodProphecy);
+    // Wire magic accessors.
+    $wireMethod('__get', [Argument::type('string')], fn(array $args) => $resolvers['__get']($context, (string) $args[0]));
 
+    $magicSetArguments = [Argument::type('string'), Argument::any()];
     if ($definition->mutable) {
-      $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      $setMethodProphecy->will(
+      $wireMethod('__set', $magicSetArguments,
         function (array $args) use ($resolvers, $context): void {
           $resolvers['set']($context, (string) $args[0], $args[1], TRUE);
         }
       );
-      $prophecy->addMethodProphecy($setMethodProphecy);
     }
     else {
-      $setMethodProphecy = new MethodProphecy($prophecy, '__set', [Argument::type('string'), Argument::any()]);
-      $setMethodProphecy->will(
+      $wireMethod('__set', $magicSetArguments,
         function (array $args): never {
           throw new \LogicException(sprintf(self::IMMUTABLE_FIELD_ERROR, (string) $args[0]));
         }
       );
-      $prophecy->addMethodProphecy($setMethodProphecy);
     }
 
     // Wire toUrl - either with resolver if configured, or with exception.
     if ($definition->url !== NULL) {
-      $prophecy->toUrl(Argument::cetera())->will(
+      $wireMethod('toUrl', [Argument::cetera()],
         fn(array $args) => $resolvers['toUrl']($context, $args[0] ?? NULL, $args[1] ?? [])
       );
     }
-    elseif (!$definition->hasMethod('toUrl')) {
-      $prophecy->toUrl(Argument::cetera())->will(
+    else {
+      $wireMethod('toUrl', [Argument::cetera()],
         fn() => throw new \LogicException(self::TO_URL_NOT_CONFIGURED_ERROR)
       );
     }
@@ -198,13 +210,14 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     $revealed = $prophecy->reveal();
     if ($definition->hasInterface(FieldableEntityInterface::class)
         && $revealed instanceof \IteratorAggregate) {
-      $prophecy->getIterator()->will(fn() => $resolvers['getIterator']($context));
+      $wireMethod('getIterator', [], fn() => $resolvers['getIterator']($context));
     }
 
-    // Wire method overrides.
-    foreach ($definition->methods as $method => $override) {
-      $resolver = $builder->getMethodResolver($method);
-      $prophecy->$method(Argument::cetera())->will(fn(array $args) => $resolver($context, ...$args));
+    // Wire the remaining method overrides.
+    foreach (array_keys($definition->methods) as $method) {
+      if (!isset($wiredMethods[strtolower($method)])) {
+        $wireOverride($method);
+      }
     }
   }
 

@@ -785,6 +785,12 @@ abstract class EntityDoubleFactory implements EntityDoubleFactoryInterface {
   /**
    * Wires entity method resolvers to the double.
    *
+   * A method override must take the place of the core wiring of its method,
+   * never sit next to it: a framework may prefer the core wiring, for example
+   * Prophecy runs the promise whose argument tokens score highest. After the
+   * core methods, the remaining overrides must be wired too. Method names are
+   * case-insensitive, so the wired methods must be tracked in lower case.
+   *
    * @param object $double
    *   The mock/prophecy object.
    * @param \Deuteros\Double\EntityDoubleBuilder $builder

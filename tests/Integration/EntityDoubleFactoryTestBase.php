@@ -407,6 +407,23 @@ abstract class EntityDoubleFactoryTestBase extends TestCase {
   }
 
   /**
+   * Tests that an override takes precedence whatever the case of its name.
+   */
+  public function testCoreMethodOverrideIgnoresCase(): void {
+    $entity = $this->factory->create(
+      EntityDoubleDefinitionBuilder::create('node')
+        ->bundle('article')
+        ->interface(FieldableEntityInterface::class)
+        ->field('field_text', 'value')
+        ->method('hasfield', fn() => FALSE)
+        ->build()
+    );
+    assert($entity instanceof FieldableEntityInterface);
+
+    $this->assertFalse($entity->hasField('field_text'));
+  }
+
+  /**
    * Tests that a ::get override applies to config entity doubles.
    *
    * Config entities have a ::get method too, which no core resolver handles.

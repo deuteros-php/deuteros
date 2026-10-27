@@ -122,7 +122,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
       $methodProphecy = new MethodProphecy($prophecy, $method, $arguments);
       $methodProphecy->will($promise);
       $prophecy->addMethodProphecy($methodProphecy);
-      $wiredMethods[$method] = TRUE;
+      $wiredMethods[strtolower($method)] = TRUE;
     };
     $wireOverride = function (string $method) use ($addPromise, $builder, $context): void {
       $resolver = $builder->getMethodResolver($method);
@@ -191,7 +191,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
     }
 
     // Wire toUrl - either with resolver if configured, or with exception.
-    if ($definition->url !== NULL || $definition->hasMethod('toUrl')) {
+    if ($definition->url !== NULL) {
       $wireMethod('toUrl', [Argument::cetera()],
         fn(array $args) => $resolvers['toUrl']($context, $args[0] ?? NULL, $args[1] ?? [])
       );
@@ -215,7 +215,7 @@ final class ProphecyEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire the remaining method overrides.
     foreach (array_keys($definition->methods) as $method) {
-      if (!isset($wiredMethods[$method])) {
+      if (!isset($wiredMethods[strtolower($method)])) {
         $wireOverride($method);
       }
     }

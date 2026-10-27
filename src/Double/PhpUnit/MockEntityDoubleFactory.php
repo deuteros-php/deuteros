@@ -72,7 +72,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
     $wireOverride = function (string $method) use ($mock, $builder, $context, &$wiredMethods): void {
       $resolver = $builder->getMethodResolver($method);
       $mock->method($method)->willReturnCallback(fn(mixed ...$args) => $resolver($context, ...$args));
-      $wiredMethods[$method] = TRUE;
+      $wiredMethods[strtolower($method)] = TRUE;
     };
     $wireMethod = function (string $method, callable $defaultResolver) use ($mock, $wireOverride, $definition, &$wiredMethods): void {
       if ($definition->hasMethod($method)) {
@@ -80,7 +80,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
       }
       else {
         $mock->method($method)->willReturnCallback($defaultResolver);
-        $wiredMethods[$method] = TRUE;
+        $wiredMethods[strtolower($method)] = TRUE;
       }
     };
 
@@ -149,7 +149,7 @@ final class MockEntityDoubleFactory extends EntityDoubleFactory {
 
     // Wire remaining method overrides (those not already wired above).
     foreach (array_keys($definition->methods) as $method) {
-      if (!isset($wiredMethods[$method])) {
+      if (!isset($wiredMethods[strtolower($method)])) {
         $wireOverride($method);
       }
     }

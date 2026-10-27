@@ -159,6 +159,9 @@ override wired with `Argument::cetera()` next to the core
 adds method prophecies with `MethodProphecy`, as `$prophecy->__get()` would
 call `ObjectProphecy::__get` instead of doubling the method. Both adapters
 track the methods they wired, and wire the remaining overrides after them.
+Method names are case-insensitive, as in PHP: `EntityDoubleDefinition::hasMethod`
+and `::getMethod` ignore the case, and the adapters track wired methods in
+lower case.
 
 **Field List Caching:** `$entity->field_name` always returns the same `FieldItemListInterface` double per entity instance.
 

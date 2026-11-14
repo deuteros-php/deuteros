@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 use Drupal\Core\Entity\EntityInterface;
 
-// Only load stubs if Drupal core is not available.
+// Only load stubs if Drupal core is not available. The stub file doesn't
+// have a .php extension, so static analyzers and IDEs that scan vendor/ don't
+// read its declarations in place of core's.
 if (!interface_exists(EntityInterface::class)) {
-  require_once __DIR__ . '/stubs.php';
+  require_once __DIR__ . '/drupal.stub';
 }
